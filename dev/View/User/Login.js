@@ -4,6 +4,7 @@ import { Notification } from 'Common/Enums';
 import { ClientSideKeyName } from 'Common/EnumsUser';
 import { Settings, SettingsGet } from 'Common/Globals';
 import { getNotification, reload as translatorReload, convertLangName } from 'Common/Translator';
+import { runHook } from 'Common/Plugins';
 
 import { LanguageStore } from 'Stores/Language';
 
@@ -127,6 +128,20 @@ class LoginUserView extends AbstractViewCenter {
 		this.emailError(!email);
 		this.passwordError(!pass);
 		this.additionalCodeError(totp && !code);
+
+		let pluginResultCode = 0, pluginResultMessage = '';
+		Plugins.runHook('user-login-submit', [(iResultCode, sResultMessage) => {
+			pluginResultCode = iResultCode;
+			pluginResultMessage = sResultMessage;
+		}]);
+		if (0 < pluginResultCode) {
+			this.submitError(getNotification(pluginResultCode));
+			valid = false;
+		} else if (pluginResultMessage) {
+			this.submitError(pluginResultMessage);
+			valid = false;
+		}
+
 		this.formError(!valid);
 
 		if (valid) {

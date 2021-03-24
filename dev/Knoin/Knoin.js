@@ -1,6 +1,7 @@
 import ko from 'ko';
 
 import { doc, $htmlCL } from 'Common/Globals';
+import { runHook } from 'Common/Plugins';
 import { isNonEmptyArray, isFunction } from 'Common/Utils';
 
 let currentScreen = null,
@@ -172,6 +173,8 @@ export function showScreenPopup(ViewModelClassToShow, params = []) {
 		vm.modalVisibility(true);
 
 		vm.onShow && vm.onShow(...params);
+
+		runHook('view-model-on-show', [vm.name, vm.__vm, params]);
 	}
 }
 
@@ -275,6 +278,8 @@ function screenOnRoute(screenName, subPart) {
 								autofocus(ViewModelClass.__dom);
 
 								ViewModelClass.__vm.onShowWithDelay && setTimeout(()=>ViewModelClass.__vm.onShowWithDelay, 200);
+
+								runHook('view-model-on-show', [ViewModelClass.name, ViewModelClass.__vm, params]);
 							}
 						});
 					}

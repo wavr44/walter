@@ -2,6 +2,7 @@ import { Notification } from 'Common/Enums';
 import { Settings } from 'Common/Globals';
 import { isArray, pInt, pString } from 'Common/Utils';
 import { serverRequest } from 'Common/Links';
+import { runHook } from 'Common/Plugins';
 
 let iJsonErrorCount = 0,
 	iTokenErrorCount = 0;
@@ -92,6 +93,8 @@ export class AbstractFetchRemote
 			abortActions.forEach(actionToAbort => abort(actionToAbort));
 		}
 
+		runHook('json-default-request', [sAction, params, sGetAdd]);
+
 		fetchJSON(sAction, sGetAdd,
 			params,
 			undefined === iTimeout ? 30000 : pInt(iTimeout),
@@ -126,6 +129,14 @@ export class AbstractFetchRemote
 						iError = data.ErrorCode || Notification.UnknownError
 					}
 				}
+
+				runHook('json-default-response', [
+					sAction,
+					iError,
+					data,
+					cached,
+					params
+				]);
 
 				fCallback && fCallback(
 					iError,
