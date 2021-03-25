@@ -2,7 +2,7 @@ import ko from 'ko';
 
 import { Scope, Notification } from 'Common/Enums';
 import { MessageSetAction } from 'Common/EnumsUser';
-import { doc, elementById } from 'Common/Globals';
+import { doc, createElement, elementById } from 'Common/Globals';
 import { isNonEmptyArray, pInt, pString, addObservablesTo, addSubscribablesTo } from 'Common/Utils';
 import { plainToHtml } from 'Common/UtilsUser';
 
@@ -247,16 +247,16 @@ export const MessageUserStore = new class {
 					NotificationUserStore.displayDesktopNotification(
 						AccountUserStore.email(),
 						i18n('MESSAGE_LIST/NEW_MESSAGE_NOTIFICATION', {
-							'COUNT': len
+							COUNT: len
 						}),
-						{ 'Url': mailBox(newMessages[0].Folder, 1) }
+						{ Url: mailBox(newMessages[0].Folder, 1) }
 					);
 				} else {
 					newMessages.forEach(item => {
 						NotificationUserStore.displayDesktopNotification(
 							EmailCollectionModel.reviveFromJson(item.From).toString(),
 							item.Subject,
-							{ 'Folder': item.Folder, 'Uid': item.Uid }
+							{ Folder: item.Folder, Uid: item.Uid }
 						);
 					});
 				}
@@ -504,7 +504,7 @@ export const MessageUserStore = new class {
 										/-----BEGIN PGP SIGNED MESSAGE-----/.test(plain) && /-----BEGIN PGP SIGNATURE-----/.test(plain);
 								}
 
-								const pre = doc.createElement('pre');
+								const pre = createElement('pre');
 								if (pgpSigned && message.isPgpSigned()) {
 									pre.className = 'b-plain-openpgp signed';
 									pre.textContent = plain;

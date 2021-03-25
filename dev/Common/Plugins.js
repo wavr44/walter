@@ -36,7 +36,7 @@ export function runHook(name, args = []) {
  * @param {?number=} timeout
  */
 rl.pluginRemoteRequest = (callback, action, parameters, timeout) => {
-	rl.app && rl.app.remote().defaultRequest(callback, 'Plugin' + action, parameters, timeout);
+	rl.app && rl.app.Remote.defaultRequest(callback, 'Plugin' + action, parameters, timeout);
 };
 
 /**

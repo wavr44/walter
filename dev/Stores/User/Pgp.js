@@ -2,7 +2,7 @@ import ko from 'ko';
 
 import { i18n } from 'Common/Translator';
 import { isArray, isNonEmptyArray, pString } from 'Common/Utils';
-import { doc } from 'Common/Globals';
+import { createElement } from 'Common/Globals';
 
 import { AccountUserStore } from 'Stores/User/Account';
 
@@ -49,7 +49,7 @@ function domControlEncryptedClickHelper(store, dom, armoredMessage, recipients) 
 								this,
 								true,
 								i18n('PGP_NOTIFICATIONS/GOOD_SIGNATURE', {
-									'USER': validPublicKey.user + ' (' + validPublicKey.id + ')'
+									USER: validPublicKey.user + ' (' + validPublicKey.id + ')'
 								}),
 								decryptedMessage.getText()
 							);
@@ -105,7 +105,7 @@ function domControlSignedClickHelper(store, dom, armoredMessage) {
 						this,
 						true,
 						i18n('PGP_NOTIFICATIONS/GOOD_SIGNATURE', {
-							'USER': validKey.user + ' (' + validKey.id + ')'
+							USER: validKey.user + ' (' + validKey.id + ')'
 						}),
 						message.getText()
 					);
@@ -361,7 +361,7 @@ export const PgpUserStore = new class {
 					verControl.addEventHandler('click', domControlSignedClickHelper(this, dom, domText));
 				}
 
-				dom.before(verControl, doc.createElement('div'));
+				dom.before(verControl, createElement('div'));
 			}
 		}
 	}
