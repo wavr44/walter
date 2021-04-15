@@ -55,74 +55,15 @@ class RemoteUserFetch extends AbstractFetchRemote {
 	 * @param {string} sPassword
 	 * @param {boolean} bSignMe
 	 * @param {string=} sLanguage
-	 * @param {string=} sAdditionalCode
-	 * @param {boolean=} bAdditionalCodeSignMe
 	 */
-	login(fCallback, sEmail, sPassword, bSignMe, sLanguage, sAdditionalCode, bAdditionalCodeSignMe) {
+	login(fCallback, sEmail, sPassword, bSignMe, sLanguage) {
 		this.defaultRequest(fCallback, 'Login', {
 			Email: sEmail,
 			Login: '',
 			Password: sPassword,
 			Language: sLanguage || '',
-			AdditionalCode: sAdditionalCode || '',
-			AdditionalCodeSignMe: bAdditionalCodeSignMe ? 1 : 0,
 			SignMe: bSignMe ? 1 : 0
 		});
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
-	getTwoFactor(fCallback) {
-		this.defaultRequest(fCallback, 'GetTwoFactorInfo');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
-	createTwoFactor(fCallback) {
-		this.defaultRequest(fCallback, 'CreateTwoFactorSecret');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
-	clearTwoFactor(fCallback) {
-		this.defaultRequest(fCallback, 'ClearTwoFactorInfo');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
-	showTwoFactorSecret(fCallback) {
-		this.defaultRequest(fCallback, 'ShowTwoFactorSecret');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 * @param {string} sCode
-	 */
-	testTwoFactor(fCallback, sCode) {
-		this.defaultRequest(fCallback, 'TestTwoFactorInfo', {
-			Code: sCode
-		});
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 * @param {boolean} bEnable
-	 */
-	enableTwoFactor(fCallback, bEnable) {
-		this.defaultRequest(fCallback, 'EnableTwoFactor', {
-			Enable: bEnable ? 1 : 0
-		});
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
-	clearTwoFactorInfo(fCallback) {
-		this.defaultRequest(fCallback, 'ClearTwoFactorInfo');
 	}
 
 	/**
@@ -297,54 +238,44 @@ class RemoteUserFetch extends AbstractFetchRemote {
 
 	/**
 	 * @param {Function} fCallback
-	 * @param {string} sFolderFullNameRaw
-	 * @param {number=} iOffset = 0
-	 * @param {number=} iLimit = 20
-	 * @param {string=} sSearch = ''
-	 * @param {string=} sThreadUid = ''
+	 * @param {object} params
 	 * @param {boolean=} bSilent = false
 	 */
-	messageList(fCallback, sFolderFullNameRaw, iOffset = 0, iLimit = 20, sSearch = '', sThreadUid = '', bSilent = false) {
-		sFolderFullNameRaw = pString(sFolderFullNameRaw);
-
-		const folderHash = getFolderHash(sFolderFullNameRaw),
-			useThreads = AppUserStore.threadsAllowed() && SettingsUserStore.useThreads(),
+	messageList(fCallback, params, bSilent = false) {
+		const
+			sFolderFullNameRaw = pString(params.Folder),
+			folderHash = getFolderHash(sFolderFullNameRaw),
+			useThreads = AppUserStore.threadsAllowed() && SettingsUserStore.useThreads() ? 1 : 0,
 			inboxUidNext = getFolderInboxName() === sFolderFullNameRaw ? getFolderUidNext(sFolderFullNameRaw) : '';
 
-		let params = {}, sGetAdd = '';
+		params.Folder = sFolderFullNameRaw;
+		params.ThreadUid = useThreads ? params.ThreadUid : '';
+		params = Object.assign({
+			Folder: '',
+			Offset: 0,
+			Limit: SettingsUserStore.messagesPerPage(),
+			Search: '',
+			UidNext: inboxUidNext,
+			UseThreads: useThreads,
+			ThreadUid: '',
+			Sort: FolderUserStore.sortMode()
+		}, params);
 
-		if (folderHash && (!sSearch || !sSearch.includes('is:'))) {
+		let sGetAdd = '';
+
+		if (folderHash && (!params.Search || !params.Search.includes('is:'))) {
 			sGetAdd = 'MessageList/' +
 				SUB_QUERY_PREFIX +
 				'/' +
-				urlsafeArray([
-					sFolderFullNameRaw,
-					iOffset,
-					iLimit,
-					sSearch,
-					SettingsGet('ProjectHash'),
-					folderHash,
-					inboxUidNext,
-					useThreads ? 1 : 0,
-					useThreads ? sThreadUid : ''
-				]);
-		} else {
-			params = {
-				Folder: sFolderFullNameRaw,
-				Offset: iOffset,
-				Limit: iLimit,
-				Search: sSearch,
-				UidNext: inboxUidNext,
-				UseThreads: useThreads ? 1 : 0,
-				ThreadUid: useThreads ? sThreadUid : ''
-			};
+				urlsafeArray([SettingsGet('ProjectHash'),folderHash].concat(Object.values(params)));
+			params = {};
 		}
 
 		this.defaultRequest(
 			fCallback,
 			'MessageList',
 			params,
-			sSearch ? 300000 : 30000,
+			30000,
 			sGetAdd,
 			bSilent ? [] : ['MessageList']
 		);
@@ -562,7 +493,7 @@ class RemoteUserFetch extends AbstractFetchRemote {
 	 * @param {Object} oData
 	 */
 	sendMessage(fCallback, oData) {
-		this.defaultRequest(fCallback, 'SendMessage', oData, 300000);
+		this.defaultRequest(fCallback, 'SendMessage', oData, 30000);
 	}
 
 	/**

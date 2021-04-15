@@ -52,7 +52,6 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 	constructor() {
 		super('User/MailBox/MessageList', 'MailMessageList');
 
-		this.sLastUid = null;
 		this.bPrefetch = false;
 		this.emptySubjectValue = '';
 
@@ -69,43 +68,34 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 
 		this.popupVisibility = ko.computed(() => 0 < popupVisibilityNames().length);
 
-		this.message = MessageUserStore.message;
 		this.messageList = MessageUserStore.list;
-		this.messageListDisableAutoSelect = MessageUserStore.listDisableAutoSelect;
 
-		this.folderList = FolderUserStore.folderList;
+		this.sortSupported = FolderUserStore.sortSupported;
 
 		this.composeInEdit = AppUserStore.composeInEdit;
 		this.leftPanelDisabled = leftPanelDisabled;
 
-		this.selectorMessageSelected = MessageUserStore.selectorMessageSelected;
-		this.selectorMessageFocused = MessageUserStore.selectorMessageFocused;
 		this.isMessageSelected = MessageUserStore.isMessageSelected;
 		this.messageListSearch = MessageUserStore.listSearch;
-		this.messageListThreadUid = MessageUserStore.listThreadUid;
 		this.messageListError = MessageUserStore.listError;
 		this.folderMenuForMove = FolderUserStore.folderMenuForMove;
 
 		this.useCheckboxesInList = SettingsUserStore.useCheckboxesInList;
 
-		this.mainMessageListSearch = MessageUserStore.mainMessageListSearch;
-		this.messageListEndFolder = MessageUserStore.listEndFolder;
 		this.messageListEndThreadUid = MessageUserStore.listEndThreadUid;
 
 		this.messageListCheckedOrSelected = MessageUserStore.listCheckedOrSelected;
-		this.messageListCheckedOrSelectedUidsWithSubMails = MessageUserStore.listCheckedOrSelectedUidsWithSubMails;
 		this.messageListCompleteLoadingThrottle = MessageUserStore.listCompleteLoading;
 		this.messageListCompleteLoadingThrottleForAnimation = MessageUserStore.listLoadingAnimation;
 
 		initOnStartOrLangChange(() => this.emptySubjectValue = i18n('MESSAGE_LIST/EMPTY_SUBJECT_TEXT'));
 
-		this.userQuota = QuotaUserStore.quota;
-		this.userUsageSize = QuotaUserStore.usage;
 		this.userUsageProc = QuotaUserStore.percentage;
 
 		this.addObservables({
 			moveDropdownTrigger: false,
 			moreDropdownTrigger: false,
+			sortDropdownTrigger: false,
 
 			dragOverArea: null,
 			dragOverBodyArea: null,
@@ -137,7 +127,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 			},
 
 			inputProxyMessageListSearch: {
-				read: this.mainMessageListSearch,
+				read: MessageUserStore.mainMessageListSearch,
 				write: value => this.sLastSearchValue = value
 			},
 
@@ -146,19 +136,19 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 				return c && MessageUserStore.list.length > c;
 			},
 
-			hasMessages: () => 0 < this.messageList.length,
+			hasMessages: () => 0 < MessageUserStore.list.length,
 
-			isSpamFolder: () => (FolderUserStore.spamFolder() || 0) === this.messageListEndFolder(),
+			isSpamFolder: () => (FolderUserStore.spamFolder() || 0) === MessageUserStore.listEndFolder(),
 
 			isSpamDisabled: () => UNUSED_OPTION_VALUE === FolderUserStore.spamFolder(),
 
-			isTrashFolder: () => (FolderUserStore.trashFolder() || 0) === this.messageListEndFolder(),
+			isTrashFolder: () => (FolderUserStore.trashFolder() || 0) === MessageUserStore.listEndFolder(),
 
-			isDraftFolder: () => (FolderUserStore.draftFolder() || 0) === this.messageListEndFolder(),
+			isDraftFolder: () => (FolderUserStore.draftFolder() || 0) === MessageUserStore.listEndFolder(),
 
-			isSentFolder: () => (FolderUserStore.sentFolder() || 0) === this.messageListEndFolder(),
+			isSentFolder: () => (FolderUserStore.sentFolder() || 0) === MessageUserStore.listEndFolder(),
 
-			isArchiveFolder: () => (FolderUserStore.archiveFolder() || 0) === this.messageListEndFolder(),
+			isArchiveFolder: () => (FolderUserStore.archiveFolder() || 0) === MessageUserStore.listEndFolder(),
 
 			isArchiveDisabled: () => UNUSED_OPTION_VALUE === FolderUserStore.archiveFolder(),
 
@@ -174,17 +164,28 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 
 			mobileCheckedStateHide: () => ThemeStore.isMobile() ? !MessageUserStore.listChecked().length : true,
 
-			messageListFocused: () => Scope.MessageList === AppUserStore.focusedState()
+			messageListFocused: () => Scope.MessageList === AppUserStore.focusedState(),
+
+			sortText: () => {
+				let mode = FolderUserStore.sortMode(),
+					desc = '' === mode || mode.includes('REVERSE');
+				mode = mode.split(/\s+/);
+				if (mode.includes('FROM')) {
+					 return '@' + (desc ? '⬆' : '⬇');
+				}
+				if (mode.includes('SUBJECT')) {
+					 return '𝐒' + (desc ? '⬆' : '⬇');
+				}
+				return (mode.includes('SIZE') ? '✉' : '📅') + (desc ? '⬇' : '⬆');
+			}
 		});
 
 		this.hasCheckedOrSelectedLines = MessageUserStore.hasCheckedOrSelected,
 
-		this.quotaTooltip = this.quotaTooltip.bind(this);
-
 		this.selector = new Selector(
-			this.messageList,
-			this.selectorMessageSelected,
-			this.selectorMessageFocused,
+			MessageUserStore.list,
+			MessageUserStore.selectorMessageSelected,
+			MessageUserStore.selectorMessageFocused,
 			'.messageListItem .actionHandle',
 			'.messageListItem .checkboxMessage',
 			'.messageListItem.focused'
@@ -209,7 +210,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 		addEventListener('mailbox.message.show', e => {
 			const sFolder = e.detail.Folder, sUid = e.detail.Uid;
 
-			const message = this.messageList.find(
+			const message = MessageUserStore.list.find(
 				item => item && sFolder === item.folder && sUid === item.uid
 			);
 
@@ -244,6 +245,11 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 			moveCommand: canBeMovedHelper,
 			moveNewCommand: canBeMovedHelper,
 		});
+	}
+
+	changeSort(self, event) {
+		FolderUserStore.sortMode(event.target.closest('li').dataset.sort);
+		this.reloadCommand();
 	}
 
 	clearCommand() {
@@ -375,7 +381,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 				return false;
 			});
 
-			if (!SettingsUserStore.usePreviewPane() && !this.message()) {
+			if (!SettingsUserStore.usePreviewPane() && !MessageUserStore.message()) {
 				this.selector.iFocusedNextHelper = up ? -1 : 1;
 			} else {
 				this.selector.iSelectNextHelper = up ? -1 : 1;
@@ -391,18 +397,18 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 	}
 
 	useAutoSelect() {
-		return !this.messageListDisableAutoSelect()
-			&& !/is:unseen/.test(this.mainMessageListSearch())
+		return !MessageUserStore.listDisableAutoSelect()
+			&& !/is:unseen/.test(MessageUserStore.mainMessageListSearch())
 			&& SettingsUserStore.usePreviewPane();
 	}
 
 	searchEnterAction() {
-		this.mainMessageListSearch(this.sLastSearchValue);
+		MessageUserStore.mainMessageListSearch(this.sLastSearchValue);
 		this.inputMessageListSearchFocus(false);
 	}
 
 	cancelSearch() {
-		this.mainMessageListSearch('');
+		MessageUserStore.mainMessageListSearch('');
 		this.inputMessageListSearchFocus(false);
 	}
 
@@ -571,7 +577,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 	}
 
 	flagMessages(currentMessage) {
-		const checked = this.messageListCheckedOrSelected();
+		const checked = MessageUserStore.listCheckedOrSelected();
 		if (currentMessage) {
 			const checkedUids = checked.map(message => message.uid);
 			if (checkedUids.includes(currentMessage.uid)) {
@@ -591,7 +597,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 	}
 
 	flagMessagesFast(bFlag) {
-		const checked = this.messageListCheckedOrSelected();
+		const checked = MessageUserStore.listCheckedOrSelected();
 		if (checked.length) {
 			if (undefined === bFlag) {
 				const flagged = checked.filter(message => message.isFlagged());
@@ -611,7 +617,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 	}
 
 	seenMessagesFast(seen) {
-		const checked = this.messageListCheckedOrSelected();
+		const checked = MessageUserStore.listCheckedOrSelected();
 		if (checked.length) {
 			if (undefined === seen) {
 				const unseen = checked.filter(message => message.isUnseen());
@@ -656,7 +662,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 			!this.messageListSearchDesc() &&
 			!this.messageListError() &&
 			!this.messageListEndThreadUid() &&
-			this.messageList.length &&
+			MessageUserStore.list.length &&
 			(this.isSpamFolder() || this.isTrashFolder())
 		);
 	}
@@ -700,7 +706,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 
 	initShortcuts() {
 		shortcuts.add('enter,open', '', Scope.MessageList, () => {
-			if (this.message() && this.useAutoSelect()) {
+			if (MessageUserStore.message() && this.useAutoSelect()) {
 				dispatchEvent(new CustomEvent('mailbox.message-view.toggle-full-screen'));
 				return false;
 			}
@@ -756,9 +762,9 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 		}
 
 		shortcuts.add('t', '', [Scope.MessageList], () => {
-			let message = this.selectorMessageSelected();
+			let message = MessageUserStore.selectorMessageSelected();
 			if (!message) {
-				message = this.selectorMessageFocused();
+				message = MessageUserStore.selectorMessageFocused();
 			}
 
 			if (message && 0 < message.threadsLen()) {
@@ -831,7 +837,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 			return false;
 		});
 		shortcuts.add('tab,arrowright', '', Scope.MessageList, () => {
-			this.message() && AppUserStore.focusedState(Scope.MessageView);
+			MessageUserStore.message() && AppUserStore.focusedState(Scope.MessageView);
 			return false;
 		});
 
@@ -841,7 +847,7 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 
 	prefetchNextTick() {
 		if (!this.bPrefetch && !ifvisible.now() && this.viewModelVisible) {
-			const message = this.messageList.find(
+			const message = MessageUserStore.list.find(
 				item => item && !hasRequestedMessage(item.folder, item.uid)
 			);
 			if (message) {
@@ -866,15 +872,15 @@ export class MessageListMailBoxUserView extends AbstractViewRight {
 
 	advancedSearchClick() {
 		Settings.capa(Capa.SearchAdv)
-			&& showScreenPopup(AdvancedSearchPopupView, [this.mainMessageListSearch()]);
+			&& showScreenPopup(AdvancedSearchPopupView, [MessageUserStore.mainMessageListSearch()]);
 	}
 
 	quotaTooltip() {
 		return i18n('MESSAGE_LIST/QUOTA_SIZE', {
-			SIZE: FileInfo.friendlySize(this.userUsageSize()),
-			PROC: this.userUsageProc(),
-			LIMIT: FileInfo.friendlySize(this.userQuota())
-		});
+			SIZE: FileInfo.friendlySize(QuotaUserStore.usage()),
+			PROC: QuotaUserStore.percentage(),
+			LIMIT: FileInfo.friendlySize(QuotaUserStore.quota())
+		}).replace(/<[^>]+>/g, '');
 	}
 
 	initUploaderForAppend() {

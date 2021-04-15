@@ -71,8 +71,6 @@ class MessageViewMailBoxUserView extends AbstractViewRight {
 			moreDropdownTrigger: false
 		});
 
-		this.pswp = null;
-
 		this.moveAction = moveAction;
 
 		this.allowComposer = Settings.capa(Capa.Composer);
@@ -84,7 +82,6 @@ class MessageViewMailBoxUserView extends AbstractViewRight {
 
 		this.message = MessageUserStore.message;
 		this.hasCheckedMessages = MessageUserStore.hasCheckedMessages;
-		this.messageListCheckedOrSelectedUidsWithSubMails = MessageUserStore.listCheckedOrSelectedUidsWithSubMails;
 		this.messageLoadingThrottle = MessageUserStore.messageLoading;
 		this.messagesBodiesDom = MessageUserStore.messagesBodiesDom;
 		this.useThreads = SettingsUserStore.useThreads;
@@ -136,6 +133,8 @@ class MessageViewMailBoxUserView extends AbstractViewRight {
 			viewReplyTo: '',
 			viewTimeStamp: 0,
 			viewSize: '',
+			viewSpamScore: 0,
+			viewSpamStatus: '',
 			viewLineAsCss: '',
 			viewViewLink: '',
 			viewUnsubscribeLink: '',
@@ -220,13 +219,15 @@ class MessageViewMailBoxUserView extends AbstractViewRight {
 					this.viewFromShort(message.fromToLine(true, true));
 					this.viewFromDkimData(message.fromDkimData());
 					this.viewToShort(message.toToLine(true, true));
-					this.viewFrom(message.fromToLine(false));
-					this.viewTo(message.toToLine(false));
-					this.viewCc(message.ccToLine(false));
-					this.viewBcc(message.bccToLine(false));
-					this.viewReplyTo(message.replyToToLine(false));
+					this.viewFrom(message.fromToLine());
+					this.viewTo(message.toToLine());
+					this.viewCc(message.ccToLine());
+					this.viewBcc(message.bccToLine());
+					this.viewReplyTo(message.replyToToLine());
 					this.viewTimeStamp(message.dateTimeStampInUTC());
 					this.viewSize(message.friendlySize());
+					this.viewSpamScore(message.spamScore());
+					this.viewSpamStatus(i18n(message.isSpam() ? 'GLOBAL/SPAM' : 'GLOBAL/NOT_SPAM') + ': ' + message.spamResult());
 					this.viewLineAsCss(message.lineAsCss());
 					this.viewViewLink(message.viewLink());
 					this.viewUnsubscribeLink(message.getFirstUnsubsribeLink());
@@ -717,7 +718,7 @@ class MessageViewMailBoxUserView extends AbstractViewRight {
 	 * @returns {string}
 	 */
 	printableCheckedMessageCount() {
-		const cnt = this.messageListCheckedOrSelectedUidsWithSubMails().length;
+		const cnt = MessageUserStore.listCheckedOrSelectedUidsWithSubMails().length;
 		return 0 < cnt ? (100 > cnt ? cnt : '99+') : '';
 	}
 

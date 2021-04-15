@@ -141,7 +141,7 @@ class Application extends \RainLoop\Config\AbstractConfig
 				'allow_sync'        => array(false),
 				'sync_interval'     => array(20),
 				'type'              => array('sqlite', ''),
-				'pdo_dsn'           => array('mysql:host=127.0.0.1;port=3306;dbname=rainloop', ''),
+				'pdo_dsn'           => array('host=127.0.0.1;port=3306;dbname=snappymail', ''),
 				'pdo_user'          => array('root', ''),
 				'pdo_password'      => array('', ''),
 				'suggestions_limit' => array(30)
@@ -158,10 +158,8 @@ class Application extends \RainLoop\Config\AbstractConfig
 				'openpgp'                    => array(false),
 
 				'admin_login'                => array('admin', 'Login and password for web admin panel'),
-				'admin_password'             => array(\password_hash('12345', PASSWORD_DEFAULT)),
+				'admin_password'             => array(''),
 				'allow_admin_panel'          => array(true, 'Access settings'),
-				'allow_two_factor_auth'      => array(false),
-				'force_two_factor_auth'      => array(false),
 				'hide_x_mailer_header'       => array(true),
 				'admin_panel_host'           => array(''),
 				'admin_panel_key'            => array('admin'),
@@ -306,7 +304,7 @@ Enables caching in the system'),
 			),
 
 			'labs' => array(
-				'ignore_folders_subscription' => array(false),
+//				'ignore_folders_subscription' => array(false),
 				'update_channel' => array('stable'),
 				'allow_prefetch' => array(true),
 				'allow_smart_html_links' => array(true),

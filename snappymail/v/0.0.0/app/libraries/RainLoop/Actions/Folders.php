@@ -14,22 +14,30 @@ trait Folders
 	{
 		$oAccount = $this->initMailClientConnection();
 
-		$oFolderCollection = null;
-		$this->Plugins()->RunHook('filter.folders-before', array($oAccount, $oFolderCollection));
-
-		if (null === $oFolderCollection)
-		{
-			$oFolderCollection = $this->MailClient()->Folders('',
-				'*',
-				!!$this->Config()->Get('labs', 'use_imap_list_subscribe', true),
-				(int) $this->Config()->Get('labs', 'imap_folder_list_limit', 200)
-			);
+		$HideUnsubscribed = $this->Config()->Get('labs', 'use_imap_list_subscribe', true);
+		$oSettingsLocal = $this->SettingsProvider(true)->Load($oAccount);
+		if ($oSettingsLocal instanceof \RainLoop\Settings) {
+			$HideUnsubscribed = (bool) $oSettingsLocal->GetConf('HideUnsubscribed', $HideUnsubscribed);
 		}
 
-		$this->Plugins()->RunHook('filter.folders-post', array($oAccount, $oFolderCollection));
+		$oFolderCollection = $this->MailClient()->Folders('',
+			'*',
+			$HideUnsubscribed,
+			(int) $this->Config()->Get('labs', 'imap_folder_list_limit', 200)
+		);
 
 		if ($oFolderCollection instanceof \MailSo\Mail\FolderCollection)
 		{
+			$this->Plugins()->RunHook('filter.folders-post', array($oAccount, $oFolderCollection));
+
+			$aFolders = $oFolderCollection->getArrayCopy();
+			foreach ($aFolders as $i => $oFolder) {
+				if (!$oFolder->IsSelectable()) {
+					unset($aFolders[$i]);
+				}
+			}
+			$oFolderCollection->exchangeArray(\array_values($aFolders));
+
 			$oSettingsLocal = $this->SettingsProvider(true)->Load($oAccount);
 
 			$aSystemFolders = array();
@@ -127,7 +135,7 @@ trait Folders
 				if ($bDoItAgain)
 				{
 					$oFolderCollection = $this->MailClient()->Folders('', '*',
-						!!$this->Config()->Get('labs', 'use_imap_list_subscribe', true),
+						$HideUnsubscribed,
 						(int) $this->Config()->Get('labs', 'imap_folder_list_limit', 200)
 					);
 
@@ -144,9 +152,9 @@ trait Folders
 			{
 				$oFolderCollection->FoldersHash = \md5(\implode("\x0", $this->recFoldersNames($oFolderCollection)));
 			}
-		}
 
-		$this->Plugins()->RunHook('filter.folders-complete', array($oAccount, $oFolderCollection));
+			$this->Plugins()->RunHook('filter.folders-complete', array($oAccount, $oFolderCollection));
+		}
 
 		return $this->DefaultResponse(__FUNCTION__, $oFolderCollection);
 	}
@@ -344,10 +352,7 @@ trait Folders
 		if (0 < strlen($sFlagsUids))
 		{
 			$aFlagsUids = explode(',', $sFlagsUids);
-			$aFlagsFilteredUids = array_filter($aFlagsUids, function (&$sUid) {
-				$sUid = (int) trim($sUid);
-				return 0 < (int) trim($sUid);
-			});
+			$aFlagsFilteredUids = \array_filter(\array_map('intval', $aFlagsUids));
 		}
 
 		$this->initMailClientConnection();
@@ -437,7 +442,6 @@ trait Folders
 		$oSettingsLocal->SetConf('SpamFolder', $this->GetActionParam('SpamFolder', ''));
 		$oSettingsLocal->SetConf('TrashFolder', $this->GetActionParam('TrashFolder', ''));
 		$oSettingsLocal->SetConf('ArchiveFolder', $this->GetActionParam('ArchiveFolder', ''));
-		$oSettingsLocal->SetConf('NullFolder', $this->GetActionParam('NullFolder', ''));
 
 		return $this->DefaultResponse(__FUNCTION__,
 			$this->SettingsProvider(true)->Save($oAccount, $oSettingsLocal));
@@ -466,14 +470,14 @@ trait Folders
 
 	private function recFoldersTypes(\RainLoop\Model\Account $oAccount, \MailSo\Mail\FolderCollection $oFolders, array &$aResult, bool $bListFolderTypes = true) : void
 	{
-		if ($oFolders && $oFolders->Count())
+		if ($oFolders->Count())
 		{
 			if ($bListFolderTypes)
 			{
 				foreach ($oFolders as $oFolder)
 				{
-					$iFolderListType = $oFolder->GetFolderListType();
-					if (!isset($aResult[$iFolderListType]) && \in_array($iFolderListType, array(
+					$iFolderType = $oFolder->GetFolderListType();
+					if (!isset($aResult[$iFolderType]) && \in_array($iFolderType, array(
 						FolderType::INBOX,
 						FolderType::SENT,
 						FolderType::DRAFTS,
@@ -482,14 +486,14 @@ trait Folders
 						FolderType::ALL
 					)))
 					{
-						$aResult[$iFolderListType] = $oFolder->FullNameRaw();
+						$aResult[$iFolderType] = $oFolder->FullNameRaw();
 					}
 				}
 
 				foreach ($oFolders as $oFolder)
 				{
 					$oSub = $oFolder->SubFolders();
-					if ($oSub && 0 < $oSub->Count())
+					if ($oSub && $oSub->Count())
 					{
 						$this->recFoldersTypes($oAccount, $oSub, $aResult, true);
 					}
@@ -505,7 +509,7 @@ trait Folders
 				if (isset($aMap[$sName]) || isset($aMap[$sFullName]))
 				{
 					$iFolderType = isset($aMap[$sName]) ? $aMap[$sName] : $aMap[$sFullName];
-					if (!isset($aResult[$iFolderType]) && \in_array($iFolderType, array(
+					if ((!isset($aResult[$iFolderType]) || $sName === $sFullName || "INBOX{$oFolder->Delimiter()}{$sName}" === $sFullName) && \in_array($iFolderType, array(
 						FolderType::INBOX,
 						FolderType::SENT,
 						FolderType::DRAFTS,
@@ -522,7 +526,7 @@ trait Folders
 			foreach ($oFolders as $oFolder)
 			{
 				$oSub = $oFolder->SubFolders();
-				if ($oSub && 0 < $oSub->Count())
+				if ($oSub && $oSub->Count())
 				{
 					$this->recFoldersTypes($oAccount, $oSub, $aResult, false);
 				}

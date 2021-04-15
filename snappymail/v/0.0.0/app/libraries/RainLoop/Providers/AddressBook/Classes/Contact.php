@@ -163,8 +163,7 @@ class Contact implements \JsonSerializable
 
 	public function RegenerateContactStr() : void
 	{
-		$this->IdContactStr = \class_exists('SabreForRainLoop\DAV\Client') ?
-			\SabreForRainLoop\DAV\UUIDUtil::getUUID() : \MailSo\Base\Utils::Md5Rand();
+		$this->IdContactStr = \SnappyMail\UUID::generate();
 	}
 
 	public function GetEmails() : array
@@ -190,11 +189,6 @@ class Contact implements \JsonSerializable
 	{
 		$this->UpdateDependentValues();
 
-		if (!\class_exists('SabreForRainLoop\DAV\Client'))
-		{
-			return '';
-		}
-
 		if ("\xef\xbb\xbf" === \substr($sPreVCard, 0, 3))
 		{
 			$sPreVCard = \substr($sPreVCard, 3);
@@ -205,7 +199,7 @@ class Contact implements \JsonSerializable
 		{
 			try
 			{
-				$oVCard = \SabreForRainLoop\VObject\Reader::read($sPreVCard);
+				$oVCard = \Sabre\VObject\Reader::read($sPreVCard);
 			}
 			catch (\Throwable $oExc)
 			{
@@ -224,7 +218,7 @@ class Contact implements \JsonSerializable
 
 		if (!$oVCard)
 		{
-			$oVCard = new \SabreForRainLoop\VObject\Component\VCard();
+			$oVCard = new \Sabre\VObject\Component\VCard();
 		}
 
 		$oVCard->VERSION = '3.0';
@@ -510,11 +504,6 @@ class Contact implements \JsonSerializable
 
 		$this->Properties = array();
 
-		if (!\class_exists('SabreForRainLoop\DAV\Client'))
-		{
-			return false;
-		}
-
 		if (!empty($sEtag))
 		{
 			$this->Etag = $sEtag;
@@ -524,7 +513,7 @@ class Contact implements \JsonSerializable
 
 		try
 		{
-			$oVCard = \SabreForRainLoop\VObject\Reader::read($sVCard);
+			$oVCard = \Sabre\VObject\Reader::read($sVCard);
 		}
 		catch (\Throwable $oExc)
 		{
@@ -621,7 +610,7 @@ class Contact implements \JsonSerializable
 				$this->addArrayPropertyHelper($aProperties, $oVCard->TEL, PropertyType::PHONE);
 			}
 
-			$sUidValue = $oVCard->UID ? (string) $oVCard->UID : \SabreForRainLoop\DAV\UUIDUtil::getUUID();
+			$sUidValue = $oVCard->UID ? (string) $oVCard->UID : \SnappyMail\UUID::generate();
 			$aProperties[] = new Property(PropertyType::UID, $sUidValue);
 
 			if (empty($this->IdContactStr))

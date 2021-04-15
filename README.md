@@ -116,23 +116,23 @@ RainLoop 1.15 vs SnappyMail
 
 |js/*           	|RainLoop 	|Snappy   	|
 |---------------	|--------:	|--------:	|
-|admin.js        	|2.158.025	|  100.608	|
-|app.js          	|4.215.733	|  495.934	|
-|boot.js         	|  672.433	|    4.726	|
-|libs.js         	|  647.679	|  227.974	|
+|admin.js        	|2.158.025	|   94.549	|
+|app.js          	|4.215.733	|  458.762	|
+|boot.js         	|  672.433	|    4.554	|
+|libs.js         	|  647.679	|  218.511	|
 |polyfills.js    	|  325.908	|        0	|
 |serviceworker.js	|        0	|      285	|
-|TOTAL           	|8.019.778	|  829.355	|
+|TOTAL           	|8.019.778	|  776.661	|
 
 |js/min/*       	|RainLoop 	|Snappy   	|RL gzip	|SM gzip	|RL brotli	|SM brotli	|
 |---------------	|--------:	|--------:	|------:	|------:	|--------:	|--------:	|
-|admin.min.js    	|  255.514	|   50.607	| 73.899	| 14.944	| 60.674 	| 13.364	|
-|app.min.js      	|  516.000	|  240.553	|140.430	| 70.291	|110.657 	| 59.309	|
+|admin.min.js    	|  255.514	|   49.871	| 73.899	| 14.771	| 60.674 	| 13.213	|
+|app.min.js      	|  516.000	|  235.474	|140.430	| 69.223	|110.657 	| 58.398	|
 |boot.min.js     	|   66.456	|    2.442	| 22.553	|  1.371	| 20.043 	|  1.178	|
-|libs.min.js     	|  574.626	|  115.877	|177.280	| 42.809	|151.855 	| 38.099	|
+|libs.min.js     	|  574.626	|  106.574	|177.280	| 38.600	|151.855 	| 34.532	|
 |polyfills.min.js	|   32.608	|        0	| 11.315	|      0	| 10.072 	|      0	|
-|TOTAL           	|1.445.204	|  409.479	|425.477	|129.415	|353.301 	|111.950	|
-|TOTAL (no admin)	|1.189.690	|  358.872	|351.061	|114.471	|292.627 	| 98.586	|
+|TOTAL           	|1.445.204	|  394.361	|425.477	|123.965	|353.301 	|107.321	|
+|TOTAL (no admin)	|1.189.690	|  344.490	|351.061	|109.194	|292.627 	| 94.108	|
 
 For a user its around 66% smaller and faster than traditional RainLoop.
 
@@ -166,12 +166,12 @@ For a user its around 66% smaller and faster than traditional RainLoop.
 
 |css/*       	|RainLoop	|Snappy   	|RL gzip	|SM gzip	|SM brotli	|
 |------------	|-------:	|-------:	|------:	|------:	|--------:	|
-|app.css     	| 340.334	| 107.279	| 46,959	| 18.816	| 16.160	|
-|app.min.css 	| 274.791	|  88.402	| 39.618	| 16.831	| 14.827	|
+|app.css     	| 340.334	| 106.864	| 46,959	| 18.751	| 16.110	|
+|app.min.css 	| 274.791	|  88.077	| 39.618	| 16.788	| 14.787	|
 |boot.css    	|       	|   2.066	|       	|    913	|    742	|
 |boot.min.css	|       	|   1.696	|       	|    818	|    664	|
-|admin.css    	|       	|  46.393	|       	|  9.237	|  8.073	|
-|admin.min.css	|       	|  37.306	|       	|  8.191	|  7.282	|
+|admin.css    	|       	|  46.337	|       	|  9.221	|  8.058	|
+|admin.min.css	|       	|  37.251	|       	|  8.178	|  7.269	|
 
 
 ### Squire vs CKEditor
@@ -190,8 +190,3 @@ Still TODO:
 CKEditor including the 7 asset requests (css,language,plugins,icons) is 633.46 KB / 180.47 KB (gzip).
 
 To use the old CKEditor, you must install the plugin.
-
-### PHP73 branch
-
-There's a RainLoop 1.14.0 branch with only the PHP 7.3 changes at
-https://github.com/the-djmaze/snappymail/tree/php73

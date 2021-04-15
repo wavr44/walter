@@ -101,6 +101,59 @@
 						</li>
 					</ul>
 				</div>
+				<div class="btn-group dropdown sortFolder" data-bind="visible: sortSupported() && mobileCheckedStateHide(), registerBootstrapDropdown: true, openDropdownTrigger: sortDropdownTrigger">
+					<a id="sort-list-dropdown-id" class="btn dropdown-toggle fontastic" href="#" tabindex="-1" data-toggle="dropdown" data-i18n="[title]MESSAGE_LIST/SORT" data-bind="text: sortText">⬇</a>
+					<ul class="dropdown-menu g-ui-menu" role="menu" aria-labelledby="sort-list-dropdown-id">
+						<li class="e-item" role="presentation" data-sort="DATE" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">📅⬆</i>
+								<span data-i18n="MESSAGE_LIST/SORT_DATE_ASC"></span>
+							</a>
+						</li>
+						<li class="e-item" role="presentation" data-sort="" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">📅⬇</i>
+								<span data-i18n="MESSAGE_LIST/SORT_DATE_DESC"></span>
+							</a>
+						</li>
+						<li class="e-item dividerbar" role="presentation" data-sort="SIZE" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">✉⬆</i>
+								<span data-i18n="MESSAGE_LIST/SORT_SIZE_ASC"></span>
+							</a>
+						</li>
+						<li class="e-item" role="presentation" data-sort="REVERSE SIZE" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">✉⬇</i>
+								<span data-i18n="MESSAGE_LIST/SORT_SIZE_DESC"></span>
+							</a>
+						</li>
+						<li class="e-item dividerbar" role="presentation" data-sort="SUBJECT" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">𝐒⬇</i>
+								<span data-i18n="MESSAGE_LIST/SORT_SUBJECT_ASC"></span>
+							</a>
+						</li>
+						<li class="e-item" role="presentation" data-sort="REVERSE SUBJECT" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">𝐒⬆</i>
+								<span data-i18n="MESSAGE_LIST/SORT_SUBJECT_DESC"></span>
+							</a>
+						</li>
+						<li class="e-item dividerbar" role="presentation" data-sort="FROM" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">@⬇</i>
+								<span data-i18n="MESSAGE_LIST/SORT_FROM_ASC"></span>
+							</a>
+						</li>
+						<li class="e-item" role="presentation" data-sort="REVERSE FROM" data-bind="click: changeSort">
+							<a class="e-link menuitem" href="#" tabindex="-1">
+								<i class="fontastic">@⬆</i>
+								<span data-i18n="MESSAGE_LIST/SORT_FROM_DESC"></span>
+							</a>
+						</li>
+					</ul>
+				</div>
 			</div>
 		</div>
 		<div class="b-message-list-wrapper">
@@ -125,9 +178,7 @@
 							<i class="fontastic" data-bind="click: cancelThreadUid">⬅</i>
 							<span data-i18n="MESSAGE_LIST/BACK_TO_MESSAGE_LIST"></span>
 						</div>
-						<div class="listSearchDesc" data-bind="visible: '' !== messageListSearchDesc()">
-							<span data-bind="text: messageListSearchDesc"></span>
-						</div>
+						<div class="listSearchDesc" data-bind="visible: '' !== messageListSearchDesc(), text: messageListSearchDesc"></div>
 						<div class="listDragOver" data-bind="css: {'viewAppendArea': dragOver() && '' === messageListError() && !popupVisibility(), 'dragOverEnter': dragOverEnter }, initDom: dragOverArea">
 							<i class="fontastic e-icon">⬇</i>
 							<span data-i18n="MESSAGE_LIST/PUT_MESSAGE_HERE"></span>
@@ -138,16 +189,17 @@
 						<div class="listError" data-bind="visible: !dragOver() && '' !== messageListError()">
 							<span class="error" data-bind="text: messageListError"></span>
 						</div>
-						<div class="listEmptyList" data-bind="visible: !dragOver() && 0 === messageList().length && !messageListCompleteLoadingThrottle() && '' === messageListError() && '' === messageListSearch()">
-							<span data-i18n="MESSAGE_LIST/EMPTY_LIST"></span>
-						</div>
+						<div class="listEmptyList" data-bind="visible: !dragOver() && 0 === messageList().length && !messageListCompleteLoadingThrottle() && '' === messageListError() && '' === messageListSearch()"
+							data-i18n="MESSAGE_LIST/EMPTY_LIST"></div>
 						<div class="listEmptyListLoading" data-bind="visible: !dragOver() && 0 === messageList().length &&
 							messageListCompleteLoadingThrottle() && '' === messageListError()">
-							<span data-i18n="GLOBAL/LOADING"></span><span class="textLoadingAnimationD1">.</span><span class="textLoadingAnimationD2">.</span><span class="textLoadingAnimationD3">.</span>
+							<span data-i18n="GLOBAL/LOADING"></span>
+							<span class="textLoadingAnimationD1">.</span>
+							<span class="textLoadingAnimationD2">.</span>
+							<span class="textLoadingAnimationD3">.</span>
 						</div>
-						<div class="listEmptySearchList" data-bind="visible: !dragOver() && 0 === messageList().length && !messageListCompleteLoadingThrottle() && '' === messageListError() && '' !== messageListSearch()">
-							<span data-i18n="MESSAGE_LIST/EMPTY_SEARCH_LIST"></span>
-						</div>
+						<div class="listEmptySearchList" data-bind="visible: !dragOver() && 0 === messageList().length && !messageListCompleteLoadingThrottle() && '' === messageListError() && '' !== messageListSearch()"
+							data-i18n="MESSAGE_LIST/EMPTY_SEARCH_LIST"></div>
 						<div data-bind="dragmessages: getDragData">
 							<div class="messageListPlace" data-bind="foreach: messageList">
 
@@ -177,6 +229,8 @@
 										<span class="subject" data-bind="text: subject"></span>
 									</div>
 
+									<div class="sizeParent actionHandle" data-bind="text: friendlySize()"></div>
+
 									<div class="threadsParent" data-bind="visible: 1 < threadsLen()">
 										<span class="threads-len">
 											<span class="threads-len-data">
@@ -196,7 +250,7 @@
 				</div>
 			</div>
 			<div class="b-footer thm-message-list-bottom-toolbar">
-				<span data-bind="visible: 0 < userUsageProc(), attr: { title: quotaTooltip }" class="e-quota">
+				<span data-bind="visible: 0 < userUsageProc(), attr: { title: quotaTooltip() }" class="e-quota">
 					<span data-bind="text: userUsageProc"></span>%
 				</span>
 				<div class="pull-right">

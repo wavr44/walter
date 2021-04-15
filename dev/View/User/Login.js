@@ -43,7 +43,6 @@ class LoginUserView extends AbstractViewCenter {
 			email: SettingsGet('DevEmail'),
 			password: SettingsGet('DevPassword'),
 			signMe: false,
-			additionalCode: '',
 
 			emailError: false,
 			passwordError: false,
@@ -56,9 +55,6 @@ class LoginUserView extends AbstractViewCenter {
 
 			langRequest: false,
 
-			additionalCodeError: false,
-			additionalCodeSignMe: false,
-			additionalCodeVisibility: false,
 			signMeType: LoginSignMeType.Unused
 		});
 
@@ -84,14 +80,9 @@ class LoginUserView extends AbstractViewCenter {
 		this.addSubscribables({
 			email: () => {
 				this.emailError(false);
-				this.additionalCode('');
-				this.additionalCodeVisibility(false);
 			},
 
 			password: () => this.passwordError(false),
-
-			additionalCode: () => this.additionalCodeError(false),
-			additionalCodeVisibility: () => this.additionalCodeError(false),
 
 			submitError: value => value || this.submitErrorAddidional(''),
 
@@ -121,16 +112,13 @@ class LoginUserView extends AbstractViewCenter {
 	submitCommand(self, event) {
 		let email = this.email().trim(),
 			valid = event.target.form.reportValidity() && email,
-			pass = this.password(),
-			totp = this.additionalCodeVisibility(),
-			code = totp ? this.additionalCode() : '';
+			pass = this.password();
 
 		this.emailError(!email);
 		this.passwordError(!pass);
-		this.additionalCodeError(totp && !code);
 
 		let pluginResultCode = 0, pluginResultMessage = '';
-		Plugins.runHook('user-login-submit', [(iResultCode, sResultMessage) => {
+		runHook('user-login-submit', [(iResultCode, sResultMessage) => {
 			pluginResultCode = iResultCode;
 			pluginResultMessage = sResultMessage;
 		}]);
@@ -156,13 +144,6 @@ class LoginUserView extends AbstractViewCenter {
 						}
 						this.submitError(getNotification(iError, oData.ErrorMessage, Notification.UnknownNotification));
 						this.submitErrorAddidional((oData && oData.ErrorMessageAdditional) || '');
-					} else if (oData.TwoFactorAuth) {
-						this.submitRequest(false);
-						this.additionalCode('');
-						this.additionalCodeVisibility(true);
-						let input = this.querySelector('.inputAdditionalCode');
-						input.required = true;
-						setTimeout(() => input.focus(), 100);
 					} else {
 						rl.route.reload();
 					}
@@ -170,9 +151,7 @@ class LoginUserView extends AbstractViewCenter {
 				email,
 				pass,
 				!!this.signMe(),
-				this.bSendLanguage ? this.language() : '',
-				code,
-				!!(totp && this.additionalCodeSignMe())
+				this.bSendLanguage ? this.language() : ''
 			);
 
 			Local.set(ClientSideKeyName.LastSignMe, this.signMe() ? '-1-' : '-0-');

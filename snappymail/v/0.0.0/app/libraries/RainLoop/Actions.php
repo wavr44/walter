@@ -265,28 +265,23 @@ class Actions
 					break;
 				case 'address-book':
 					// Providers\AddressBook\AddressBookInterface
-
 					$sDsn = \trim($this->Config()->Get('contacts', 'pdo_dsn', ''));
 					$sUser = \trim($this->Config()->Get('contacts', 'pdo_user', ''));
 					$sPassword = (string)$this->Config()->Get('contacts', 'pdo_password', '');
-
 					$sDsnType = $this->ValidateContactPdoType(\trim($this->Config()->Get('contacts', 'type', 'sqlite')));
 					if ('sqlite' === $sDsnType) {
-						$mResult = new Providers\AddressBook\PdoAddressBook(
-							'sqlite:' . APP_PRIVATE_DATA . 'AddressBook.sqlite', '', '', 'sqlite');
+						$sUser = $sPassword = '';
+						$sDsn = 'sqlite:' . APP_PRIVATE_DATA . 'AddressBook.sqlite';
 					} else {
-						$mResult = new Providers\AddressBook\PdoAddressBook($sDsn, $sUser, $sPassword, $sDsnType);
+						$sDsn = $sDsnType . ':' . \preg_replace('/^[a-z]+:/', '', $sDsn);
 					}
+					$mResult = new Providers\AddressBook\PdoAddressBook($sDsn, $sUser, $sPassword, $sDsnType);
 					break;
 				case 'identities':
 					$mResult = [];
 					break;
 				case 'suggestions':
 					$mResult = [];
-					break;
-				case 'two-factor-auth':
-					// Providers\TwoFactorAuth\TwoFactorAuthInterface
-					$mResult = new Providers\TwoFactorAuth\TotpTwoFactorAuth();
 					break;
 			}
 		}
@@ -804,13 +799,10 @@ class Actions
 					(\MailSo\Base\Utils::FunctionExistsAndEnabled('php_sapi_name') ? \php_sapi_name() : '~') . ']'
 				);
 
-				$sPdo = (\class_exists('PDO') ? \implode(',', \PDO::getAvailableDrivers()) : 'off');
-				$sPdo = empty($sPdo) ? '~' : $sPdo;
-
 				$this->oLogger->Write(
 					'[APC:' . (\MailSo\Base\Utils::FunctionExistsAndEnabled('apc_fetch') ? 'on' : 'off') .
 					'][MB:' . (\MailSo\Base\Utils::FunctionExistsAndEnabled('mb_convert_encoding') ? 'on' : 'off') .
-					'][PDO:' . $sPdo .
+					'][PDO:' . (\class_exists('PDO') ? (\implode(',', \Pdo::getAvailableDrivers()) ?: '~') : 'off') .
 					'][Streams:' . \implode(',', \stream_get_transports()) .
 					']');
 
@@ -879,7 +871,7 @@ class Actions
 		}
 	}
 
-	public function LoginProvide(string $sEmail, string $sLogin, string $sPassword, string $sSignMeToken = '', string $sClientCert = '', bool $bThrowProvideException = false): ?Model\Account
+	protected function LoginProvide(string $sEmail, string $sLogin, string $sPassword, string $sSignMeToken = '', string $sClientCert = '', bool $bThrowProvideException = false): ?Model\Account
 	{
 		$oAccount = null;
 		if (0 < \strlen($sEmail) && 0 < \strlen($sLogin) && 0 < \strlen($sPassword)) {
@@ -887,7 +879,7 @@ class Actions
 			if ($oDomain) {
 				if ($oDomain->ValidateWhiteList($sEmail, $sLogin)) {
 					$oAccount = new Model\Account($sEmail, $sLogin, $sPassword, $oDomain, $sSignMeToken, '', '', $sClientCert);
-					$this->Plugins()->RunHook('filter.acount', array($oAccount));
+					$this->Plugins()->RunHook('filter.account', array($oAccount));
 
 					if ($bThrowProvideException && !$oAccount) {
 						throw new Exceptions\ClientException(Notifications::AuthError);
@@ -1013,8 +1005,8 @@ class Actions
 			'faviconStatus' => (bool)$oConfig->Get('labs', 'favicon_status', true),
 			'listPermanentFiltered' => '' !== \trim(Api::Config()->Get('labs', 'imap_message_list_permanent_filter', '')),
 			'themes' => $this->GetThemes(),
-			'languages' => $this->GetLanguages(false),
-			'languagesAdmin' => $this->GetLanguages(true),
+			'languages' => \SnappyMail\L10n::getLanguages(false),
+			'languagesAdmin' => \SnappyMail\L10n::getLanguages(true),
 			'attachmentsActions' => $aAttachmentsActions
 		), $bAdmin ? array(
 			'adminHostUse' => '' !== $oConfig->Get('security', 'admin_panel_host', ''),
@@ -1063,7 +1055,6 @@ class Actions
 			'StartupUrl' => \trim(\ltrim(\trim($oConfig->Get('labs', 'startup_url', '')), '#/')),
 			'SieveAllowFileintoInbox' => (bool)$oConfig->Get('labs', 'sieve_allow_fileinto_inbox', false),
 			'ContactsIsAllowed' => false,
-			'RequireTwoFactor' => false,
 			'Admin' => array(),
 			'Capa' => array(),
 			'Plugins' => array(),
@@ -1090,7 +1081,7 @@ class Actions
 			'AllowDraftAutosave' => (bool) $oConfig->Get('defaults', 'allow_draft_autosave', true),
 			'ReplySameFolder' => (bool) $oConfig->Get('defaults', 'mail_reply_same_folder', false),
 			'ContactsAutosave' => (bool) $oConfig->Get('defaults', 'contacts_autosave', true),
-			'EnableTwoFactor' => false,
+			'HideUnsubscribed' => (bool) $oConfig->Get('labs', 'use_imap_list_subscribe', true),
 			'ParentEmail' => '',
 			'InterfaceAnimation' => true,
 			'UserBackgroundName' => '',
@@ -1102,6 +1093,16 @@ class Actions
 		}
 
 		$oSettings = null;
+
+		$passfile = APP_PRIVATE_DATA.'admin_password.txt';
+		$sPassword = $oConfig->Get('security', 'admin_password', '');
+		if (!$sPassword) {
+			$sPassword = \substr(\base64_encode(\random_bytes(16)), 0, 12);
+			\file_put_contents($passfile, $sPassword);
+			\chmod($passfile, 0600);
+			$oConfig->SetPassword($sPassword);
+			$oConfig->Save();
+		}
 
 		if (!$bAdmin) {
 			$oAccount = $this->getAccountFromToken(false);
@@ -1163,18 +1164,6 @@ class Actions
 			}
 
 			$aResult['Capa'] = $this->Capa(false, $oAccount);
-
-			if ($aResult['Auth'] && !$aResult['RequireTwoFactor']) {
-				if ($this->GetCapa(false, Enumerations\Capa::TWO_FACTOR, $oAccount) &&
-					$this->GetCapa(false, Enumerations\Capa::TWO_FACTOR_FORCE, $oAccount) &&
-					$this->TwoFactorAuthProvider()->IsActive()) {
-					$aData = $this->getTwoFactorInfo($oAccount, true);
-
-					$aResult['RequireTwoFactor'] = !$aData ||
-						!isset($aData['User'], $aData['IsSet'], $aData['Enable']) ||
-						!($aData['IsSet'] && $aData['Enable']);
-				}
-			}
 		} else {
 			$aResult['Auth'] = $this->IsAdminLoggined(false);
 			if ($aResult['Auth']) {
@@ -1186,7 +1175,7 @@ class Actions
 				$aResult['VerifySslCertificate'] = (bool)$oConfig->Get('ssl', 'verify_certificate', false);
 				$aResult['AllowSelfSigned'] = (bool)$oConfig->Get('ssl', 'allow_self_signed', true);
 
-				$aResult['supportedPdoDrivers'] = \class_exists('PDO') ? \PDO::getAvailableDrivers() : [];
+				$aResult['supportedPdoDrivers'] = \RainLoop\Common\PdoAbstract::getAvailableDrivers();
 
 				$aResult['ContactsEnable'] = (bool)$oConfig->Get('contacts', 'enable', false);
 				$aResult['ContactsSync'] = (bool)$oConfig->Get('contacts', 'allow_sync', false);
@@ -1196,7 +1185,7 @@ class Actions
 				$aResult['ContactsPdoUser'] = (string)$oConfig->Get('contacts', 'pdo_user', '');
 				$aResult['ContactsPdoPassword'] = (string)APP_DUMMY;
 
-				$aResult['WeakPassword'] = (bool)$oConfig->ValidatePassword('12345');
+				$aResult['WeakPassword'] = \is_file($passfile);
 
 				$aResult['PhpUploadSizes'] = array(
 					'upload_max_filesize' => \ini_get('upload_max_filesize'),
@@ -1224,7 +1213,7 @@ class Actions
 				$aResult['SpamFolder'] = (string)$oSettingsLocal->GetConf('SpamFolder', '');
 				$aResult['TrashFolder'] = (string)$oSettingsLocal->GetConf('TrashFolder', '');
 				$aResult['ArchiveFolder'] = (string)$oSettingsLocal->GetConf('ArchiveFolder', '');
-				$aResult['NullFolder'] = (string)$oSettingsLocal->GetConf('NullFolder', '');
+				$aResult['HideUnsubscribed'] = (bool)$oSettingsLocal->GetConf('HideUnsubscribed', $aResult['HideUnsubscribed']);
 			}
 
 			if ($this->GetCapa(false, Enumerations\Capa::SETTINGS, $oAccount)) {
@@ -1253,8 +1242,6 @@ class Actions
 						$aResult['UserBackgroundName'] = (string)$oSettings->GetConf('UserBackgroundName', $aResult['UserBackgroundName']);
 						$aResult['UserBackgroundHash'] = (string)$oSettings->GetConf('UserBackgroundHash', $aResult['UserBackgroundHash']);
 					}
-
-					$aResult['EnableTwoFactor'] = (bool)$oSettings->GetConf('EnableTwoFactor', $aResult['EnableTwoFactor']);
 				}
 
 				if ($oSettingsLocal instanceof Settings) {
@@ -1428,12 +1415,11 @@ class Actions
 	/**
 	 * @throws \RainLoop\Exceptions\ClientException
 	 */
-	public function LoginProcess(string &$sEmail, string &$sPassword, string $sSignMeToken = '',
-								 string $sAdditionalCode = '', bool $bAdditionalCodeSignMe = false, bool $bSkipTwoFactorAuth = false): Model\Account
+	public function LoginProcess(string &$sEmail, string &$sPassword, string $sSignMeToken = ''): Model\Account
 	{
 		$sInputEmail = $sEmail;
 
-		$this->Plugins()->RunHook('filter.login-credentials.step-1', array(&$sEmail, &$sPassword));
+		$this->Plugins()->RunHook('login.credentials.step-1', array(&$sEmail));
 
 		$sEmail = \MailSo\Base\Utils::Trim($sEmail);
 		if ($this->Config()->Get('login', 'login_lowercase', true)) {
@@ -1500,7 +1486,7 @@ class Actions
 			}
 		}
 
-		$this->Plugins()->RunHook('filter.login-credentials.step-2', array(&$sEmail, &$sPassword));
+		$this->Plugins()->RunHook('login.credentials.step-2', array(&$sEmail, &$sPassword));
 
 		if (false === \strpos($sEmail, '@') || 0 === \strlen($sPassword)) {
 			$this->loginErrorDelay();
@@ -1515,11 +1501,9 @@ class Actions
 			$sLogin = \MailSo\Base\Utils::StrToLowerIfAscii($sLogin);
 		}
 
-		$this->Plugins()->RunHook('filter.login-credentials', array(&$sEmail, &$sLogin, &$sPassword));
+		$this->Plugins()->RunHook('login.credentials', array(&$sEmail, &$sLogin, &$sPassword));
 
 		$this->Logger()->AddSecret($sPassword);
-
-		$this->Plugins()->RunHook('event.login-pre-login-provide', array());
 
 		$oAccount = null;
 		$sClientCert = \trim($this->Config()->Get('ssl', 'client_cert', ''));
@@ -1529,55 +1513,10 @@ class Actions
 			if (!$oAccount) {
 				throw new Exceptions\ClientException(Notifications::AuthError);
 			}
-
-			$this->Plugins()->RunHook('event.login-post-login-provide', array($oAccount));
 		} catch (\Throwable $oException) {
 			$this->loginErrorDelay();
 			$this->LoggerAuthHelper($oAccount, $this->getAdditionalLogParamsByUserLogin($sInputEmail));
 			throw $oException;
-		}
-
-		// 2FA
-		if (!$bSkipTwoFactorAuth && $this->TwoFactorAuthProvider()->IsActive()) {
-			$aData = $this->getTwoFactorInfo($oAccount);
-			if ($aData && isset($aData['IsSet'], $aData['Enable']) && !empty($aData['Secret']) && $aData['IsSet'] && $aData['Enable']) {
-				$sSecretHash = \md5(APP_SALT . $aData['Secret'] . Utils::Fingerprint());
-				$sSecretCookieHash = Utils::GetCookie(self::AUTH_TFA_SIGN_ME_TOKEN_KEY, '');
-
-				if (empty($sSecretCookieHash) || $sSecretHash !== $sSecretCookieHash) {
-					$sAdditionalCode = \trim($sAdditionalCode);
-					if (empty($sAdditionalCode)) {
-						$this->Logger()->Write('TFA: Required Code for ' . $oAccount->ParentEmailHelper() . ' account.');
-
-						throw new Exceptions\ClientException(Notifications::AccountTwoFactorAuthRequired);
-					} else {
-						$this->Logger()->Write('TFA: Verify Code for ' . $oAccount->ParentEmailHelper() . ' account.');
-
-						$bUseBackupCode = false;
-						if (6 < \strlen($sAdditionalCode) && !empty($aData['BackupCodes'])) {
-							$aBackupCodes = \explode(' ', \trim(\preg_replace('/[^\d]+/', ' ', $aData['BackupCodes'])));
-							$bUseBackupCode = \in_array($sAdditionalCode, $aBackupCodes);
-
-							if ($bUseBackupCode) {
-								$this->removeBackupCodeFromTwoFactorInfo($oAccount->ParentEmailHelper(), $sAdditionalCode);
-							}
-						}
-
-						if (!$bUseBackupCode && !$this->TwoFactorAuthProvider()->VerifyCode($aData['Secret'], $sAdditionalCode)) {
-							$this->loginErrorDelay();
-
-							$this->LoggerAuthHelper($oAccount);
-
-							throw new Exceptions\ClientException(Notifications::AccountTwoFactorAuthError);
-						}
-
-						if ($bAdditionalCodeSignMe) {
-							Utils::SetCookie(self::AUTH_TFA_SIGN_ME_TOKEN_KEY, $sSecretHash,
-								\time() + 60 * 60 * 24 * 14);
-						}
-					}
-				}
-			}
 		}
 
 		try {
@@ -2077,16 +2016,6 @@ class Actions
 			}
 		}
 
-		if ($oConfig->Get('security', 'allow_two_factor_auth', false) &&
-			($bAdmin || ($oAccount && !$oAccount->IsAdditionalAccount()))) {
-			$aResult[] = Enumerations\Capa::TWO_FACTOR;
-
-			if ($oConfig->Get('security', 'force_two_factor_auth', false) &&
-				($bAdmin || ($oAccount && !$oAccount->IsAdditionalAccount()))) {
-				$aResult[] = Enumerations\Capa::TWO_FACTOR_FORCE;
-			}
-		}
-
 		if ($oConfig->Get('capa', 'help', true)) {
 			$aResult[] = Enumerations\Capa::HELP;
 		}
@@ -2216,52 +2145,48 @@ class Actions
 
 	public function ValidateLanguage(string $sLanguage, string $sDefault = '', bool $bAdmin = false, bool $bAllowEmptyResult = false): string
 	{
-		$sResult = '';
-		$aLang = $this->GetLanguages($bAdmin);
+		$aLang = \SnappyMail\L10n::getLanguages($bAdmin);
 
-		$aHelper = array('en' => 'en_us', 'ar' => 'ar_sa', 'cs' => 'cs_cz', 'no' => 'nb_no', 'ua' => 'uk_ua',
-			'cn' => 'zh_cn', 'zh' => 'zh_cn', 'tw' => 'zh_tw', 'fa' => 'fa_ir');
+		$aHelper = array(
+			'ar' => 'ar-SA',
+			'cs' => 'cs-CZ',
+			'no' => 'nb-NO',
+			'ua' => 'uk-UA',
+			'cn' => 'zh-CN',
+			'zh' => 'zh-CN',
+			'tw' => 'zh-TW',
+			'fa' => 'fa-IR'
+		);
 
-		$sLanguage = isset($aHelper[$sLanguage]) ? $aHelper[$sLanguage] : $sLanguage;
-		$sDefault = isset($aHelper[$sDefault]) ? $aHelper[$sDefault] : $sDefault;
-
-		$sLanguage = \strtolower(\str_replace('-', '_', $sLanguage));
-		if (2 === strlen($sLanguage)) {
-			$sLanguage = $sLanguage . '_' . $sLanguage;
-		}
-
-		$sDefault = \strtolower(\str_replace('-', '_', $sDefault));
-		if (2 === strlen($sDefault)) {
-			$sDefault = $sDefault . '_' . $sDefault;
-		}
-
-		$sLanguage = \preg_replace_callback('/_([a-zA-Z0-9]{2})$/', function ($aData) {
-			return \strtoupper($aData[0]);
-		}, $sLanguage);
-
-		$sDefault = \preg_replace_callback('/_([a-zA-Z0-9]{2})$/', function ($aData) {
-			return \strtoupper($aData[0]);
-		}, $sDefault);
+		$sLanguage = isset($aHelper[$sLanguage]) ? $aHelper[$sLanguage] : \strtr($sLanguage, '_', '-');
+		$sDefault  = isset($aHelper[$sDefault])  ? $aHelper[$sDefault]  : \strtr($sDefault, '_', '-');
 
 		if (\in_array($sLanguage, $aLang)) {
-			$sResult = $sLanguage;
+			return $sLanguage;
 		}
 
-		if (empty($sResult) && !empty($sDefault) && \in_array($sDefault, $aLang)) {
-			$sResult = $sDefault;
+		$sLangCountry = \preg_replace_callback('/-([a-zA-Z]{2})$/', function ($aData) {
+			return \strtoupper($aData[0]);
+		}, $sLanguage);
+		if (\in_array($sLangCountry, $aLang)) {
+			return $sLangCountry;
 		}
 
-		if (empty($sResult) && !$bAllowEmptyResult) {
-			$sResult = $this->Config()->Get('webmail', $bAdmin ? 'language_admin' : 'language', 'en_US');
-			$sResult = \in_array($sResult, $aLang) ? $sResult : 'en_US';
+		if (\in_array($sDefault, $aLang)) {
+			return $sDefault;
 		}
 
-		return $sResult;
+		if ($bAllowEmptyResult) {
+			return '';
+		}
+
+		$sResult = $this->Config()->Get('webmail', $bAdmin ? 'language_admin' : 'language', 'en');
+		return \in_array($sResult, $aLang) ? $sResult : 'en';
 	}
 
 	public function ValidateContactPdoType(string $sType): string
 	{
-		return \in_array($sType, array('mysql', 'pgsql', 'sqlite')) ? $sType : 'sqlite';
+		return \in_array($sType, \RainLoop\Common\PdoAbstract::getAvailableDrivers()) ? $sType : 'sqlite';
 	}
 
 	/**
@@ -2322,44 +2247,6 @@ class Actions
 		}
 
 		return $aCache;
-	}
-
-	/**
-	 * @staticvar array $aCache
-	 */
-	public function GetLanguages(bool $bAdmin = false): array
-	{
-		static $aCache = array();
-		$sDir = APP_VERSION_ROOT_PATH . 'app/localization/' . ($bAdmin ? 'admin' : 'webmail') . '/';
-
-		if (isset($aCache[$sDir])) {
-			return $aCache[$sDir];
-		}
-
-		$aTop = array();
-		$aList = array();
-
-		if (\is_dir($sDir)) {
-			$rDirH = \opendir($sDir);
-			if ($rDirH) {
-				while (($sFile = \readdir($rDirH)) !== false) {
-					if ('.' !== $sFile[0] && \is_file($sDir . '/' . $sFile) && '.yml' === \substr($sFile, -4)) {
-						$sLang = \substr($sFile, 0, -4);
-						if (0 < \strlen($sLang) && 'always' !== $sLang && '_source.en' !== $sLang) {
-							\array_push($aList, $sLang);
-						}
-					}
-				}
-
-				\closedir($rDirH);
-			}
-		}
-
-		\sort($aTop);
-		\sort($aList);
-
-		$aCache[$sDir] = \array_merge($aTop, $aList);
-		return $aCache[$sDir];
 	}
 
 	public function ProcessTemplate(string $sName, string $sHtml): string
@@ -2451,17 +2338,11 @@ class Actions
 
 		if (null === $aLang) {
 			$sLang = $this->ValidateLanguage($sLang, 'en');
-
-			$aLang = array();
-//			Utils::ReadAndAddLang(APP_VERSION_ROOT_PATH.'app/i18n/langs.ini', $aLang);
-//			Utils::ReadAndAddLang(APP_VERSION_ROOT_PATH.'langs/'.$sLang.'.ini', $aLang);
-			Utils::ReadAndAddLang(APP_VERSION_ROOT_PATH . 'app/localization/langs.yml', $aLang);
-			Utils::ReadAndAddLang(APP_VERSION_ROOT_PATH . 'app/localization/webmail/' . $sLang . '.yml', $aLang);
-
+			$aLang = \SnappyMail\L10n::load($sLang, 'static');
 			$this->Plugins()->ReadLang($sLang, $aLang);
 		}
 
-		return isset($aLang[$sKey]) ? $aLang[$sKey] : $sKey;
+		return $aLang[$aKey] ?? $sKey;
 	}
 
 	public function StaticPath(string $sPath): string

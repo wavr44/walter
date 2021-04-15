@@ -100,18 +100,26 @@ class ResponseCollection extends \MailSo\Base\Collection
 
 		foreach ($this as $oResponse) {
 			if (\MailSo\Imap\Enumerations\ResponseType::UNTAGGED === $oResponse->ResponseType &&
-				$sStatus === $oResponse->StatusOrIndex && 5 === count($oResponse->ResponseList))
+				$sStatus === $oResponse->StatusOrIndex && 5 <= count($oResponse->ResponseList))
 			{
 				try
 				{
-					$sFullNameRaw = $oResponse->ResponseList[4];
-					if (\is_array($sFullNameRaw)) {
-						$sFullNameRaw = "[{$sFullNameRaw[0]}]";
+					/**
+					 * A bug in the parser converts folder names that start with '[' into arrays,
+					 * and subfolders are in $oResponse->ResponseList[5+]
+					 * https://github.com/the-djmaze/snappymail/issues/1
+					 * https://github.com/the-djmaze/snappymail/issues/70
+					 */
+					$sFullNameRaw = \array_slice($oResponse->ResponseList, 4);
+					foreach ($sFullNameRaw as &$name) {
+						if (\is_array($name)) {
+							$name = "[{$name[0]}]";
+						} else if (!\is_string($name)) {
+							$name = '';
+						}
 					}
-					if (!\is_string($sFullNameRaw)) {
-						\error_log('ResponseCollection::getFoldersResult: invalid string ' . \var_export($sFullNameRaw, true));
-						continue;
-					}
+					$sFullNameRaw = \implode('', $sFullNameRaw);
+
 					$oFolder = new Folder($sFullNameRaw,
 						$oResponse->ResponseList[3], $oResponse->ResponseList[2]);
 

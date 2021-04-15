@@ -10,6 +10,7 @@ import * as Local from 'Storage/Client';
 
 import { AppUserStore } from 'Stores/User/App';
 import { FolderUserStore } from 'Stores/User/Folder';
+import { SettingsUserStore } from 'Stores/User/Settings';
 
 import ko from 'ko';
 
@@ -113,6 +114,7 @@ export class FolderCollectionModel extends AbstractCollectionModel
 		AppUserStore.threadsAllowed(!!(Settings.app('useImapThread') && this.IsThreadsSupported));
 
 		FolderUserStore.folderListOptimized(!!this.Optimized);
+		FolderUserStore.sortSupported(!!this.IsSortSupported);
 
 		let update = false;
 
@@ -123,8 +125,7 @@ export class FolderCollectionModel extends AbstractCollectionModel
 					SettingsGet('DraftFolder') +
 					SettingsGet('SpamFolder') +
 					SettingsGet('TrashFolder') +
-					SettingsGet('ArchiveFolder') +
-					SettingsGet('NullFolder'))
+					SettingsGet('ArchiveFolder'))
 		) {
 			Settings.set('SentFolder', this.SystemFolders[ServerFolderType.SENT] || null);
 			Settings.set('DraftFolder', this.SystemFolders[ServerFolderType.DRAFTS] || null);
@@ -147,8 +148,7 @@ export class FolderCollectionModel extends AbstractCollectionModel
 				DraftFolder: FolderUserStore.draftFolder(),
 				SpamFolder: FolderUserStore.spamFolder(),
 				TrashFolder: FolderUserStore.trashFolder(),
-				ArchiveFolder: FolderUserStore.archiveFolder(),
-				NullFolder: 'NullFolder'
+				ArchiveFolder: FolderUserStore.archiveFolder()
 			});
 		}
 
@@ -301,7 +301,10 @@ export class FolderModel extends AbstractModel {
 
 				canBeDeleted: () => !folder.isSystemFolder() && !folder.subFolders.length,
 
-				canBeSubscribed: () => !folder.isSystemFolder() && folder.selectable && Settings.app('useImapSubscribe'),
+				canBeSubscribed: () => !folder.isSystemFolder()
+					&& SettingsUserStore.hideUnsubscribed()
+					&& folder.selectable
+					&& Settings.app('useImapSubscribe'),
 
 				canBeSelected:   () => !folder.isSystemFolder() && folder.selectable,
 
