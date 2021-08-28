@@ -1,5 +1,10 @@
 <?php
 
+namespace LessPHP;
+
+class stdClass extends \stdClass {};
+class Exception extends \Exception {};
+
 /**
  * lessphp v0.5.0
  * http://leafo.net/lessphp
@@ -746,7 +751,7 @@ class lessc {
                     if ($suffix !== null &&
                         $subProp[0] == "assign" &&
                         is_string($subProp[1]) &&
-                        $subProp[1]{0} != $this->vPrefix
+                        $subProp[1][0] != $this->vPrefix
                     ) {
                         $subProp[2] = array(
                             'list', ' ',
@@ -1963,7 +1968,7 @@ class lessc {
         $this->pushEnv();
         $parser = new lessc_parser($this, __METHOD__);
         foreach ($args as $name => $strValue) {
-            if ($name{0} !== '@') {
+            if ($name[0] !== '@') {
                 $name = '@' . $name;
             }
             $parser->count = 0;
@@ -2157,6 +2162,7 @@ class lessc {
             $className = "lessc_formatter_$this->formatterName";
         }
 
+	$className = 'LessPHP\\'.$className;
         return new $className;
     }
 
@@ -2436,7 +2442,7 @@ class lessc_parser {
 
         if (!self::$operatorString) {
             self::$operatorString =
-                '('.implode('|', array_map(array('lessc', 'preg_quote'),
+                '('.implode('|', array_map(array('LessPHP\\lessc', 'preg_quote'),
                     array_keys(self::$precedence))).')';
 
             $commentSingle = lessc::preg_quote(self::$commentSingle);
@@ -2624,7 +2630,7 @@ class lessc_parser {
                 $hidden = true;
                 if (!isset($block->args)) {
                     foreach ($block->tags as $tag) {
-                        if (!is_string($tag) || $tag{0} != $this->lessc->mPrefix) {
+                        if (!is_string($tag) || $tag[0] != $this->lessc->mPrefix) {
                             $hidden = false;
                             break;
                         }
@@ -2669,7 +2675,7 @@ class lessc_parser {
     protected function isDirective($dirname, $directives) {
         // TODO: cache pattern in parser
         $pattern = implode("|",
-            array_map(array("lessc", "preg_quote"), $directives));
+            array_map(array("LessPHP\\lessc", "preg_quote"), $directives));
         $pattern = '/^(-[a-z-]+-)?(' . $pattern . ')$/i';
 
         return preg_match($pattern, $dirname);
@@ -2678,7 +2684,7 @@ class lessc_parser {
     protected function fixTags($tags) {
         // move @ tags out of variable namespace
         foreach ($tags as &$tag) {
-            if ($tag{0} == $this->lessc->vPrefix)
+            if ($tag[0] == $this->lessc->vPrefix)
                 $tag[0] = $this->lessc->mPrefix;
         }
         return $tags;
@@ -2956,7 +2962,7 @@ class lessc_parser {
         $this->eatWhiteDefault = false;
 
         $stop = array("'", '"', "@{", $end);
-        $stop = array_map(array("lessc", "preg_quote"), $stop);
+        $stop = array_map(array("LessPHP\\lessc", "preg_quote"), $stop);
         // $stop[] = self::$commentMulti;
 
         if (!is_null($rejectStrs)) {
