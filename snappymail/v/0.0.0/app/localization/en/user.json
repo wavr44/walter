@@ -355,6 +355,7 @@
 		"LABEL_ACCOUNTS_NAME": "Accounts",
 		"LABEL_IDENTITIES_NAME": "Identities",
 		"LABEL_FILTERS_NAME": "Filters",
+		"LABEL_TEMPLATES_NAME": "Templates",
 		"LABEL_SECURITY_NAME": "Security",
 		"LABEL_THEMES_NAME": "Themes"
 	},

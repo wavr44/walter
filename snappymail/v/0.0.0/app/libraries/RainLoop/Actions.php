@@ -1932,6 +1932,10 @@ class Actions
 				$aResult[] = Enumerations\Capa::IDENTITIES;
 			}
 
+			if ($oConfig->Get('capa', 'x-templates', true)) {
+				$aResult[] = Enumerations\Capa::TEMPLATES;
+			}
+
 			if ($oConfig->Get('webmail', 'allow_themes', false)) {
 				$aResult[] = Enumerations\Capa::THEMES;
 			}
