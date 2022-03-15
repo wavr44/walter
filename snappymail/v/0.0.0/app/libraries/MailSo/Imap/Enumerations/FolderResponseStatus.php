@@ -18,10 +18,16 @@ namespace MailSo\Imap\Enumerations;
  */
 abstract class FolderResponseStatus
 {
+	// RFC 3501
 	const MESSAGES = 'MESSAGES';
-	const RECENT = 'RECENT';
-	const UNSEEN = 'UNSEEN';
+//	const RECENT = 'RECENT'; // IMAP4rev2 deprecated
 	const UIDNEXT = 'UIDNEXT';
-	const HIGHESTMODSEQ = 'HIGHESTMODSEQ';
 	const UIDVALIDITY = 'UIDVALIDITY';
+	const UNSEEN = 'UNSEEN';
+	// RFC 4551
+	const HIGHESTMODSEQ = 'HIGHESTMODSEQ';
+	// RFC 7889
+	const APPENDLIMIT = 'APPENDLIMIT';
+	// RFC 8474
+	const MAILBOXID = 'MAILBOXID';
 }

@@ -8,14 +8,11 @@ import Remote from 'Remote/Admin/Fetch';
 import { DomainPopupView } from 'View/Popup/Domain';
 import { DomainAliasPopupView } from 'View/Popup/DomainAlias';
 
-export class DomainsAdminSettings {
+export class AdminSettingsDomains /*extends AbstractViewSettings*/ {
 	constructor() {
 		this.domains = DomainAdminStore;
 
-		this.domainForDeletion = ko.observable(null).deleteAccessHelper();
-
-		this.onDomainListChangeRequest = this.onDomainListChangeRequest.bind(this);
-		this.onDomainLoadRequest = this.onDomainLoadRequest.bind(this);
+		this.domainForDeletion = ko.observable(null).askDeleteHelper();
 	}
 
 	createDomain() {
@@ -28,30 +25,32 @@ export class DomainsAdminSettings {
 
 	deleteDomain(domain) {
 		DomainAdminStore.remove(domain);
-		Remote.domainDelete(this.onDomainListChangeRequest, domain.name);
+		Remote.domainDelete(DomainAdminStore.fetch, domain.name);
+		Remote.request('AdminDomainDelete', DomainAdminStore.fetch, {
+			Name: domain.name
+		});
 	}
 
 	disableDomain(domain) {
 		domain.disabled(!domain.disabled());
-		Remote.domainDisable(this.onDomainListChangeRequest, domain.name, domain.disabled());
+		Remote.request('AdminDomainDisable', DomainAdminStore.fetch, {
+			Name: domain.name,
+			Disabled: domain.disabled() ? 1 : 0
+		});
 	}
 
 	onBuild(oDom) {
 		oDom.addEventListener('click', event => {
-			let el = event.target.closestWithin('.b-admin-domains-list-table .e-item .e-action', oDom);
-			el && ko.dataFor(el) && Remote.domain(this.onDomainLoadRequest, ko.dataFor(el).name);
+			let el = event.target.closestWithin('.b-admin-domains-list-table .e-action', oDom);
+			el && ko.dataFor(el) && Remote.request('AdminDomainLoad',
+				(iError, oData) => iError || showScreenPopup(DomainPopupView, [oData.Result]),
+				{
+					Name: ko.dataFor(el).name
+				}
+			);
+
 		});
 
-		DomainAdminStore.fetch();
-	}
-
-	onDomainLoadRequest(iError, oData) {
-		if (!iError) {
-			showScreenPopup(DomainPopupView, [oData.Result]);
-		}
-	}
-
-	onDomainListChangeRequest() {
 		DomainAdminStore.fetch();
 	}
 }

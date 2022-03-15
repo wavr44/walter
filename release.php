@@ -2,82 +2,10 @@
 <?php
 chdir(__DIR__);
 
-$options = getopt('', ['aur','docker','plugins']);
+$options = getopt('', ['aur','docker','plugins','set-version','skip-gulp','debian','sign']);
 
 if (isset($options['plugins'])) {
-	$destPath = "build/dist/releases/plugins/";
-	is_dir($destPath) || mkdir($destPath, 0777, true);
-	$manifest = [];
-	require 'snappymail/v/0.0.0/app/libraries/RainLoop/Plugins/AbstractPlugin.php';
-	$keys = [
-		'author',
-		'category',
-		'description',
-		'file',
-		'id',
-		'license',
-		'name',
-		'release',
-		'required',
-		'type',
-		'url',
-		'version'
-	];
-	foreach (glob('plugins/*', GLOB_NOSORT | GLOB_ONLYDIR) as $dir) {
-		if (is_file("{$dir}/index.php")) {
-			require "{$dir}/index.php";
-			$name = basename($dir);
-			$class = new ReflectionClass(str_replace('-', '', $name) . 'Plugin');
-			$manifest_item = [];
-			foreach ($class->getConstants() as $key => $value) {
-				$key = \strtolower($key);
-				if (in_array($key, $keys)) {
-					$manifest_item[$key] = $value;
-				}
-			}
-			$version = $manifest_item['version'];
-			if (0 < floatval($version)) {
-				echo "+ {$name} {$version}\n";
-				$manifest_item['type'] = 'plugin';
-				$manifest_item['id']   = $name;
-				$manifest_item['file'] = "{$dir}-{$version}.tgz";
-				ksort($manifest_item);
-				$manifest[$name] = $manifest_item;
-				$tar_destination = "{$destPath}{$name}-{$version}.tar";
-				$tgz_destination = "{$destPath}{$name}-{$version}.tgz";
-				@unlink($tgz_destination);
-				@unlink("{$tar_destination}.gz");
-				$tar = new PharData($tar_destination);
-				$tar->buildFromDirectory('./plugins/', '/' . \preg_quote("./plugins/{$name}", '/') . '/');
-				$tar->compress(Phar::GZ);
-				unlink($tar_destination);
-				rename("{$tar_destination}.gz", $tgz_destination);
-				if (Phar::canWrite()) {
-					$phar_destination = "{$destPath}{$name}.phar";
-					@unlink($phar_destination);
-					$tar = new Phar($phar_destination);
-					$tar->buildFromDirectory("./plugins/{$name}/");
-					$tar->compress(Phar::GZ);
-					unlink($phar_destination);
-					rename("{$phar_destination}.gz", $phar_destination);
-				}
-			} else {
-				echo "- {$name} {$version}\n";
-			}
-		} else {
-			echo "- {$name}\n";
-		}
-	}
-
-	ksort($manifest);
-	$manifest = json_encode(array_values($manifest));
-	$manifest = str_replace('{"', "\n\t{\n\t\t\"", $manifest);
-	$manifest = str_replace('"}', "\"\n\t}", $manifest);
-	$manifest = str_replace('}]', "}\n]", $manifest);
-	$manifest = str_replace('","', "\",\n\t\t\"", $manifest);
-	$manifest = str_replace('\/', '/', $manifest);
-	file_put_contents("{$destPath}packages.json", $manifest);
-	exit;
+	require(__DIR__ . '/build/plugins.php');
 }
 
 $gulp = trim(`which gulp`);
@@ -85,9 +13,29 @@ if (!$gulp) {
 	exit('gulp not installed, run as root: npm install --global gulp-cli');
 }
 
-$rollup = trim(`which rollup`);
-if (!$rollup) {
-	exit('rollup not installed, run as root: npm install --global rollup');
+$package = json_decode(file_get_contents('package.json'));
+
+/**
+ * Update files that contain version
+ */
+// cloudron
+$file = __DIR__ . '/integrations/cloudron/Dockerfile';
+file_put_contents($file, preg_replace('/VERSION=[0-9.]+/', "VERSION={$package->version}", file_get_contents($file)));
+$file = __DIR__ . '/integrations/cloudron/DESCRIPTION.md';
+file_put_contents($file, preg_replace('/<upstream>[^<]*</', "<upstream>{$package->version}<", file_get_contents($file)));
+// docker
+$file = __DIR__ . '/.docker/release/files/usr/local/include/application.ini';
+file_put_contents($file, preg_replace('/current = "[0-9.]+"/', "current = \"{$package->version}\"", file_get_contents($file)));
+// nextcloud
+file_put_contents(__DIR__ . '/integrations/nextcloud/snappymail/VERSION', $package->version);
+$file = __DIR__ . '/integrations/nextcloud/snappymail/appinfo/info.xml';
+file_put_contents($file, preg_replace('/<version>[^<]*</', "<version>{$package->version}<", file_get_contents($file)));
+// virtualmin
+$file = __DIR__ . '/integrations/virtualmin/snappymail.pl';
+file_put_contents($file, preg_replace('/return \\( "[0-9]+\\.[0-9]+\\.[0-9]+" \\)/', "return ( \"{$package->version}\" )", file_get_contents($file)));
+
+if (isset($options['set-version'])) {
+	exit;
 }
 
 // Arch User Repository
@@ -97,8 +45,6 @@ $options['aur'] = isset($options['aur']);
 // Docker build
 $docker = trim(`which docker`);
 $options['docker'] = isset($options['docker']) || (!$options['aur'] && $docker && strtoupper(readline("Build Docker image? (Y/N): ")) === "Y");
-
-$package = json_decode(file_get_contents('package.json'));
 
 $destPath = "build/dist/releases/webmail/{$package->version}/";
 is_dir($destPath) || mkdir($destPath, 0777, true);
@@ -110,39 +56,38 @@ $tar_destination = "{$destPath}snappymail-{$package->version}.tar";
 @unlink($tar_destination);
 @unlink("{$tar_destination}.gz");
 
-echo "\x1b[33;1m === Gulp === \x1b[0m\n";
-passthru($gulp, $return_var);
-if ($return_var) {
-	exit("gulp failed with error code {$return_var}\n");
-}
+if (!isset($options['skip-gulp'])) {
+	echo "\x1b[33;1m === Gulp === \x1b[0m\n";
+	passthru($gulp, $return_var);
+	if ($return_var) {
+		exit("gulp failed with error code {$return_var}\n");
+	}
 
-/*
-passthru("{$rollup} -c", $return_var);
-if ($return_var) {
-	exit("rollup failed with error code {$return_var}\n");
-}
-*/
+	$cmddir = escapeshellcmd(__DIR__) . '/snappymail/v/0.0.0/static';
 
-$cmddir = escapeshellcmd(__DIR__) . '/snappymail/v/0.0.0/static';
+	if ($gzip = trim(`which gzip`)) {
+		echo "\x1b[33;1m === Gzip *.js and *.css === \x1b[0m\n";
+		passthru("{$gzip} -k --best {$cmddir}/js/*.js");
+		passthru("{$gzip} -k --best {$cmddir}/js/min/*.js");
+		passthru("{$gzip} -k --best {$cmddir}/css/admin*.css");
+		passthru("{$gzip} -k --best {$cmddir}/css/app*.css");
+		unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/boot.js.gz');
+		unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/min/boot.min.js.gz');
+	}
 
-if ($gzip = trim(`which gzip`)) {
-	echo "\x1b[33;1m === Gzip *.js and *.css === \x1b[0m\n";
-	passthru("{$gzip} -k --best {$cmddir}/js/*.js");
-	passthru("{$gzip} -k --best {$cmddir}/js/min/*.js");
-	passthru("{$gzip} -k --best {$cmddir}/css/admin*.css");
-	passthru("{$gzip} -k --best {$cmddir}/css/app*.css");
-	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/boot.js.gz');
-	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/min/boot.min.js.gz');
-}
+	if ($brotli = trim(`which brotli`)) {
+		echo "\x1b[33;1m === Brotli *.js and *.css === \x1b[0m\n";
+		passthru("{$brotli} -k --best {$cmddir}/js/*.js");
+		passthru("{$brotli} -k --best {$cmddir}/js/min/*.js");
+		passthru("{$brotli} -k --best {$cmddir}/css/admin*.css");
+		passthru("{$brotli} -k --best {$cmddir}/css/app*.css");
+		unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/boot.js.br');
+		unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/min/boot.min.js.br');
+	}
 
-if ($brotli = trim(`which brotli`)) {
-	echo "\x1b[33;1m === Brotli *.js and *.css === \x1b[0m\n";
-	passthru("{$brotli} -k --best {$cmddir}/js/*.js");
-	passthru("{$brotli} -k --best {$cmddir}/js/min/*.js");
-	passthru("{$brotli} -k --best {$cmddir}/css/admin*.css");
-	passthru("{$brotli} -k --best {$cmddir}/css/app*.css");
-	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/boot.js.br');
-	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/min/boot.min.js.br');
+	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/openpgp.js');
+	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/openpgp.js.br');
+	unlink(__DIR__ . '/snappymail/v/0.0.0/static/js/openpgp.js.gz');
 }
 
 // Temporary rename folder to speed up PharData
@@ -193,9 +138,6 @@ $tar->addFromString('data/VERSION', $package->version);
 $zip->addFile('data/README.md');
 $tar->addFile('data/README.md');
 
-//$zip->addFile('data/EMPTY');
-//$tar->addFile('data/EMPTY');
-
 if ($options['aur']) {
 	$data = '<?php
 function __get_custom_data_full_path()
@@ -215,7 +157,6 @@ $tar->addFile('.htaccess');
 
 $index = file_get_contents('index.php');
 $index = str_replace('0.0.0', $package->version, $index);
-$index = str_replace('source', 'community', $index);
 $zip->addFromString('index.php', $index);
 $tar->addFromString('index.php', $index);
 
@@ -231,13 +172,31 @@ $zip->close();
 
 $tar->compress(Phar::GZ);
 unlink($tar_destination);
+$tar_destination .= '.gz';
 
-echo "{$zip_destination} created\n{$tar_destination}.gz created\n";
+echo "{$zip_destination} created\n{$tar_destination} created\n";
+
+rename("snappymail/v/{$package->version}", 'snappymail/v/0.0.0');
 
 // Arch User Repository
 if ($options['aur']) {
-/*
-	file_put_contents('arch/.SRCINFO', 'pkgbase = snappymail
+	// extension_loaded('blake2')
+	if (!function_exists('b2sum') && $b2sum = trim(`which b2sum`)) {
+		function b2sum($file) {
+			$file = escapeshellarg($file);
+			exec("b2sum --binary {$file} 2>&1", $output, $exitcode);
+			$output = explode(' ', implode("\n", $output));
+			return $output[0];
+		}
+	}
+
+	$b2sums = function_exists('b2sum') ? [
+		b2sum($tar_destination),
+		b2sum(__DIR__ . '/build/arch/snappymail.sysusers'),
+		b2sum(__DIR__ . '/build/arch/snappymail.tmpfiles')
+	] : [];
+
+	file_put_contents('build/arch/.SRCINFO', 'pkgbase = snappymail
 	pkgdesc = modern PHP webmail client
 	pkgver = '.$package->version.'
 	pkgrel = 1
@@ -255,13 +214,22 @@ if ($options['aur']) {
 	source = snappymail-'.$package->version.'.tar.gz::https://github.com/the-djmaze/snappymail/archive/v'.$package->version.'.tar.gz
 	source = snappymail.sysusers
 	source = snappymail.tmpfiles
-	b2sums = ?
-	b2sums = e020b2d4bc694ca056f5c15b148c69553ab610b5e1789f52543aa65e098f8097a41709b5b0fc22a6a01088a9d3f14d623b1b6e9ae2570acd4f380f429301c003
-	b2sums = 2536e11622895322cc752c6b651811b2122d3ae60099fe609609d7b45ba1ed00ea729c23f344405078698d161dbf9bcaffabf8eff14b740acdce3c681c513318
+	b2sums = '.implode("\n	b2sums = ", $b2sums).'
 
 pkgname = snappymail
 ');
-*/
+
+	$file = __DIR__ . '/build/arch/PKGBUILD';
+	if (is_file($file)) {
+		$PKGBUILD = file_get_contents($file);
+		$PKGBUILD = preg_replace('/pkgver=[0-9.]+/', "pkgver={$package->version}", $PKGBUILD);
+		$PKGBUILD = preg_replace('/b2sums=\\([^)]+\\)/s', "b2sums=('".implode("'\n        '", $b2sums)."')", $PKGBUILD);
+		file_put_contents($file, $PKGBUILD);
+	}
+}
+// Debian Repository
+else if (isset($options['debian'])) {
+	require(__DIR__ . '/build/deb.php');
 }
 // Docker build
 else if ($options['docker']) {
@@ -271,5 +239,22 @@ else if ($options['docker']) {
 		passthru("{$docker} build " . __DIR__ . "/.docker/release/ --build-arg FILES_ZIP={$zip_destination} -t snappymail:{$package->version}");
 	} else {
 		echo "Docker not installed!\n";
+	}
+}
+
+if (isset($options['sign'])) {
+	echo "\x1b[33;1m === PGP Sign === \x1b[0m\n";
+	passthru('gpg --local-user 1016E47079145542F8BA133548208BA13290F3EB --armor --detach-sign '.escapeshellarg($tar_destination), $return_var);
+	passthru('gpg --local-user 1016E47079145542F8BA133548208BA13290F3EB --armor --detach-sign '.escapeshellarg($zip_destination), $return_var);
+	if (isset($options['debian'])) {
+		passthru('gpg --local-user 1016E47079145542F8BA133548208BA13290F3EB --armor --detach-sign '
+			. escapeshellarg(__DIR__ . "/build/dist/releases/webmail/{$package->version}/" . basename(DEB_DEST_DIR.'.deb')), $return_var);
+		// https://github.com/the-djmaze/snappymail/issues/185#issuecomment-1059420588
+		passthru('gpg --local-user 1016E47079145542F8BA133548208BA13290F3EB --digest-algo SHA512 --clearsign --output '
+			. escapeshellarg(__DIR__ . "/build/dist/releases/webmail/{$package->version}/InRelease") . ' '
+			. escapeshellarg(__DIR__ . "/build/dist/releases/webmail/{$package->version}/Release"), $return_var);
+		passthru('gpg --local-user 1016E47079145542F8BA133548208BA13290F3EB --digest-algo SHA512 -abs --output '
+			. escapeshellarg(__DIR__ . "/build/dist/releases/webmail/{$package->version}/Release.gpg") . ' '
+			. escapeshellarg(__DIR__ . "/build/dist/releases/webmail/{$package->version}/Release"), $return_var);
 	}
 }

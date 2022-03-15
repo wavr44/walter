@@ -1,32 +1,9 @@
-import { doc, elementById, dropdownVisibility, Settings } from 'Common/Globals';
+import { Settings } from 'Common/Globals';
 import { i18n } from 'Common/Translator';
 
 import { root } from 'Common/Links';
 
-export default (App) => {
-
-	addEventListener('keydown', event => {
-		event = event || window.event;
-		if (event && event.ctrlKey && !event.shiftKey && !event.altKey) {
-			if ('S' == event.key) {
-				event.preventDefault();
-			} else if ('A' == event.key) {
-				const sender = event.target;
-				if (
-					sender &&
-					('true' === '' + sender.contentEditable || (sender.matches && sender.matches('INPUT,TEXTAREA')))
-				) {
-					return;
-				}
-
-				getSelection().removeAllRanges();
-
-				event.preventDefault();
-			}
-		}
-	});
-
-	addEventListener('click', ()=>rl.Dropdowns.detectVisibility());
+export default App => {
 
 	rl.app = App;
 	rl.logoutReload = App.logoutReload;
@@ -41,47 +18,20 @@ export default (App) => {
 		}
 	};
 
-	rl.Dropdowns = [];
-	rl.Dropdowns.register = function(element) { this.push(element); };
-	rl.Dropdowns.detectVisibility = (() =>
-		dropdownVisibility(!!rl.Dropdowns.find(item => item.classList.contains('show')))
-	).debounce(50);
-
 	rl.route = {
 		root: () => {
-			rl.route.setHash(root(), true);
 			rl.route.off();
+			hasher.setHash(root());
 		},
 		reload: () => {
 			rl.route.root();
 			setTimeout(() => (Settings.app('inIframe') ? parent : window).location.reload(), 100);
 		},
-		off: () => hasher.changed.active = false,
-		on: () => hasher.changed.active = true,
-		/**
-		 * @param {string} sHash
-		 * @param {boolean=} silence = false
-		 * @param {boolean=} replace = false
-		 * @returns {void}
-		 */
-		setHash: (hash, silence = false, replace = false) => {
-			hash = hash.replace(/^[#/]+/, '');
-
-			const cmd = replace ? 'replaceHash' : 'setHash';
-
-			if (silence) {
-				hasher.changed.active = false;
-				hasher[cmd](hash);
-				hasher.changed.active = true;
-			} else {
-				hasher.changed.active = true;
-				hasher[cmd](hash);
-				hasher.setHash(hash);
-			}
-		}
+		off: () => hasher.active = false,
+		on: () => hasher.active = true
 	};
 
-	rl.fetchJSON = (resource, init, postData) => {
+	rl.fetch = (resource, init, postData) => {
 		init = Object.assign({
 			mode: 'same-origin',
 			cache: 'no-cache',
@@ -90,14 +40,10 @@ export default (App) => {
 			credentials: 'same-origin',
 			headers: {}
 		}, init);
-		init.headers.Accept = 'application/json';
 		if (postData) {
 			init.method = 'POST';
 			init.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
-			postData.XToken = Settings.app('token');
-//			init.body = JSON.stringify(postData);
-			const formData = new FormData(),
-			buildFormData = (formData, data, parentKey) => {
+			const buildFormData = (formData, data, parentKey) => {
 				if (data && typeof data === 'object' && !(data instanceof Date || data instanceof File)) {
 					Object.keys(data).forEach(key =>
 						buildFormData(formData, data[key], parentKey ? `${parentKey}[${key}]` : key)
@@ -105,12 +51,23 @@ export default (App) => {
 				} else {
 					formData.set(parentKey, data == null ? '' : data);
 				}
+				return formData;
 			};
-			buildFormData(formData, postData);
-			init.body = new URLSearchParams(formData);
+			postData = (postData instanceof FormData)
+				? postData
+				: buildFormData(new FormData(), postData);
+			postData.set('XToken', Settings.app('token'));
+//			init.body = JSON.stringify(Object.fromEntries(postData));
+			init.body = new URLSearchParams(postData);
 		}
 
-		return fetch(resource, init).then(response => {
+		return fetch(resource, init);
+	};
+
+	rl.fetchJSON = (resource, init, postData) => {
+		init = Object.assign({ headers: {} }, init);
+		init.headers.Accept = 'application/json';
+		return rl.fetch(resource, init, postData).then(response => {
 			if (!response.ok) {
 				return Promise.reject('Network response error: ' + response.status);
 			}
@@ -135,17 +92,4 @@ export default (App) => {
 		});
 	};
 
-	window.__APP_BOOT = fErrorCallback => {
-		const cb = () => setTimeout(() => {
-				if (rl.TEMPLATES) {
-					elementById('rl-templates').innerHTML = rl.TEMPLATES;
-					setTimeout(() => App.bootstart(), 10);
-				} else {
-					fErrorCallback();
-				}
-
-				window.__APP_BOOT = null;
-			}, 10);
-		('loading' !== doc.readyState) ? cb() : doc.addEventListener('DOMContentLoaded', cb);
-	};
 };

@@ -57,6 +57,11 @@ class Parameter
 		return $this->sValue;
 	}
 
+	public function setValue(string $sValue) : void
+	{
+		$this->sValue = $sValue;
+	}
+
 	public function Parse(string $sRawParam, string $sSeparator = '=') : self
 	{
 		$this->Reset();
@@ -75,7 +80,7 @@ class Parameter
 	public function ToString(bool $bConvertSpecialsName = false) : string
 	{
 		$sResult = '';
-		if (0 < strlen($this->sName))
+		if (\strlen($this->sName))
 		{
 			$sResult = $this->sName.'=';
 			if ($bConvertSpecialsName && in_array(strtolower($this->sName), array(

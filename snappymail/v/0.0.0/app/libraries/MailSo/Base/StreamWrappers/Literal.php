@@ -50,18 +50,11 @@ class Literal
 	 */
 	public static function CreateStream($rStream, int $iLiteralLen)
 	{
-		if (!in_array(self::STREAM_NAME, stream_get_wrappers()))
-		{
-			stream_wrapper_register(self::STREAM_NAME, '\MailSo\Base\StreamWrappers\Literal');
-		}
-
-		$sHashName = md5(microtime(true).rand(1000, 9999));
+		$sHashName = \md5(\microtime(true).\rand(1000, 9999));
 
 		self::$aStreams[$sHashName] = array($rStream, $iLiteralLen);
 
-		\MailSo\Base\Loader::IncStatistic('CreateStream/Literal');
-
-		return fopen(self::STREAM_NAME.'://'.$sHashName, 'rb');
+		return \fopen(self::STREAM_NAME.'://'.$sHashName, 'rb');
 	}
 
 	public function stream_open(string $sPath) : bool
@@ -70,26 +63,25 @@ class Literal
 		$this->iSize = 0;
 		$this->rStream = false;
 
-		$bResult = false;
-		$aPath = parse_url($sPath);
+		$aPath = \parse_url($sPath);
 
 		if (isset($aPath['host']) && isset($aPath['scheme']) &&
-			0 < strlen($aPath['host']) && 0 < strlen($aPath['scheme']) &&
+			\strlen($aPath['host']) && \strlen($aPath['scheme']) &&
 			self::STREAM_NAME === $aPath['scheme'])
 		{
 			$sHashName = $aPath['host'];
 			if (isset(self::$aStreams[$sHashName]) &&
-				is_array(self::$aStreams[$sHashName]) &&
-				2 === count(self::$aStreams[$sHashName]))
+				\is_array(self::$aStreams[$sHashName]) &&
+				2 === \count(self::$aStreams[$sHashName]))
 			{
 				$this->rStream = self::$aStreams[$sHashName][0];
 				$this->iSize = self::$aStreams[$sHashName][1];
 			}
 
-			$bResult = is_resource($this->rStream);
+			return \is_resource($this->rStream);
 		}
 
-		return $bResult;
+		return false;
 	}
 
 	public function stream_read(int $iCount) : string
@@ -106,7 +98,7 @@ class Literal
 			$iRead = $iCount;
 			while (0 < $iRead)
 			{
-				$sAddRead = fread($this->rStream, $iRead);
+				$sAddRead = \fread($this->rStream, $iRead);
 				if (false === $sAddRead)
 				{
 					$sReadResult = false;
@@ -114,8 +106,8 @@ class Literal
 				}
 
 				$sReadResult .= $sAddRead;
-				$iRead -= strlen($sAddRead);
-				$this->iPos += strlen($sAddRead);
+				$iRead -= \strlen($sAddRead);
+				$this->iPos += \strlen($sAddRead);
 			}
 
 			if (false !== $sReadResult)
@@ -166,3 +158,5 @@ class Literal
 		return false;
 	}
 }
+
+\stream_wrapper_register(Literal::STREAM_NAME, '\\MailSo\\Base\\StreamWrappers\\Literal');

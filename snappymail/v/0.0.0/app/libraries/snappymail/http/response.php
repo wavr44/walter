@@ -52,6 +52,9 @@ class Response
 		return \property_exists($this, $k) ? $this->$k : null;
 	}
 
+	/**
+	 * returns string, array or null
+	 */
 	public function getHeader($names)
 	{
 		$names = \is_array($names) ? $names : array($names);
@@ -62,6 +65,11 @@ class Response
 			}
 		}
 		return null;
+	}
+
+	public function getHeaders() : array
+	{
+		return $this->headers;
 	}
 
 	public function getRedirectLocation() : ?string

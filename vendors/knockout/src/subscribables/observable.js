@@ -1,5 +1,5 @@
 const observableLatestValue = Symbol('_latestValue'),
-	length = 'length';
+    length = 'length';
 
 ko.observable = initialValue => {
     function observable() {
@@ -42,13 +42,13 @@ var observableFn = {
         let value = this[observableLatestValue];
         return value && value.toJSON ? value.toJSON() : value;
     },
-    'equalityComparer': valuesArePrimitiveAndEqual,
+    equalityComparer: valuesArePrimitiveAndEqual,
     peek: function() { return this[observableLatestValue]; },
     valueHasMutated: function () {
-        this['notifySubscribers'](this[observableLatestValue], 'spectate');
-        this['notifySubscribers'](this[observableLatestValue]);
+        this.notifySubscribers(this[observableLatestValue], 'spectate');
+        this.notifySubscribers(this[observableLatestValue]);
     },
-    valueWillMutate: function () { this['notifySubscribers'](this[observableLatestValue], 'beforeChange'); }
+    valueWillMutate: function () { this.notifySubscribers(this[observableLatestValue], 'beforeChange'); }
 };
 
 // Note that for browsers that don't support proto assignment, the

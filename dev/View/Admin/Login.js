@@ -1,33 +1,26 @@
-import ko from 'ko';
-
-import { Settings } from 'Common/Globals';
+import { fireEvent } from 'Common/Globals';
 import { getNotification } from 'Common/Translator';
 
 import Remote from 'Remote/Admin/Fetch';
 
 import { decorateKoCommands } from 'Knoin/Knoin';
-import { AbstractViewCenter } from 'Knoin/AbstractViews';
+import { AbstractViewLogin } from 'Knoin/AbstractViews';
 
-class LoginAdminView extends AbstractViewCenter {
+export class AdminLoginView extends AbstractViewLogin {
 	constructor() {
-		super('Admin/Login', 'AdminLogin');
-
-		this.hideSubmitButton = Settings.app('hideSubmitButton');
+		super('AdminLogin');
 
 		this.addObservables({
 			login: '',
 			password: '',
+			totp: '',
 
 			loginError: false,
 			passwordError: false,
 
-			formHidden: false,
-
 			submitRequest: false,
 			submitError: ''
 		});
-
-		this.formError = ko.observable(false).extend({ falseTimeout: 500 });
 
 		this.addSubscribables({
 			login: () => this.loginError(false),
@@ -40,41 +33,34 @@ class LoginAdminView extends AbstractViewCenter {
 	}
 
 	submitCommand(self, event) {
-		const valid = event.target.form.reportValidity(),
-			name = this.login().trim(),
-			pass = this.password();
+		let form = event.target.form,
+			data = new FormData(form),
+			valid = form.reportValidity() && fireEvent('sm-admin-login', data);
 
-		this.loginError(!name);
-		this.passwordError(!pass);
+		this.loginError(!this.login());
+		this.passwordError(!this.password());
 		this.formError(!valid);
 
 		if (valid) {
 			this.submitRequest(true);
 
-			Remote.adminLogin(
-				iError => {
+			Remote.request('AdminLogin',
+				(iError, oData) => {
+					fireEvent('sm-admin-login-response', {
+						error: iError,
+						data: oData
+					});
 					if (iError) {
 						this.submitRequest(false);
 						this.submitError(getNotification(iError));
 					} else {
-						rl.route.reload();
+						rl.setData(oData.Result);
 					}
 				},
-				name,
-				pass
+				data
 			);
 		}
 
 		return valid;
 	}
-
-	onShow() {
-		rl.route.off();
-	}
-
-	submitForm() {
-//		return false;
-	}
 }
-
-export { LoginAdminView };

@@ -1,107 +1,50 @@
 import { SaveSettingsStep } from 'Common/Enums';
-import { doc, createElement, elementById } from 'Common/Globals';
-
-export const
-	isArray = Array.isArray,
-	isNonEmptyArray = array => isArray(array) && array.length,
-	isFunction = v => typeof v === 'function';
-
-/**
- * @param {*} value
- * @param {number=} defaultValue = 0
- * @returns {number}
- */
-export function pInt(value, defaultValue = 0) {
-	value = parseInt(value, 10);
-	return isNaN(value) || !isFinite(value) ? defaultValue : value;
-}
-
-/**
- * @param {*} value
- * @returns {string}
- */
-export function pString(value) {
-	return null != value ? '' + value : '';
-}
-
-/**
- * @returns {boolean}
- */
-export function inFocus() {
-	try {
-		return doc.activeElement && doc.activeElement.matches(
-			'input,textarea,.cke_editable'
-		);
-	} catch (e) {
-		return false;
-	}
-}
-
-/**
- * @param {string} theme
- * @returns {string}
- */
-export const convertThemeName = theme => {
-	if ('@custom' === theme.substr(-7)) {
-		theme = theme.substr(0, theme.length - 7).trim();
-	}
-
-	return theme
-		.replace(/([A-Z])/g, ' $1')
-		.replace(/[^a-zA-Z0-9]+/g, ' ')
-		.trim();
-};
-
-/**
- * @param {object} domOption
- * @param {object} item
- * @returns {void}
- */
-export function defaultOptionsAfterRender(domItem, item) {
-	if (item && undefined !== item.disabled && domItem) {
-		domItem.classList.toggle('disabled', domItem.disabled = item.disabled);
-	}
-}
-
-/**
- * @param {object} koTrigger
- * @param {mixed} context
- * @returns {mixed}
- */
-export function settingsSaveHelperSimpleFunction(koTrigger, context) {
-	return iError => {
-		koTrigger.call(context, iError ? SaveSettingsStep.FalseResult : SaveSettingsStep.TrueResult);
-		setTimeout(() => koTrigger.call(context, SaveSettingsStep.Idle), 1000);
-	};
-}
+import { elementById } from 'Common/Globals';
 
 let __themeTimer = 0,
 	__themeJson = null;
 
-/**
- * @param {string} value
- * @param {function=} themeTrigger = noop
- * @returns {void}
- */
-export function changeTheme(value, themeTrigger = ()=>{}) {
-	const themeLink = elementById('app-theme-link'),
-		clearTimer = () => {
-			__themeTimer = setTimeout(() => themeTrigger(SaveSettingsStep.Idle), 1000);
-			__themeJson = null;
-		};
+export const
+	isArray = Array.isArray,
+	arrayLength = array => isArray(array) && array.length,
+	isFunction = v => typeof v === 'function',
+	pString = value => null != value ? '' + value : '',
 
-	let themeStyle = elementById('app-theme-style'),
-		url = (themeLink && themeLink.href) || (themeStyle && themeStyle.dataset.href);
+	forEachObjectValue = (obj, fn) => Object.values(obj).forEach(fn),
 
-	if (url) {
-		url = url.toString()
-			.replace(/\/-\/[^/]+\/-\//, '/-/' + value + '/-/')
-			.replace(/\/Css\/[^/]+\/User\//, '/Css/0/User/')
-			.replace(/\/Hash\/[^/]+\//, '/Hash/-/');
+	forEachObjectEntry = (obj, fn) => Object.entries(obj).forEach(([key, value]) => fn(key, value)),
 
-		if ('Json/' !== url.substr(-5)) {
-			url += 'Json/';
-		}
+	pInt = (value, defaultValue = 0) => {
+		value = parseInt(value, 10);
+		return isNaN(value) || !isFinite(value) ? defaultValue : value;
+	},
+
+	convertThemeName = theme => theme
+		.replace(/@custom$/, '')
+		.replace(/([A-Z])/g, ' $1')
+		.replace(/[^a-zA-Z0-9]+/g, ' ')
+		.trim(),
+
+	defaultOptionsAfterRender = (domItem, item) =>
+		domItem && item && undefined !== item.disabled
+		&& domItem.classList.toggle('disabled', domItem.disabled = item.disabled),
+
+	// unescape(encodeURIComponent()) makes the UTF-16 DOMString to an UTF-8 string
+	b64EncodeJSON = data => btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
+/* 	// Without deprecated 'unescape':
+	b64EncodeJSON = data => btoa(encodeURIComponent(JSON.stringify(data)).replace(
+		/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)
+	)),
+*/
+	b64EncodeJSONSafe = data => b64EncodeJSON(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+
+	changeTheme = (value, themeTrigger = ()=>0) => {
+		const themeStyle = elementById('app-theme-style'),
+			clearTimer = () => {
+				__themeTimer = setTimeout(() => themeTrigger(SaveSettingsStep.Idle), 1000);
+				__themeJson = null;
+			},
+			url = themeStyle.dataset.href.replace(/(Admin|User)\/-\/[^/]+\//, '$1/-/' + value + '/') + 'Json/';
 
 		clearTimeout(__themeTimer);
 
@@ -117,36 +60,12 @@ export function changeTheme(value, themeTrigger = ()=>{}) {
 		}
 		rl.fetchJSON(url, init)
 			.then(data => {
-				if (data && isArray(data) && 2 === data.length) {
-					if (themeLink && !themeStyle) {
-						themeStyle = createElement('style');
-						themeStyle.id = 'app-theme-style';
-						themeLink.after(themeStyle);
-						themeLink.remove();
-					}
-
-					if (themeStyle) {
-						themeStyle.textContent = data[1];
-						themeStyle.dataset.href = url;
-						themeStyle.dataset.theme = data[0];
-					}
-
+				if (2 === arrayLength(data)) {
+					themeStyle.textContent = data[1];
 					themeTrigger(SaveSettingsStep.TrueResult);
 				}
 			})
 			.then(clearTimer, clearTimer);
-	}
-}
+	},
 
-export function addObservablesTo(target, observables) {
-	Object.entries(observables).forEach(([key, value]) =>
-		target[key] = /*isArray(value) ? ko.observableArray(value) :*/ ko.observable(value) );
-}
-
-export function addComputablesTo(target, computables) {
-	Object.entries(computables).forEach(([key, fn]) => target[key] = ko.computed(fn));
-}
-
-export function addSubscribablesTo(target, subscribables) {
-	Object.entries(subscribables).forEach(([key, fn]) => target[key].subscribe(fn));
-}
+	getKeyByValue = (o, v) => Object.keys(o).find(key => o[key] === v);

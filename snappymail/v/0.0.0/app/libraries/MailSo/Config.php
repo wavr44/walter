@@ -17,21 +17,6 @@ namespace MailSo;
 class Config
 {
 	/**
-	 * @var array|null
-	 */
-	public static $HtmlStrictAllowedTags = null;
-
-	/**
-	 * @var array|null
-	 */
-	public static $HtmlStrictAllowedAttributes = null;
-
-	/**
-	 * @var boolean
-	 */
-	public static $HtmlStrictDebug = false;
-
-	/**
 	 * @var int
 	 */
 	public static $MessageListFastSimpleSearch = true;

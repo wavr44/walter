@@ -1,9 +1,7 @@
 import ko from 'ko';
 
-import {
-	elementById,
-	Settings
-} from 'Common/Globals';
+import { Settings, SettingsGet } from 'Common/Globals';
+import { changeTheme } from 'Common/Utils';
 
 import { logoutLink } from 'Common/Links';
 import { i18nToNodes, initOnStartOrLangChange } from 'Common/Translator';
@@ -25,11 +23,8 @@ export class AbstractApp {
 		this.Remote = Remote;
 	}
 
-	logoutReload(close = false) {
+	logoutReload() {
 		const url = logoutLink();
-
-		rl.hash.clear();
-		close && window.close && window.close();
 
 		if (location.href !== url) {
 			setTimeout(() => (Settings.app('inIframe') ? parent : window).location.href = url, 100);
@@ -38,25 +33,27 @@ export class AbstractApp {
 		}
 	}
 
+	refresh() {
+//		rl.adminArea() || !translatorReload(false, );
+		rl.adminArea() || (
+			LanguageStore.language(SettingsGet('Language'))
+			& ThemeStore.populate()
+			& changeTheme(SettingsGet('Theme'))
+		);
+
+		this.start();
+	}
+
 	bootstart() {
 		const register = (key, ClassObject, templateID) => ko.components.register(key, {
 				template: { element: templateID || (key + 'Component') },
 				viewModel: {
 					createViewModel: (params, componentInfo) => {
 						params = params || {};
-						params.element = null;
-
-						if (componentInfo && componentInfo.element) {
-							params.component = componentInfo;
-							params.element = componentInfo.element;
-
-							i18nToNodes(componentInfo.element);
-
-							if (params.inline && ko.unwrap(params.inline)) {
-								params.element.style.display = 'inline-block';
-							}
+						i18nToNodes(componentInfo.element);
+						if (params.inline) {
+							componentInfo.element.style.display = 'inline-block';
 						}
-
 						return new ClassObject(params);
 					}
 				}
@@ -72,14 +69,7 @@ export class AbstractApp {
 
 		LanguageStore.populate();
 		ThemeStore.populate();
-	}
 
-	/**
-	 * @returns {void}
-	 */
-	hideLoading() {
-		elementById('rl-content').hidden = false;
-		elementById('rl-loading').remove();
+		this.start();
 	}
-
 }

@@ -1,5 +1,3 @@
-import { change } from 'Common/Links';
-
 import { AbstractModel } from 'Knoin/AbstractModel';
 
 export class AccountModel extends AbstractModel {
@@ -8,23 +6,16 @@ export class AccountModel extends AbstractModel {
 	 * @param {boolean=} canBeDelete = true
 	 * @param {number=} count = 0
 	 */
-	constructor(email, canBeDelete = true, count = 0) {
+	constructor(email/*, count = 0*/, isAdditional = true) {
 		super();
 
 		this.email = email;
 
 		this.addObservables({
-			count: count,
-			deleteAccess: false,
-			canBeDeleted: !!canBeDelete
+//			count: count || 0,
+			askDelete: false,
+			isAdditional: isAdditional
 		});
-		this.canBeEdit = this.canBeDeleted;
 	}
 
-	/**
-	 * @returns {string}
-	 */
-	changeAccountLink() {
-		return change(this.email);
-	}
 }

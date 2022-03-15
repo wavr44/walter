@@ -19,12 +19,17 @@ namespace MailSo\Mime\Enumerations;
 abstract class MimeType
 {
 	const TEXT_PLAIN = 'text/plain';
-	const TEXT_HTML = 'text/html';
 
 	const MULTIPART_ALTERNATIVE = 'multipart/alternative';
 	const MULTIPART_RELATED = 'multipart/related';
 	const MULTIPART_MIXED = 'multipart/mixed';
+
 	const MULTIPART_SIGNED = 'multipart/signed';
+	const APPLICATION_PGP_SIGNATURE = 'application/pgp-signature';
+
+	const MULTIPART_ENCRYPTED = 'multipart/encrypted';
+	const APPLICATION_PGP_ENCRYPTED = 'application/pgp-encrypted';
+	const APPLICATION_OCTET_STREAM = 'application/octet-stream';
 
 	const MESSAGE_RFC822 = 'message/rfc822';
 	const MESSAGE_PARTIAL = 'message/partial';

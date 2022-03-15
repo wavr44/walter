@@ -21,7 +21,7 @@ config.paths.staticMinJS = 'snappymail/v/' + config.devVersion + '/static/js/min
 config.paths.staticCSS = 'snappymail/v/' + config.devVersion + '/static/css/';
 
 config.paths.assets = {
-	src: 'assets/**/*.*'
+	src: ['assets/**/*.*', 'assets/**/.htaccess']
 };
 
 config.paths.less = {
@@ -30,9 +30,6 @@ config.paths.less = {
 		options: {
 			paths: [path.join(__dirname, 'dev', 'Styles'), path.join(__dirname, 'vendors', 'bootstrap', 'less')]
 		}
-	},
-	admin: {
-		src: 'dev/Styles/@Admin.less'
 	}
 };
 
@@ -45,13 +42,16 @@ config.paths.css = {
 		]
 	},
 	admin: {
-		name: 'admin.css'
+		name: 'admin.css',
+		src: [
+			'vendors/fontastic/styles.css',
+			'dev/Styles/@Admin.less'
+		]
 	},
 	boot: {
 		name: 'boot.css',
 		src: [
-			'dev/Styles/@Boot.css',
-			'dev/Styles/_progressjs.css'
+			'dev/Styles/@Boot.css'
 		]
 	}
 };
@@ -60,7 +60,6 @@ config.paths.js = {
 	libs: {
 		name: 'libs.js',
 		src: [
-			'dev/polyfill.js',
 			'dev/prototype.js',
 			'dev/External/ifvisible.js',
 			'dev/dragdropgecko.js',
@@ -73,6 +72,9 @@ config.paths.js = {
 			'vendors/squire/build/squire-raw.js',
 			'dev/External/SquireUI.js'
 		]
+	},
+	sieve: {
+		name: 'sieve.js'
 	},
 	app: {
 		name: 'app.js'

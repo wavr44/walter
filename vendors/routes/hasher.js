@@ -11,16 +11,13 @@
     // Private
     //--------------------------------------------------------------------------------------
 
-    var _hash, _bindings = [];
-
     const
     _hashValRegexp = /#(.*)$/,
-    _hashRegexp = /^#/,
+    _hashRegexp = /^[#/]+/,
     _hashTrim = /^\/|\$/g,
     _trimHash = hash => hash ? hash.replace(_hashTrim, '') : '',
     _getWindowHash = () => {
         //parsed full URL instead of getting window.location.hash because Firefox decode hash value (and all the other browsers don't)
-        //also because of IE8 bug with hash query in local file [issue #6]
         var result = _hashValRegexp.exec( location.href );
         return (result && result[1]) ? decodeURIComponent(result[1]) : '';
     },
@@ -28,49 +25,43 @@
         if (_hash !== newHash) {
             var oldHash = _hash;
             _hash = newHash; //should come before event dispatch to make sure user can get proper value inside event handler
-            hasher.changed.dispatch(_trimHash(newHash), _trimHash(oldHash));
-        }
-    },
-    _checkHistory = () => {
-        var windowHash = _getWindowHash();
-        if (windowHash !== _hash) {
-            _registerChange(windowHash);
+            _dispatch(_trimHash(newHash), _trimHash(oldHash));
         }
     },
     _setHash = (path, replace) => {
-        path = path.join('/');
         path = path ? '/' + path.replace(_hashRegexp, '') : path;
         if (path !== _hash){
             // we should store raw value
             _registerChange(path);
             if (path === _hash) {
+                path = '#' + encodeURI(path)
                 // we check if path is still === _hash to avoid error in
                 // case of multiple consecutive redirects [issue #39]
                 replace
-                    ? location.replace('#' + encodeURI(path))
-                    : (location.hash = '#' + encodeURI(path));
+                    ? location.replace(path)
+                    : (location.hash = path);
             }
         }
     },
+    _dispatch = (...args) => hasher.active && _bindings.forEach(callback => callback(...args)),
 
     //--------------------------------------------------------------------------------------
     // Public (API)
     //--------------------------------------------------------------------------------------
 
     hasher = /** @lends hasher */ {
+        clear : () => {
+            _bindings = [];
+            hasher.active = true;
+        },
 
         /**
          * Signal dispatched when hash value changes.
          * - pass current hash as 1st parameter to listeners and previous hash value as 2nd parameter.
          * @type signals.Signal
          */
-        changed : {
-            active : true,
-            add : callback => _bindings.push(callback),
-            dispatch : function(...args) {
-                this.active && _bindings.forEach(callback => callback(...args));
-            }
-        },
+        active : true,
+        add : callback => _bindings.push(callback),
 
         /**
          * Start listening/dispatching changes in the hash/history.
@@ -78,32 +69,27 @@
          *   <li>hasher won't dispatch CHANGE events by manually typing a new value or pressing the back/forward buttons before calling this method.</li>
          * </ul>
          */
-        init : () => {
-            hasher.init = ()=>{};
-            _hash = _getWindowHash();
-
-            //thought about branching/overloading hasher.init() to avoid checking multiple times but
-            //don't think worth doing it since it probably won't be called multiple times.
-            addEventListener('hashchange', _checkHistory);
-
-            hasher.changed.dispatch(_trimHash(_hash));
-        },
+        init : () => _dispatch(_trimHash(_hash)),
 
         /**
          * Set Hash value, generating a new history record.
          * @param {...string} path    Hash value without '#'.
-         * @example hasher.setHash('lorem', 'ipsum', 'dolor') -> '#/lorem/ipsum/dolor'
+         * @example hasher.setHash('lorem/ipsum/dolor') -> '#/lorem/ipsum/dolor'
          */
-        setHash : (...path) => _setHash(path),
+        setHash : path => _setHash(path),
 
         /**
          * Set Hash value without keeping previous hash on the history record.
-         * Similar to calling `window.location.replace("#/hash")` but will also work on IE6-7.
          * @param {...string} path    Hash value without '#'.
-         * @example hasher.replaceHash('lorem', 'ipsum', 'dolor') -> '#/lorem/ipsum/dolor'
+         * @example hasher.replaceHash('lorem/ipsum/dolor') -> '#/lorem/ipsum/dolor'
          */
-        replaceHash : (...path) => _setHash(path, true)
+        replaceHash : path => _setHash(path, true)
     };
+
+    var _hash = _getWindowHash(),
+        _bindings = [];
+
+    addEventListener('hashchange', () => _registerChange(_getWindowHash()));
 
     global.hasher = hasher;
 })(this);

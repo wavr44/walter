@@ -1,0 +1,113 @@
+
+#top-system-dropdown-id {
+	overflow: hidden;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.rl-left-panel-disabled #more-list-dropdown-id + .dropdown-menu {
+	position: fixed;
+	top: 40px;
+}
+
+#V-SystemDropDown {
+
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 30px;
+	padding: 10px @rlLowMargin;
+	z-index: 103;
+
+	.email-title {
+		display: inline-block;
+		max-width: 50vw;
+		text-align: left;
+		text-overflow: ellipsis;
+		overflow: hidden;
+		margin-right: 28px;
+		vertical-align: middle;
+	}
+
+	.audioPlace {
+		cursor: pointer;
+		display: inline-block;
+		font-size: 30px;
+		height: 30px;
+		margin-right: 10px;
+		width: 1em;
+
+		.stopIcon {
+			color: orange;
+			display: none;
+		}
+
+		&:hover {
+
+			.playIcon {
+				display: none;
+			}
+
+			.stopIcon {
+				display: inline-block;
+			}
+		}
+	}
+
+	.accountPlace {
+		background-color: rgba(0, 0, 0, 0.5);
+		border-radius: 4px;
+		color: #fff;
+		display: inline-block;
+		font-weight: bold;
+		font-size: 16px;
+		height: 29px;
+		line-height: 30px;
+		max-width: 25vw;
+		overflow: hidden;
+		padding: 1px 8px;
+		text-overflow: ellipsis;
+		text-shadow: 0 1px 0 #000;
+		white-space: nowrap;
+	}
+
+	.counter {
+		display: inline-block;
+	}
+
+	.dropdown-menu a.account-item {
+		padding-right: 5px;
+	}
+}
+
+@keyframes equaliserBar {
+  0%   { top: 30%; }
+  50%  { top: 100%; }
+  100% { top: 30%; }
+}
+
+.playIcon {
+
+	margin-top: 5px;
+	height: 20px;
+	position: relative;
+
+	*, &::before, &::after  {
+		animation: equaliserBar 1s infinite;
+		background: orange;
+		bottom:0;
+		left: calc(1em / 2 - 2px);
+		position: absolute;
+		width: 5px;
+		content: '';
+	}
+
+	&::before {
+		left: calc(1em / 2 - 9px);
+		animation-delay: -0.33s;
+	}
+	&::after {
+		left: calc(1em / 2 + 5px);
+		animation-delay: -0.66s;
+	}
+}

@@ -1,4 +1,4 @@
-import { isArray } from 'Common/Utils';
+import { isArray, forEachObjectEntry } from 'Common/Utils';
 
 export class AbstractCollectionModel extends Array
 {
@@ -24,8 +24,7 @@ export class AbstractCollectionModel extends Array
 		const result = new this();
 		if (json) {
 			if ('Collection/'+this.name.replace('Model', '') === json['@Object']) {
-				Object.entries(json).forEach(([key, value]) => '@' !== key[0] && (result[key] = value));
-//				json[@Count]
+				forEachObjectEntry(json, (key, value) => '@' !== key[0] && (result[key] = value));
 				json = json['@Collection'];
 			}
 			if (isArray(json)) {

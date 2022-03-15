@@ -1,22 +1,21 @@
-import ko from 'ko';
-
 import { SMAudio } from 'Common/Audio';
-import { SettingsGet } from 'Common/Globals';
 import * as Links from 'Common/Links';
+import { addObservablesTo } from 'External/ko';
+import { fireEvent } from 'Common/Globals';
 
 /**
  * Might not work due to the new ServiceWorkerRegistration.showNotification
  */
-const HTML5Notification = window.Notification ? Notification : null,
+const HTML5Notification = window.Notification,
 	HTML5NotificationStatus = () => (HTML5Notification && HTML5Notification.permission) || 'denied',
 	NotificationsDenied = () => 'denied' === HTML5NotificationStatus(),
 	NotificationsGranted = () => 'granted' === HTML5NotificationStatus(),
 	dispatchMessage = data => {
 		focus();
 		if (data.Folder && data.Uid) {
-			dispatchEvent(new CustomEvent('mailbox.message.show', {detail:data}));
+			fireEvent('mailbox.message.show', data);
 		} else if (data.Url) {
-			rl.route.setHash(data.Url);
+			hasher.setHash(data.Url);
 		}
 	};
 
@@ -37,17 +36,19 @@ if (WorkerNotifications && ServiceWorkerRegistration && ServiceWorkerRegistratio
 
 export const NotificationUserStore = new class {
 	constructor() {
-		this.enableSoundNotification = ko.observable(false);
+		addObservablesTo(this, {
+			enableSoundNotification: false,
 
-		this.enableDesktopNotification = ko.observable(false)/*.extend({ notify: 'always' })*/;
+			enableDesktopNotification: false,/*.extend({ notify: 'always' })*/
 
-		this.isDesktopNotificationDenied = ko.observable(NotificationsDenied());
+			isDesktopNotificationAllowed: !NotificationsDenied()
+		});
 
 		this.enableDesktopNotification.subscribe(value => {
 			DesktopNotifications = !!value;
 			if (value && HTML5Notification && !NotificationsGranted()) {
 				HTML5Notification.requestPermission(() =>
-					this.isDesktopNotificationDenied(NotificationsDenied())
+					this.isDesktopNotificationAllowed(!NotificationsDenied())
 				);
 			}
 		});
@@ -100,10 +101,5 @@ export const NotificationUserStore = new class {
 				setTimeout(() => notification.close(), 7000);
 			}
 		}
-	}
-
-	populate() {
-		this.enableSoundNotification(!!SettingsGet('SoundNotification'));
-		this.enableDesktopNotification(!!SettingsGet('DesktopNotifications'));
 	}
 };

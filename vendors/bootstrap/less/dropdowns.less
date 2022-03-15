@@ -7,10 +7,6 @@
 .dropdown {
   position: relative;
 }
-.dropdown-toggle:active,
-.open .dropdown-toggle {
-  outline: 0;
-}
 
 // Dropdown arrow/caret
 // --------------------
@@ -32,6 +28,9 @@
 // The dropdown menu (ul)
 // ----------------------
 .dropdown-menu {
+  max-height: 60vh;
+  max-width: 90vw;
+  overflow: auto;
   position: absolute;
   top: 100%;
   left: 0;
@@ -55,33 +54,22 @@
 
   // Links within the dropdown menu
   a {
+    background-color: var(--dropdown-menu-bg-color, #fff);
+    color: var(--dropdown-menu-color, @dropdownLinkColor);
     display: block;
     padding: 3px 10px;
-    clear: both;
-    font-weight: normal;
-    line-height: @baseLineHeight;
-    color: @dropdownLinkColor;
+    text-decoration: none;
     white-space: nowrap;
   }
 }
 
 // Hover state
 // -----------
-.dropdown-menu li > a:hover,
-.dropdown-menu li > a:focus {
+.dropdown-menu li:not(.disabled) > a:hover,
+.dropdown-menu li:not(.disabled) > a:focus {
+  background-color: var(--dropdown-menu-hover-bg-color, #444);
+  color: var(--dropdown-menu-hover-color, #eee);
   text-decoration: none;
-  color: @dropdownLinkColorHover;
-  background-color: @dropdownLinkBackgroundHover;
-}
-
-// Active state
-// ------------
-.dropdown-menu .active > a,
-.dropdown-menu .active > a:hover {
-  color: @dropdownLinkColorHover;
-  text-decoration: none;
-  outline: 0;
-  background-color: @dropdownLinkBackgroundActive;
 }
 
 // Disabled state
@@ -90,18 +78,6 @@
 .dropdown-menu .disabled > a,
 .dropdown-menu .disabled > a:hover {
   color: @grayLight;
-}
-// Nuke hover effects
-.dropdown-menu .disabled > a:hover {
-  text-decoration: none;
-  background-color: transparent;
-  cursor: default;
-}
-
-// Open state for the dropdown
-// ---------------------------
-.open {
-  & > .dropdown-menu {
-    display: block;
-  }
+  cursor: not-allowed;
+  opacity: 0.5;
 }

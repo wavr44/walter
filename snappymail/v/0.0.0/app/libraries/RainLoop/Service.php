@@ -2,73 +2,8 @@
 
 namespace RainLoop;
 
-class Service
+abstract class Service
 {
-	/**
-	 * @var \MailSo\Base\Http
-	 */
-	private $oHttp;
-
-	/**
-	 * @var \RainLoop\Actions
-	 */
-	private $oActions;
-
-	/**
-	 * @var \RainLoop\ServiceActions
-	 */
-	private $oServiceActions;
-
-	function __construct()
-	{
-		$this->oHttp = \MailSo\Base\Http::SingletonInstance();
-		$this->oActions = Api::Actions();
-
-		$this->oServiceActions = new ServiceActions($this->oHttp, $this->oActions);
-
-		if ($this->oActions->Config()->Get('debug', 'enable', false))
-		{
-			\error_reporting(E_ALL);
-			\ini_set('display_errors', 1);
-			\ini_set('log_errors', 1);
-		}
-
-		$sServer = \trim($this->oActions->Config()->Get('security', 'custom_server_signature', ''));
-		if (0 < \strlen($sServer))
-		{
-			\header('Server: '.$sServer, true);
-		}
-
-		\header('Referrer-Policy: no-referrer');
-		\header('X-Content-Type-Options: nosniff');
-
-		$sContentSecurityPolicy = \trim($this->oActions->Config()->Get('security', 'content_security_policy', '')) ?: APP_DEFAULT_CSP;
-		if ($this->oActions->Config()->Get('security', 'use_local_proxy_for_external_images', '')) {
-			$sContentSecurityPolicy = preg_replace('/(img-src[^;]+)\\shttps:(\\s|;|$)/D', '$1$2', $sContentSecurityPolicy);
-			$sContentSecurityPolicy = preg_replace('/(img-src[^;]+)\\shttp:(\\s|;|$)/D', '$1$2', $sContentSecurityPolicy);
-		}
-		\header('Content-Security-Policy: '.$sContentSecurityPolicy, true);
-
-		$sXFrameOptionsHeader = \trim($this->oActions->Config()->Get('security', 'x_frame_options_header', '')) ?: 'DENY';
-		\header('X-Frame-Options: '.$sXFrameOptionsHeader, true);
-
-		$sXssProtectionOptionsHeader = \trim($this->oActions->Config()->Get('security', 'x_xss_protection_header', '')) ?: '1; mode=block';
-		\header('X-XSS-Protection: '.$sXssProtectionOptionsHeader, true);
-
-		if ($this->oActions->Config()->Get('labs', 'force_https', false) && !$this->oHttp->IsSecure())
-		{
-			\header('Location: https://'.$this->oHttp->GetHost(false, false).$this->oHttp->GetUrl(), true);
-			exit(0);
-		}
-
-		$this->localHandle();
-	}
-
-	public function RunResult() : bool
-	{
-		return true;
-	}
-
 	/**
 	 * @staticvar bool $bOne
 	 */
@@ -77,64 +12,127 @@ class Service
 		static $bOne = null;
 		if (null === $bOne)
 		{
-			$bOne = (new self)->RunResult();
+			$bOne = static::RunResult();
 		}
 
 		return $bOne;
 	}
 
-	private function localHandle() : self
+	private static function RunResult() : bool
 	{
-		$sResult = '';
-		$bCached = false;
+		$oConfig = Api::Config();
 
-		$sQuery = $this->oActions->ParseQueryAuthString();
+		if ($oConfig->Get('debug', 'enable', false))
+		{
+			\error_reporting(E_ALL);
+			\ini_set('display_errors', 1);
+			\ini_set('log_errors', 1);
+		}
 
-		$this->oActions->Plugins()->RunHook('filter.http-query', array(&$sQuery));
+		$sServer = \trim($oConfig->Get('security', 'custom_server_signature', ''));
+		if (\strlen($sServer))
+		{
+			\header('Server: '.$sServer);
+		}
+
+		\header('Referrer-Policy: no-referrer');
+		\header('X-Content-Type-Options: nosniff');
+
+		// Google FLoC
+		\header('Permissions-Policy: interest-cohort=()');
+
+		static::setCSP();
+
+		$sXFrameOptionsHeader = \trim($oConfig->Get('security', 'x_frame_options_header', '')) ?: 'DENY';
+		\header('X-Frame-Options: '.$sXFrameOptionsHeader);
+
+		$sXssProtectionOptionsHeader = \trim($oConfig->Get('security', 'x_xss_protection_header', '')) ?: '1; mode=block';
+		\header('X-XSS-Protection: '.$sXssProtectionOptionsHeader);
+
+		$oHttp = \MailSo\Base\Http::SingletonInstance();
+		if ($oConfig->Get('labs', 'force_https', false) && !$oHttp->IsSecure())
+		{
+			\header('Location: https://'.$oHttp->GetHost(false, false).$oHttp->GetUrl());
+			exit;
+		}
+
+		$sQuery = \trim($_SERVER['QUERY_STRING'] ?? '');
+		$iPos = \strpos($sQuery, '&');
+		if (0 < $iPos) {
+			$sQuery = \substr($sQuery, 0, $iPos);
+		}
+		$sQuery = \trim(\trim($sQuery), ' /');
+		$aSubQuery = $_GET['q'] ?? null;
+		if (\is_array($aSubQuery)) {
+			$aSubQuery = \array_map(function ($sS) {
+				return \trim(\trim($sS), ' /');
+			}, $aSubQuery);
+
+			if (\count($aSubQuery)) {
+				$sQuery .= '/' . \implode('/', $aSubQuery);
+			}
+		}
+
 		$aPaths = \explode('/', $sQuery);
-		$this->oActions->Plugins()->RunHook('filter.http-paths', array(&$aPaths));
 
 		$bAdmin = false;
-		$sAdminPanelHost = $this->oActions->Config()->Get('security', 'admin_panel_host', '');
+		$sAdminPanelHost = $oConfig->Get('security', 'admin_panel_host', '');
 		if (empty($sAdminPanelHost))
 		{
-			$sAdminPanelKey = \strtolower($this->oActions->Config()->Get('security', 'admin_panel_key', 'admin'));
-			$bAdmin = !empty($aPaths[0]) && \strtolower($aPaths[0]) === $sAdminPanelKey;
+			$bAdmin = !empty($aPaths[0]) && ($oConfig->Get('security', 'admin_panel_key', '') ?: 'admin') === $aPaths[0];
+			$bAdmin && \array_shift($aPaths);
 		}
-		else if (empty($aPaths[0]) &&
-			\MailSo\Base\Utils::StrToLowerIfAscii($sAdminPanelHost) === \MailSo\Base\Utils::StrToLowerIfAscii($this->oHttp->GetHost()))
+		else if (empty($aPaths[0]) && \mb_strtolower($sAdminPanelHost) === \mb_strtolower($oHttp->GetHost()))
 		{
 			$bAdmin = true;
 		}
 
-		if ($this->oHttp->IsPost())
+		$oActions = $bAdmin ? new ActionsAdmin() : Api::Actions();
+
+		$oActions->Plugins()->RunHook('filter.http-paths', array(&$aPaths));
+
+		if ($oHttp->IsPost())
 		{
-			$this->oHttp->ServerNoCache();
+			$oHttp->ServerNoCache();
 		}
 
-		if ($bAdmin && !$this->oActions->Config()->Get('security', 'allow_admin_panel', true))
-		{
-			$this->oHttp->StatusHeader(403);
-			echo $this->oServiceActions->ErrorTemplates('Access Denied.',
-				'Access to the SnappyMail Admin Panel is not allowed!', true);
+		$oServiceActions = new ServiceActions($oHttp, $oActions);
 
-			return $this;
+		if ($bAdmin && !$oConfig->Get('security', 'allow_admin_panel', true))
+		{
+			\MailSo\Base\Http::StatusHeader(403);
+			echo $oServiceActions->ErrorTemplates('Access Denied.',
+				'Access to the SnappyMail Admin Panel is not allowed!');
+
+			return false;
 		}
 
 		$bIndex = true;
-		if (0 < \count($aPaths) && !empty($aPaths[0]) && !$bAdmin && 'index' !== \strtolower($aPaths[0]))
+		$sResult = '';
+		if (\count($aPaths) && !empty($aPaths[0]) && 'index' !== \strtolower($aPaths[0]))
 		{
+			if ('mailto' !== \strtolower($aPaths[0]) && !\SnappyMail\HTTP\SecFetch::isSameOrigin()) {
+				\MailSo\Base\Http::StatusHeader(403);
+				echo $oServiceActions->ErrorTemplates('Access Denied.',
+					"Disallowed Sec-Fetch
+					Dest: " . ($_SERVER['HTTP_SEC_FETCH_DEST'] ?? '') . "
+					Mode: " . ($_SERVER['HTTP_SEC_FETCH_MODE'] ?? '') . "
+					Site: " . ($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '') . "
+					User: " . (\SnappyMail\HTTP\SecFetch::user() ? 'true' : 'false'));
+				return false;
+			}
+
 			$bIndex = false;
 			$sMethodName = 'Service'.\preg_replace('/@.+$/', '', $aPaths[0]);
-			$sMethodExtra = 0 < \strpos($aPaths[0], '@') ? \preg_replace('/^[^@]+@/', '', $aPaths[0]) : '';
+			$sMethodExtra = \strpos($aPaths[0], '@') ? \preg_replace('/^[^@]+@/', '', $aPaths[0]) : '';
 
-			if (\method_exists($this->oServiceActions, $sMethodName) &&
-				\is_callable(array($this->oServiceActions, $sMethodName)))
+			if (\method_exists($oServiceActions, $sMethodName) &&
+				\is_callable(array($oServiceActions, $sMethodName)))
 			{
-				$this->oServiceActions->SetQuery($sQuery)->SetPaths($aPaths);
-				$sResult = \call_user_func(array($this->oServiceActions, $sMethodName), $sMethodExtra);
+				$oServiceActions->SetQuery($sQuery)->SetPaths($aPaths);
+				$sResult = $oServiceActions->{$sMethodName}($sMethodExtra);
 			}
-			else if (!$this->oActions->Plugins()->RunAdditionalPart($aPaths[0], $aPaths))
+			else if (!$oActions->Plugins()->RunAdditionalPart($aPaths[0], $aPaths))
 			{
 				$bIndex = true;
 			}
@@ -142,53 +140,98 @@ class Service
 
 		if ($bIndex)
 		{
-			header('Content-Type: text/html; charset=utf-8');
-			$this->oHttp->ServerNoCache();
+			if (!$bAdmin) {
+				$login = $oConfig->Get('labs', 'custom_login_link', '');
+				if ($login && !$oActions->getAccountFromToken(false)) {
+					\header("Location: {$login}");
+					exit;
+				}
+			}
+
+//			if (!\SnappyMail\HTTP\SecFetch::isEntering()) {
+			\header('Content-Type: text/html; charset=utf-8');
+			$oHttp->ServerNoCache();
 
 			if (!\is_dir(APP_DATA_FOLDER_PATH) || !\is_writable(APP_DATA_FOLDER_PATH))
 			{
-				echo $this->oServiceActions->ErrorTemplates(
+				echo $oServiceActions->ErrorTemplates(
 					'Permission denied!',
-					'SnappyMail cannot access to the data folder "'.APP_DATA_FOLDER_PATH.'"'
+					'SnappyMail can not access the data folder "'.APP_DATA_FOLDER_PATH.'"'
 				);
 
-				return $this;
+				return false;
 			}
 
-			$aTemplateParameters = $this->indexTemplateParameters($bAdmin);
+			$sLanguage = $oActions->GetLanguage($bAdmin);
+
+			$sAppJsMin = $oConfig->Get('labs', 'use_app_debug_js', false) ? '' : '.min';
+			$sAppCssMin = $oConfig->Get('labs', 'use_app_debug_css', false) ? '' : '.min';
+
+			$sFaviconUrl = (string) $oConfig->Get('webmail', 'favicon_url', '');
+
+			$sFaviconPngLink = $sFaviconUrl ? $sFaviconUrl : $oActions->StaticPath('apple-touch-icon.png');
+			$sAppleTouchLink = $sFaviconUrl ? '' : $oActions->StaticPath('apple-touch-icon.png');
+
+			$aTemplateParameters = array(
+				'{{BaseAppFaviconPngLinkTag}}' => $sFaviconPngLink ? '<link type="image/png" rel="shortcut icon" href="'.$sFaviconPngLink.'">' : '',
+				'{{BaseAppFaviconTouchLinkTag}}' => $sAppleTouchLink ? '<link type="image/png" rel="apple-touch-icon" href="'.$sAppleTouchLink.'">' : '',
+				'{{BaseAppMainCssLink}}' => $oActions->StaticPath('css/'.($bAdmin ? 'admin' : 'app').$sAppCssMin.'.css'),
+				'{{BaseAppThemeCssLink}}' => $oActions->ThemeLink($bAdmin),
+				'{{BaseAppManifestLink}}' => $oActions->StaticPath('manifest.json'),
+				'{{LoadingDescriptionEsc}}' => \htmlspecialchars($oConfig->Get('webmail', 'loading_description', 'SnappyMail'), ENT_QUOTES|ENT_IGNORE, 'UTF-8'),
+				'{{BaseAppAdmin}}' => $bAdmin ? 1 : 0
+			);
 
 			$sCacheFileName = '';
-			if ($this->oActions->Config()->Get('labs', 'cache_system_data', true) && !empty($aTemplateParameters['{{BaseHash}}']))
+			if ($oConfig->Get('labs', 'cache_system_data', true))
 			{
-				$sCacheFileName = 'TMPL:'.$aTemplateParameters['{{BaseHash}}'];
-				$sResult = $this->oActions->Cacher()->Get($sCacheFileName);
+				$sCacheFileName = 'TMPL:' . $sLanguage . \md5(
+					\json_encode(array(
+						$oConfig->Get('cache', 'index', ''),
+						$oActions->Plugins()->Hash(),
+						$sAppJsMin,
+						$sAppCssMin,
+						$aTemplateParameters,
+						APP_VERSION
+					))
+				);
+				$sResult = $oActions->Cacher()->Get($sCacheFileName);
 			}
 
-			if (0 === \strlen($sResult))
-			{
-//				$aTemplateParameters['{{BaseTemplates}}'] = $this->oServiceActions->compileTemplates($bAdmin, false);
+			if ($sResult) {
+				$sResult .= '<!--cached-->';
+			} else {
+				$aTemplateParameters['{{BaseAppThemeCss}}'] = $oActions->compileCss($oActions->GetTheme($bAdmin), $bAdmin);
+				$aTemplateParameters['{{BaseLanguage}}'] = $oActions->compileLanguage($sLanguage, $bAdmin);
+				$aTemplateParameters['{{BaseTemplates}}'] = $oServiceActions->compileTemplates($bAdmin);
+				$aTemplateParameters['{{BaseAppBootCss}}'] = \file_get_contents(APP_VERSION_ROOT_PATH.'static/css/boot'.$sAppCssMin.'.css');
+				$aTemplateParameters['{{BaseAppBootScript}}'] = \file_get_contents(APP_VERSION_ROOT_PATH.'static/js'.($sAppJsMin ? '/min' : '').'/boot'.$sAppJsMin.'.js');
 				$sResult = \strtr(\file_get_contents(APP_VERSION_ROOT_PATH.'app/templates/Index.html'), $aTemplateParameters);
 
-				$sResult = Utils::ClearHtmlOutput($sResult);
-				if (0 < \strlen($sCacheFileName))
-				{
-					$this->oActions->Cacher()->Set($sCacheFileName, $sResult);
+				if ($sAppJsMin || $sAppCssMin) {
+					$sResult = \preg_replace(
+						['@\\s*/>@', '/\\s*&nbsp;/i', '/&nbsp;\\s*/i', '/>\\s+</'],
+						['>', "\xC2\xA0", "\xC2\xA0", '><'],
+						\trim($sResult)
+					);
+				} else {
+					$sResult = Utils::ClearHtmlOutput($sResult);
+				}
+				if ($sCacheFileName) {
+					$oActions->Cacher()->Set($sCacheFileName, $sResult);
 				}
 			}
-			else
-			{
-				$bCached = true;
-			}
 
-			$sResult .= '<!--';
-			$sResult .= '[time:'.\substr(\microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'], 0, 6);
-			$sResult .= '][AGPLv3';
-			$sResult .= '][cached:'.($bCached ? 'true' : 'false');
-//			$sResult .= '][hash:'.$aTemplateParameters['{{BaseHash}}'];
-//			$sResult .= '][session:'.\md5(Utils::GetShortToken());
-			$sResult .= ']-->';
+			$sScriptNonce = \SnappyMail\UUID::generate();
+			static::setCSP($sScriptNonce);
+			$sResult = \str_replace('nonce=""', 'nonce="'.$sScriptNonce.'"', $sResult);
+/*
+			\preg_match('<script[^>]+>(.+)</script>', $sResult, $script);
+			$sScriptHash = 'sha256-'.\base64_encode(\hash('sha256', $script[1], true));
+			static::setCSP(null, $sScriptHash);
+*/
 		}
-		else if (!headers_sent())
+		else if (!\headers_sent())
 		{
 			\header('X-XSS-Protection: 1; mode=block');
 		}
@@ -197,59 +240,29 @@ class Service
 		echo $sResult;
 		unset($sResult);
 
-		$this->oActions->BootEnd();
-		return $this;
+		$oActions->BootEnd();
+
+		return true;
 	}
 
-	private function staticPath(string $sPath) : string
+	private static function setCSP(string $sScriptNonce = null) : void
 	{
-		return $this->oActions->StaticPath($sPath);
-	}
+		$CSP = new \SnappyMail\HTTP\CSP(\trim(Api::Config()->Get('security', 'content_security_policy', '')));
+		$CSP->report = Api::Config()->Get('security', 'csp_report', false);
+		$CSP->report_only = Api::Config()->Get('debug', 'enable', false); // '0.0.0' === APP_VERSION
 
-	private function indexTemplateParameters(bool $bAdmin = false) : array
-	{
-		$sLanguage = 'en';
-		$sTheme = 'Default';
+		// Allow https: due to remote images in e-mails or use proxy
+		if (!Api::Config()->Get('security', 'use_local_proxy_for_external_images', '')) {
+			$CSP->img[] = 'https:';
+			$CSP->img[] = 'http:';
+		}
+		// Internet Explorer does not support 'nonce'
+		if ($sScriptNonce && !$_SERVER['HTTP_USER_AGENT'] || (!\strpos($_SERVER['HTTP_USER_AGENT'], 'Trident/') && !\strpos($_SERVER['HTTP_USER_AGENT'], 'Edge/1'))) {
+			$CSP->script[] = "'nonce-{$sScriptNonce}'";
+		}
 
-		list($sLanguage, $sTheme) = $this->oActions->GetLanguageAndTheme($bAdmin);
+		Api::Actions()->Plugins()->RunHook('main.content-security-policy', array($CSP));
 
-		$oConfig = $this->oActions->Config();
-
-		$bAppJsDebug = !!$oConfig->Get('labs', 'use_app_debug_js', false);
-		$bAppCssDebug = !!$oConfig->Get('labs', 'use_app_debug_css', false);
-
-		$sFaviconUrl = (string) $oConfig->Get('webmail', 'favicon_url', '');
-
-		$sFaviconPngLink = $sFaviconUrl ? $sFaviconUrl : $this->staticPath('apple-touch-icon.png');
-		$sAppleTouchLink = $sFaviconUrl ? '' : $this->staticPath('apple-touch-icon.png');
-
-		$LoadingDescription = $oConfig->Get('webmail', 'loading_description', 'SnappyMail');
-
-		$aTemplateParameters = array(
-			'{{BaseAppFaviconPngLinkTag}}' => $sFaviconPngLink ? '<link type="image/png" rel="shortcut icon" href="'.$sFaviconPngLink.'" />' : '',
-			'{{BaseAppFaviconTouchLinkTag}}' => $sAppleTouchLink ? '<link type="image/png" rel="apple-touch-icon" href="'.$sAppleTouchLink.'" />' : '',
-			'{{BaseAppMainCssLink}}' => $this->staticPath('css/'.($bAdmin ? 'admin' : 'app').($bAppCssDebug ? '' : '.min').'.css'),
-			'{{BaseAppThemeCssLink}}' => $this->oActions->ThemeLink($sTheme, $bAdmin),
-			'{{BaseAppBootScriptLink}}' => $this->staticPath('js/'.($bAppJsDebug ? '' : 'min/').'boot'.($bAppJsDebug ? '' : '.min').'.js'),
-			'{{BaseAppBootScript}}' => \file_get_contents(APP_VERSION_ROOT_PATH.'static/js/min/boot.min.js'),
-			'{{BaseDir}}' => false && \in_array($sLanguage, array('ar', 'he', 'ur')) ? 'rtl' : 'ltr',
-			'{{BaseAppManifestLink}}' => $this->staticPath('manifest.json'),
-			'{{BaseAppBootCss}}' => \file_get_contents(APP_VERSION_ROOT_PATH.'static/css/boot.min.css'),
-			'{{LoadingDescriptionEsc}}' => \htmlspecialchars($LoadingDescription, ENT_QUOTES|ENT_IGNORE, 'UTF-8'),
-			'{{BaseAppAdmin}}' => $bAdmin ? 1 : 0
-		);
-
-		$aTemplateParameters['{{BaseHash}}'] = \md5(
-			\implode('~', array(
-				$bAdmin ? '1' : '0',
-				\md5($oConfig->Get('cache', 'index', '')),
-				$this->oActions->Plugins()->Hash(),
-				Utils::WebVersionPath(),
-				APP_VERSION,
-			)).
-			\implode('~', $aTemplateParameters)
-		);
-
-		return $aTemplateParameters;
+		$CSP->setHeaders();
 	}
 }

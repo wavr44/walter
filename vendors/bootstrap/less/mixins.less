@@ -6,21 +6,6 @@
 // UTILITY MIXINS
 // --------------------------------------------------
 
-// Clearfix
-// --------
-// For clearing floats like a boss h5bp.com/q
-.clearfix {
-  &::before,
-  &::after {
-    display: table;
-    content: "";
-    // Fixes Opera/contenteditable bug:
-    // http://nicolasgallagher.com/micro-clearfix-hack/#comment-36952
-    line-height: 0;
-    clear: both;
-  }
-}
-
 // Webkit-style focus
 // ------------------
 .tab-focus() {
@@ -63,12 +48,6 @@
       box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 6px lighten(@borderColor, 20%);
     }
   }
-  // Give a small background color for input-prepend/-append
-  .input-append .add-on {
-    color: @textColor;
-    background-color: @backgroundColor;
-    border-color: @textColor;
-  }
 }
 
 
@@ -78,11 +57,6 @@
 
 // Grid System
 // -----------
-
-// Table columns
-.tableColumns(@columnSpan: 1) {
-  width: ((@gridColumnWidth) * @columnSpan) + (@gridGutterWidth * (@columnSpan - 1)) - 16; // 16 is total padding on left and right of table cells
-}
 
 // The Grid
 #grid {
@@ -109,9 +83,6 @@
       margin-left: @gridGutterWidth;
       vertical-align: top;
     }
-
-    // Set the container width
-    .container { .span(@gridColumns); }
 
     // generate .spanX
     .spanX (@gridColumns);

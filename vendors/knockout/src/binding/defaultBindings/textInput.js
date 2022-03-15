@@ -12,33 +12,20 @@ ko.bindingHandlers['textInput'] = {
             var elementValue = element.value;
             if (previousElementValue !== elementValue) {
                 // Provide a way for tests to know exactly which event was processed
-                if (DEBUG && event) element['_ko_textInputProcessedEvent'] = event.type;
                 previousElementValue = elementValue;
                 ko.expressionRewriting.writeValueToProperty(valueAccessor(), allBindings, 'textInput', elementValue);
-            }
-        };
-
-        var deferUpdateModel = event => {
-            if (!timeoutHandle) {
-                // The elementValueBeforeEvent variable is set *only* during the brief gap between an
-                // event firing and the updateModel function running. This allows us to ignore model
-                // updates that are from the previous state of the element, usually due to techniques
-                // such as rateLimit. Such updates, if not ignored, can cause keystrokes to be lost.
-                elementValueBeforeEvent = element.value;
-                var handler = DEBUG ? updateModel.bind(element, {type: event.type}) : updateModel;
-                timeoutHandle = ko.utils.setTimeout(handler, 4);
             }
         };
 
         var updateView = () => {
             var modelValue = ko.utils.unwrapObservable(valueAccessor());
 
-            if (modelValue === null || modelValue === undefined) {
+            if (modelValue == null) {
                 modelValue = '';
             }
 
             if (elementValueBeforeEvent !== undefined && modelValue === elementValueBeforeEvent) {
-                ko.utils.setTimeout(updateView, 4);
+                setTimeout(updateView, 4);
                 return;
             }
 
@@ -51,20 +38,9 @@ ko.bindingHandlers['textInput'] = {
         };
 
         var onEvent = (event, handler) =>
-            ko.utils.registerEventHandler(element, event, handler);
+            element.addEventListener(event, handler);
 
-        if (DEBUG && ko.bindingHandlers['textInput']['_forceUpdateOn']) {
-            // Provide a way for tests to specify exactly which events are bound
-            ko.bindingHandlers['textInput']['_forceUpdateOn'].forEach(eventName => {
-                if (eventName.slice(0,5) == 'after') {
-                    onEvent(eventName.slice(5), deferUpdateModel);
-                } else {
-                    onEvent(eventName, updateModel);
-                }
-            });
-        } else {
-            onEvent('input', updateModel);
-        }
+        onEvent('input', updateModel);
 
         // Bind to the change event so that we can catch programmatic updates of the value that fire this event.
         onEvent('change', updateModel);
@@ -75,7 +51,7 @@ ko.bindingHandlers['textInput'] = {
         ko.computed(updateView, { disposeWhenNodeIsRemoved: element });
     }
 };
-ko.expressionRewriting.twoWayBindings['textInput'] = true;
+ko.expressionRewriting.twoWayBindings.add('textInput');
 
 // textinput is an alias for textInput
 ko.bindingHandlers['textinput'] = {

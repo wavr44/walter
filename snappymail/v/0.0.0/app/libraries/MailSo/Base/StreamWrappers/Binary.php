@@ -11,6 +11,7 @@
 
 namespace MailSo\Base\StreamWrappers;
 
+
 /**
  * @category MailSo
  * @package Base
@@ -70,20 +71,15 @@ class Binary
 
 	public static function GetInlineDecodeOrEncodeFunctionName(string $sContentTransferEncoding, bool $bDecode = true) : string
 	{
-		$sFunctionName = '';
-		switch (strtolower($sContentTransferEncoding))
+		switch (\strtolower($sContentTransferEncoding))
 		{
 			case \MailSo\Base\Enumerations\Encoding::BASE64_LOWER:
-				// InlineBase64Decode
-				$sFunctionName = $bDecode ? 'InlineBase64Decode' : 'convert.base64-encode';
-				break;
+				return $bDecode ? 'convert.base64-decode' : 'convert.base64-encode';
 			case \MailSo\Base\Enumerations\Encoding::QUOTED_PRINTABLE_LOWER:
-				// InlineQuotedPrintableDecode
-				$sFunctionName = $bDecode ? 'convert.quoted-printable-decode' : 'convert.quoted-printable-encode';
-				break;
+				return $bDecode ? 'convert.quoted-printable-decode' : 'convert.quoted-printable-encode';
 		}
 
-		return $sFunctionName;
+		return '';
 	}
 
 	public static function InlineNullDecode(string $sBodyString, string &$sEndBuffer) : string
@@ -92,42 +88,15 @@ class Binary
 		return $sBodyString;
 	}
 
-	public static function InlineBase64Decode(string $sBaseString, string &$sEndBuffer) : string
-	{
-		$sEndBuffer = '';
-		$sBaseString = str_replace(array("\r", "\n", "\t"), '', $sBaseString);
-		$iBaseStringLen = strlen($sBaseString);
-		$iBaseStringNormFloorLen = floor($iBaseStringLen / 4) * 4;
-		if ($iBaseStringNormFloorLen < $iBaseStringLen)
-		{
-			$sEndBuffer = substr($sBaseString, $iBaseStringNormFloorLen);
-			$sBaseString = substr($sBaseString, 0, $iBaseStringNormFloorLen);
-		}
-		return \MailSo\Base\Utils::Base64Decode($sBaseString);
-	}
-
-	public static function InlineQuotedPrintableDecode(string $sQuotedPrintableString, string &$sEndBuffer) : string
-	{
-		$sEndBuffer = '';
-		$sQuotedPrintableLen = strlen($sQuotedPrintableString);
-		$iLastSpace = strrpos($sQuotedPrintableString, ' ');
-		if (false !== $iLastSpace && $iLastSpace + 1 < $sQuotedPrintableLen)
-		{
-			$sEndBuffer = substr($sQuotedPrintableString, $iLastSpace + 1);
-			$sQuotedPrintableString = substr($sQuotedPrintableString, 0, $iLastSpace + 1);
-		}
-		return quoted_printable_decode($sQuotedPrintableString);
-	}
-
 	public static function InlineConvertDecode(string $sEncodedString, string &$sEndBuffer, string $sFromEncoding, string $sToEncoding) : string
 	{
 		$sEndBuffer = '';
-		$sQuotedPrintableLen = strlen($sEncodedString);
-		$iLastSpace = strrpos($sEncodedString, ' ');
-		if (false !== $iLastSpace && $iLastSpace + 1 < $sQuotedPrintableLen)
+		$iQuotedPrintableLen = \strlen($sEncodedString);
+		$iLastSpace = \strrpos($sEncodedString, ' ');
+		if (false !== $iLastSpace && $iLastSpace + 1 < $iQuotedPrintableLen)
 		{
-			$sEndBuffer = substr($sEncodedString, $iLastSpace + 1);
-			$sEncodedString = substr($sEncodedString, 0, $iLastSpace + 1);
+			$sEndBuffer = \substr($sEncodedString, $iLastSpace + 1);
+			$sEncodedString = \substr($sEncodedString, 0, $iLastSpace + 1);
 		}
 		return \MailSo\Base\Utils::ConvertEncoding($sEncodedString, $sFromEncoding, $sToEncoding);
 	}
@@ -167,17 +136,12 @@ class Binary
 	public static function CreateStream($rStream,
 		string $sUtilsDecodeOrEncodeFunctionName = null, string $sFromEncoding = null, string $sToEncoding = null)
 	{
-		if (!in_array(self::STREAM_NAME, stream_get_wrappers()))
-		{
-			stream_wrapper_register(self::STREAM_NAME, '\MailSo\Base\StreamWrappers\Binary');
-		}
-
-		if (null === $sUtilsDecodeOrEncodeFunctionName || 0 === strlen($sUtilsDecodeOrEncodeFunctionName))
+		if (null === $sUtilsDecodeOrEncodeFunctionName || !\strlen($sUtilsDecodeOrEncodeFunctionName))
 		{
 			$sUtilsDecodeOrEncodeFunctionName = 'InlineNullDecode';
 		}
 
-		$sHashName = md5(microtime(true).rand(1000, 9999));
+		$sHashName = \md5(\microtime(true).\rand(1000, 9999));
 
 		if (null !== $sFromEncoding && null !== $sToEncoding && $sFromEncoding !== $sToEncoding)
 		{
@@ -185,24 +149,23 @@ class Binary
 			$sUtilsDecodeOrEncodeFunctionName = 'InlineConvertDecode';
 		}
 
-		if (in_array($sUtilsDecodeOrEncodeFunctionName, array(
-			'convert.base64-decode', 'convert.base64-encode',
-			'convert.quoted-printable-decode', 'convert.quoted-printable-encode'
-		)))
+		if (\in_array($sUtilsDecodeOrEncodeFunctionName, ['convert.base64-decode', 'convert.quoted-printable-decode']))
+		{
+			$rFilter = \stream_filter_append($rStream, $sUtilsDecodeOrEncodeFunctionName);
+			return \is_resource($rFilter) ? $rStream : false;
+		}
+		else if (\in_array($sUtilsDecodeOrEncodeFunctionName, ['convert.base64-encode', 'convert.quoted-printable-encode']))
 		{
 			$rFilter = \stream_filter_append($rStream, $sUtilsDecodeOrEncodeFunctionName,
-				STREAM_FILTER_READ, array(
-					'line-length' => \MailSo\Mime\Enumerations\Constants::LINE_LENGTH,
-					'line-break-chars' => \MailSo\Mime\Enumerations\Constants::CRLF
+				\STREAM_FILTER_READ, array(
+					'line-length' => 74,
+					'line-break-chars' => "\r\n"
 				));
-
 			return \is_resource($rFilter) ? $rStream : false;
 		}
 
 		self::$aStreams[$sHashName] =
 			array($rStream, $sUtilsDecodeOrEncodeFunctionName, $sFromEncoding, $sToEncoding);
-
-		\MailSo\Base\Loader::IncStatistic('CreateStream/Binary');
 
 		return \fopen(self::STREAM_NAME.'://'.$sHashName, 'rb');
 	}
@@ -217,17 +180,16 @@ class Binary
 		$this->sToEncoding = null;
 		$this->sFunctionName = null;
 
-		$bResult = false;
-		$aPath = parse_url($sPath);
+		$aPath = \parse_url($sPath);
 
 		if (isset($aPath['host']) && isset($aPath['scheme']) &&
-			0 < strlen($aPath['host']) && 0 < strlen($aPath['scheme']) &&
+			\strlen($aPath['host']) && \strlen($aPath['scheme']) &&
 			self::STREAM_NAME === $aPath['scheme'])
 		{
 			$sHashName = $aPath['host'];
 			if (isset(self::$aStreams[$sHashName]) &&
-				is_array(self::$aStreams[$sHashName]) &&
-				4 === count(self::$aStreams[$sHashName]))
+				\is_array(self::$aStreams[$sHashName]) &&
+				4 === \count(self::$aStreams[$sHashName]))
 			{
 				$this->rStream = self::$aStreams[$sHashName][0];
 				$this->sFunctionName = self::$aStreams[$sHashName][1];
@@ -235,10 +197,10 @@ class Binary
 				$this->sToEncoding = self::$aStreams[$sHashName][3];
 			}
 
-			$bResult = is_resource($this->rStream);
+			return \is_resource($this->rStream);
 		}
 
-		return $bResult;
+		return false;
 	}
 
 	public function stream_read(int $iCount) : string
@@ -248,29 +210,29 @@ class Binary
 
 		if ($iCount > 0)
 		{
-			if ($iCount < strlen($this->sBuffer))
+			if ($iCount < \strlen($this->sBuffer))
 			{
-				$sReturn = substr($this->sBuffer, 0, $iCount);
-				$this->sBuffer = substr($this->sBuffer, $iCount);
+				$sReturn = \substr($this->sBuffer, 0, $iCount);
+				$this->sBuffer = \substr($this->sBuffer, $iCount);
 			}
 			else
 			{
 				$sReturn = $this->sBuffer;
 				while ($iCount > 0)
 				{
-					if (feof($this->rStream))
+					if (\feof($this->rStream))
 					{
-						if (0 === strlen($this->sBuffer.$sReturn))
+						if (!\strlen($this->sBuffer.$sReturn))
 						{
 							return false;
 						}
 
-						if (0 < strlen($this->sReadEndBuffer))
+						if (\strlen($this->sReadEndBuffer))
 						{
 							$sReturn .= self::$sFunctionName($this->sReadEndBuffer,
 								$this->sReadEndBuffer, $this->sFromEncoding, $this->sToEncoding);
 
-							$iDecodeLen = strlen($sReturn);
+							$iDecodeLen = \strlen($sReturn);
 						}
 
 						$iCount = 0;
@@ -278,7 +240,7 @@ class Binary
 					}
 					else
 					{
-						$sReadResult = fread($this->rStream, 8192);
+						$sReadResult = \fread($this->rStream, 8192);
 						if (false === $sReadResult)
 						{
 							return false;
@@ -287,11 +249,11 @@ class Binary
 						$sReturn .= self::$sFunctionName($this->sReadEndBuffer.$sReadResult,
 							$this->sReadEndBuffer, $this->sFromEncoding, $this->sToEncoding);
 
-						$iDecodeLen = strlen($sReturn);
+						$iDecodeLen = \strlen($sReturn);
 						if ($iCount < $iDecodeLen)
 						{
-							$this->sBuffer = substr($sReturn, $iCount);
-							$sReturn = substr($sReturn, 0, $iCount);
+							$this->sBuffer = \substr($sReturn, $iCount);
+							$sReturn = \substr($sReturn, 0, $iCount);
 							$iCount = 0;
 						}
 						else
@@ -302,7 +264,7 @@ class Binary
 				}
 			}
 
-			$this->iPos += strlen($sReturn);
+			$this->iPos += \strlen($sReturn);
 			return $sReturn;
 		}
 
@@ -321,7 +283,7 @@ class Binary
 
 	public function stream_eof() : bool
 	{
-		return 0 === strlen($this->sBuffer) && feof($this->rStream);
+		return !\strlen($this->sBuffer) && \feof($this->rStream);
 	}
 
 	public function stream_stat() : array
@@ -348,3 +310,5 @@ class Binary
 		return false;
 	}
 }
+
+\stream_wrapper_register(Binary::STREAM_NAME, '\\MailSo\\Base\\StreamWrappers\\Binary');

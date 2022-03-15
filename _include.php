@@ -4,29 +4,33 @@
 
 //header('Strict-Transport-Security: max-age=31536000');
 
-// Uncomment to use gzip encoded output
+/**
+ * Uncomment to use gzip compressed output
+ */
 //define('USE_GZIP', 1);
 
-// Uncomment to enable multiple domain installation.
+/**
+ * Uncomment to use brotli compressed output
+ */
+//define('USE_BROTLI', 1);
+
+/**
+ * Uncomment to enable multiple domain installation.
+ */
 //define('MULTIDOMAIN', 1);
 
 /**
- * Custom 'data' folder path
- * @return string
+ * Uncomment to disable APCU.
  */
-function __get_custom_data_full_path()
-{
-	return '';
-	return dirname(__DIR__) . '/snappymail-data';
-	return '/var/external-snappymail-data-folder';
-}
+//define('APP_USE_APCU_CACHE', false);
+
+/**
+ * Custom 'data' folder path
+ */
+//define('APP_DATA_FOLDER_PATH', dirname(__DIR__) . '/snappymail-data/');
+//define('APP_DATA_FOLDER_PATH', '/var/external-snappymail-data-folder/');
 
 /**
  * Additional configuration file name
- * @return string
  */
-function __get_additional_configuration_name()
-{
-	return '';
-	return defined('APP_SITE') && 0 < strlen(APP_SITE) ? APP_SITE.'.ini' : '';
-}
+//define('APP_CONFIGURATION_NAME', $_SERVER['HTTP_HOST'].'.ini');

@@ -81,7 +81,7 @@ class HeaderCollection extends \MailSo\Base\Collection
 	{
 		$oResult = null;
 		$sValue = $this->ValueByName($sHeaderName, $bCharsetAutoDetect);
-		if (0 < \strlen($sValue)) {
+		if (\strlen($sValue)) {
 			$oResult = new EmailCollection($sValue);
 		}
 		return $oResult && 0 < $oResult->Count() ? $oResult : null;
@@ -144,7 +144,7 @@ class HeaderCollection extends \MailSo\Base\Collection
 		$sName = null;
 		$sValue = null;
 		foreach ($aHeaders as $sHeadersValue) {
-			if (0 === strlen($sHeadersValue)) {
+			if (!\strlen($sHeadersValue)) {
 				continue;
 			}
 
@@ -218,7 +218,7 @@ class HeaderCollection extends \MailSo\Base\Collection
 		$aResult = array();
 
 		$aHeaders = $this->ValuesByName(Enumerations\Header::AUTHENTICATION_RESULTS);
-		if (0 < \count($aHeaders))
+		if (\count($aHeaders))
 		{
 			foreach ($aHeaders as $sHeaderValue)
 			{
@@ -301,12 +301,8 @@ class HeaderCollection extends \MailSo\Base\Collection
 		}
 	}
 
-	public function ToEncodedString() : string
+	public function __toString() : string
 	{
-		$aResult = array();
-		foreach ($this as $oHeader) {
-			$aResult[] = $oHeader->EncodedValue();
-		}
-		return \implode(Enumerations\Constants::CRLF, $aResult);
+		return \implode("\r\n", $this->getArrayCopy());
 	}
 }

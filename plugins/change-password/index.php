@@ -6,11 +6,11 @@ class ChangePasswordPlugin extends \RainLoop\Plugins\AbstractPlugin
 {
 	const
 		NAME     = 'Change Password',
-		VERSION  = '2.1',
-		RELEASE  = '2021-03-18',
-		REQUIRED = '2.4.0',
+		VERSION  = '2.13.1',
+		RELEASE  = '2022-03-10',
+		REQUIRED = '2.12.0',
 		CATEGORY = 'Security',
-		DESCRIPTION = 'This plugin allows you to change passwords of email accounts';
+		DESCRIPTION = 'Extension to allow users to change their passwords';
 
 	// \RainLoop\Notifications\
 	const
@@ -23,6 +23,7 @@ class ChangePasswordPlugin extends \RainLoop\Plugins\AbstractPlugin
 	{
 		$this->UseLangs(true); // start use langs folder
 
+//		$this->addCss('style.css');
 		$this->addJs('js/ChangePasswordUserSettings.js'); // add js file
 		$this->addJsonHook('ChangePassword', 'ChangePassword');
 		$this->addTemplate('templates/SettingsChangePassword.html');
@@ -95,16 +96,21 @@ class ChangePasswordPlugin extends \RainLoop\Plugins\AbstractPlugin
 				->SetDefaultValue(70),
 		];
 		foreach ($this->getSupportedDrivers(true) as $name => $class) {
-			$result[] = \RainLoop\Plugins\Property::NewInstance("driver_{$name}_enabled")
-				->SetLabel('Enable ' . $class::NAME)
-				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
-				->SetDescription($class::DESCRIPTION);
-			$result[] = \RainLoop\Plugins\Property::NewInstance("driver_{$name}_allowed_emails")
-				->SetLabel('Allowed emails')
-				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING_TEXT)
-				->SetDescription('Allowed emails, space as delimiter, wildcard supported. Example: user1@example.net user2@example1.net *@example2.net')
-				->SetDefaultValue('*');
-			$result = \array_merge($result, \call_user_func("{$class}::configMapping"));
+			$group = new \RainLoop\Plugins\PropertyCollection($name);
+			$props = [
+				\RainLoop\Plugins\Property::NewInstance("driver_{$name}_enabled")
+					->SetLabel('Enable ' . $class::NAME)
+					->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
+					->SetDescription($class::DESCRIPTION)
+					->SetDefaultValue(false),
+				\RainLoop\Plugins\Property::NewInstance("driver_{$name}_allowed_emails")
+					->SetLabel('Allowed emails')
+					->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING_TEXT)
+					->SetDescription('Allowed emails, space as delimiter, wildcard supported. Example: user1@example.net user2@example1.net *@example2.net')
+					->SetDefaultValue('*')
+			];
+			$group->exchangeArray(\array_merge($props, \call_user_func("{$class}::configMapping")));
+			$result[] = $group;
 		}
 		return $result;
 	}
@@ -174,7 +180,7 @@ class ChangePasswordPlugin extends \RainLoop\Plugins\AbstractPlugin
 		$oAccount->SetPassword($sNewPassword);
 		$oActions->SetAuthToken($oAccount);
 
-		return $this->jsonResponse(__FUNCTION__, $oActions->GetSpecAuthToken());
+		return $this->jsonResponse(__FUNCTION__, $oActions->AppData(false));
 	}
 
 	public static function encrypt(string $algo, string $password)
@@ -200,7 +206,7 @@ class ChangePasswordPlugin extends \RainLoop\Plugins\AbstractPlugin
 				break;
 		}
 
-		return $sPassword;
+		return $password;
 	}
 
 	private static function PasswordStrength(string $sPassword) : int

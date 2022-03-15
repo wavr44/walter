@@ -1,14 +1,10 @@
-import ko from 'ko';
+import { koArrayWithDestroy } from 'External/ko';
 
-import {
-	SaveSettingsStep,
-	Scope
-} from 'Common/Enums';
-
+import { SaveSettingsStep } from 'Common/Enums';
 import { ComposeType } from 'Common/EnumsUser';
-
-import { isNonEmptyArray, pInt } from 'Common/Utils';
-import { delegateRunOnDestroy, computedPaginatorHelper, showMessageComposer } from 'Common/UtilsUser';
+import { registerShortcut } from 'Common/Globals';
+import { arrayLength, pInt } from 'Common/Utils';
+import { download, computedPaginatorHelper, showMessageComposer } from 'Common/UtilsUser';
 
 import { Selector } from 'Common/Selector';
 import { serverRequestRaw, serverRequest } from 'Common/Links';
@@ -23,14 +19,18 @@ import { EmailModel } from 'Model/Email';
 import { ContactModel } from 'Model/Contact';
 import { ContactPropertyModel, ContactPropertyType } from 'Model/ContactProperty';
 
-import { decorateKoCommands, hideScreenPopup } from 'Knoin/Knoin';
+import { decorateKoCommands, showScreenPopup } from 'Knoin/Knoin';
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-const CONTACTS_PER_PAGE = 50,
+import { AskPopupView } from 'View/Popup/Ask';
+
+const
+	CONTACTS_PER_PAGE = 50,
+	ScopeContacts = 'Contacts',
 	propertyIsMail = prop => prop.isType(ContactPropertyType.Email),
 	propertyIsName = prop => prop.isType(ContactPropertyType.FirstName) || prop.isType(ContactPropertyType.LastName);
 
-class ContactsPopupView extends AbstractViewPopup {
+export class ContactsPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Contacts');
 
@@ -66,7 +66,7 @@ class ContactsPopupView extends AbstractViewPopup {
 
 		this.contacts = ContactUserStore;
 
-		this.viewProperties = ko.observableArray();
+		this.viewProperties = koArrayWithDestroy();
 
 		this.useCheckboxesInList = SettingsUserStore.useCheckboxesInList;
 
@@ -79,18 +79,18 @@ class ContactsPopupView extends AbstractViewPopup {
 			'.e-contact-item.focused'
 		);
 
-		this.selector.on('onItemSelect', contact => {
-			this.populateViewContact(contact || null);
+		this.selector.on('ItemSelect', contact => {
+			this.populateViewContact(contact);
 			if (!contact) {
 				this.emptySelection(true);
 			}
 		});
 
-		this.selector.on('onItemGetUid', contact => contact ? contact.generateUid() : '');
+		this.selector.on('ItemGetUid', contact => contact ? contact.generateUid() : '');
 
 		this.bDropPageAfterDelete = false;
 
-		// this.saveCommandDebounce = _.debounce(this.saveCommand.bind(this), 1000);
+		// this.saveCommandDebounce = this.saveCommand.bind(this).debounce(1000);
 
 		const
 //			propertyFocused = property => !property.isValid() && !property.focused(),
@@ -136,17 +136,16 @@ class ContactsPopupView extends AbstractViewPopup {
 		});
 
 		decorateKoCommands(this, {
-			newCommand: 1,
+//			close: self => !self.watchDirty(),
 			deleteCommand: self => 0 < self.contactsCheckedOrSelected().length,
 			newMessageCommand: self => 0 < self.contactsCheckedOrSelected().length,
-			clearCommand: 1,
 			saveCommand: self => !self.viewSaving() && !self.viewReadOnly()
 				&& (self.contactHasValidName() || self.viewProperties.find(prop => propertyIsMail(prop) && prop.isValid())),
 			syncCommand: self => !self.contacts.syncing() && !self.contacts.importing()
 		});
 	}
 
-	newCommand() {
+	newContact() {
 		this.populateViewContact(null);
 		this.currentContact(null);
 	}
@@ -163,7 +162,7 @@ class ContactsPopupView extends AbstractViewPopup {
 			bccEmails = null;
 
 		const aC = this.contactsCheckedOrSelected();
-		if (isNonEmptyArray(aC)) {
+		if (arrayLength(aC)) {
 			aE = aC.map(oItem => {
 				if (oItem) {
 					const data = oItem.getNameAndEmailHelper(),
@@ -180,10 +179,10 @@ class ContactsPopupView extends AbstractViewPopup {
 			aE = aE.filter(value => !!value);
 		}
 
-		if (isNonEmptyArray(aE)) {
+		if (arrayLength(aE)) {
 			this.bBackToCompose = false;
 
-			hideScreenPopup(ContactsPopupView);
+			this.close();
 
 			switch (this.sLastComposeFocusedField) {
 				case 'cc':
@@ -192,7 +191,6 @@ class ContactsPopupView extends AbstractViewPopup {
 				case 'bcc':
 					bccEmails = aE;
 					break;
-				case 'to':
 				default:
 					toEmails = aE;
 					break;
@@ -208,7 +206,7 @@ class ContactsPopupView extends AbstractViewPopup {
 		return true;
 	}
 
-	clearCommand() {
+	clearSearch() {
 		this.search('');
 	}
 
@@ -218,7 +216,7 @@ class ContactsPopupView extends AbstractViewPopup {
 
 		const requestUid = Jua.randomId();
 
-		Remote.contactSave(
+		Remote.request('ContactSave',
 			(iError, oData) => {
 				let res = false;
 				this.viewSaving(false);
@@ -244,15 +242,16 @@ class ContactsPopupView extends AbstractViewPopup {
 					this.watchDirty(false);
 					setTimeout(() => this.viewSaveTrigger(SaveSettingsStep.Idle), 1000);
 				}
-			},
-			requestUid,
-			this.viewID(),
-			this.viewProperties.map(oItem => oItem.toJSON())
+			}, {
+				RequestUid: requestUid,
+				Uid: this.viewID(),
+				Properties: this.viewProperties.map(oItem => oItem.toJSON())
+			}
 		);
 	}
 
 	syncCommand() {
-		rl.app.contactsSync(iError => {
+		ContactUserStore.sync(iError => {
 			iError && alert(getNotification(iError));
 
 			this.reloadContactList(true);
@@ -317,37 +316,11 @@ class ContactsPopupView extends AbstractViewPopup {
 	}
 
 	exportVcf() {
-		rl.app.download(serverRequestRaw('ContactsVcf'));
+		download(serverRequestRaw('ContactsVcf'), 'contacts.vcf');
 	}
 
 	exportCsv() {
-		rl.app.download(serverRequestRaw('ContactsCsv'));
-	}
-
-	initUploader() {
-		if (this.importUploaderButton()) {
-			const j = new Jua({
-				action: serverRequest('UploadContacts'),
-				name: 'uploader',
-				queueSize: 1,
-				multipleSizeLimit: 1,
-				disableMultiple: true,
-				disableDocumentDropPrevent: true,
-				clickElement: this.importUploaderButton()
-			});
-
-			if (j) {
-				j.on('onStart', () => {
-					ContactUserStore.importing(true);
-				}).on('onComplete', (id, result, data) => {
-					ContactUserStore.importing(false);
-					this.reloadContactList();
-					if (!id || !result || !data || !data.Result) {
-						alert(i18n('CONTACTS/ERROR_IMPORT_FILE'));
-					}
-				});
-			}
-		}
+		download(serverRequestRaw('ContactsCsv'), 'contacts.csv');
 	}
 
 	removeCheckedOrSelectedContactsFromList() {
@@ -372,39 +345,30 @@ class ContactsPopupView extends AbstractViewPopup {
 			}
 
 			setTimeout(() => {
-				contacts.forEach(contact => {
-					ContactUserStore.remove(contact);
-					delegateRunOnDestroy(contact);
-				});
+				contacts.forEach(contact => ContactUserStore.remove(contact));
 			}, 500);
 		}
 	}
 
 	deleteSelectedContacts() {
 		if (this.contactsCheckedOrSelected().length) {
-			Remote.contactsDelete(this.deleteResponse.bind(this), this.contactsCheckedOrSelectedUids());
-
+			Remote.request('ContactsDelete',
+				(iError, oData) => {
+					if (500 < (!iError && oData && oData.Time ? pInt(oData.Time) : 0)) {
+						this.reloadContactList(this.bDropPageAfterDelete);
+					} else {
+						setTimeout(() => this.reloadContactList(this.bDropPageAfterDelete), 500);
+					}
+				}, {
+					Uids: this.contactsCheckedOrSelectedUids().join(',')
+				}
+			);
 			this.removeCheckedOrSelectedContactsFromList();
-		}
-	}
-
-	/**
-	 * @param {int} iError
-	 * @param {FetchJsonDefaultResponse} oData
-	 */
-	deleteResponse(iError, oData) {
-		if (500 < (!iError && oData && oData.Time ? pInt(oData.Time) : 0)) {
-			this.reloadContactList(this.bDropPageAfterDelete);
-		} else {
-			setTimeout(() => {
-				this.reloadContactList(this.bDropPageAfterDelete);
-			}, 500);
 		}
 	}
 
 	removeProperty(oProp) {
 		this.viewProperties.remove(oProp);
-		delegateRunOnDestroy(oProp);
 	}
 
 	/**
@@ -428,7 +392,6 @@ class ContactsPopupView extends AbstractViewPopup {
 
 		this.viewID(id);
 
-//		delegateRunOnDestroy(this.viewProperties());
 //		this.viewProperties([]);
 		this.viewProperties(contact.properties);
 
@@ -450,12 +413,12 @@ class ContactsPopupView extends AbstractViewPopup {
 		}
 
 		ContactUserStore.loading(true);
-		Remote.contacts(
+		Remote.request('Contacts',
 			(iError, data) => {
 				let count = 0,
 					list = [];
 
-				if (!iError && isNonEmptyArray(data.Result.List)) {
+				if (!iError && arrayLength(data.Result.List)) {
 					data.Result.List.forEach(item => {
 						item = ContactModel.reviveFromJson(item);
 						item && list.push(item);
@@ -467,27 +430,31 @@ class ContactsPopupView extends AbstractViewPopup {
 
 				this.contactsCount(count);
 
-				delegateRunOnDestroy(ContactUserStore());
 				ContactUserStore(list);
 
 				ContactUserStore.loading(false);
 				this.viewClearSearch(!!this.search());
 			},
-			offset,
-			CONTACTS_PER_PAGE,
-			this.search()
+			{
+				Offset: offset,
+				Limit: CONTACTS_PER_PAGE,
+				Search: this.search()
+			},
+			null,
+			'',
+			['Contacts']
 		);
 	}
 
 	onBuild(dom) {
-		this.selector.init(dom.querySelector('.b-list-content'), Scope.Contacts);
+		this.selector.init(dom.querySelector('.b-list-content'), ScopeContacts);
 
-		shortcuts.add('delete', '', Scope.Contacts, () => {
+		registerShortcut('delete', '', ScopeContacts, () => {
 			this.deleteCommand();
 			return false;
 		});
 
-		shortcuts.add('c,w', '', Scope.Contacts, () => {
+		registerShortcut('c,w', '', ScopeContacts, () => {
 			this.newMessageCommand();
 			return false;
 		});
@@ -495,33 +462,59 @@ class ContactsPopupView extends AbstractViewPopup {
 		const self = this;
 
 		dom.addEventListener('click', event => {
-			let el = event.target.closestWithin('.e-paginator .e-page', dom);
+			let el = event.target.closestWithin('.e-paginator a', dom);
 			if (el && ko.dataFor(el)) {
 				self.contactsPage(pInt(ko.dataFor(el).value));
 				self.reloadContactList();
 			}
 		});
 
-		this.initUploader();
+		// initUploader
+
+		if (this.importUploaderButton()) {
+			const j = new Jua({
+				action: serverRequest('UploadContacts'),
+				limit: 1,
+				disableDocumentDropPrevent: true,
+				clickElement: this.importUploaderButton()
+			});
+
+			if (j) {
+				j.on('onStart', () => {
+					ContactUserStore.importing(true);
+				}).on('onComplete', (id, result, data) => {
+					ContactUserStore.importing(false);
+					this.reloadContactList();
+					if (!id || !result || !data || !data.Result) {
+						alert(i18n('CONTACTS/ERROR_IMPORT_FILE'));
+					}
+				});
+			}
+		}
+	}
+
+	onClose() {
+		if (this.watchDirty() && AskPopupView.hidden()) {
+			showScreenPopup(AskPopupView, [
+				i18n('POPUPS_ASK/DESC_WANT_CLOSE_THIS_WINDOW'),
+				() => this.close()
+			]);
+			return false;
+		}
 	}
 
 	onShow(bBackToCompose, sLastComposeFocusedField) {
-		this.bBackToCompose = undefined === bBackToCompose ? false : !!bBackToCompose;
-		this.sLastComposeFocusedField = undefined === sLastComposeFocusedField ? '' : sLastComposeFocusedField;
-
-		rl.route.off();
+		this.bBackToCompose = !!bBackToCompose;
+		this.sLastComposeFocusedField = sLastComposeFocusedField;
 		this.reloadContactList(true);
 	}
 
 	onHide() {
-		rl.route.on();
-
 		this.currentContact(null);
 		this.emptySelection(true);
 		this.search('');
 		this.contactsCount(0);
 
-		delegateRunOnDestroy(ContactUserStore());
 		ContactUserStore([]);
 
 		this.sLastComposeFocusedField = '';
@@ -533,5 +526,3 @@ class ContactsPopupView extends AbstractViewPopup {
 		}
 	}
 }
-
-export { ContactsPopupView, ContactsPopupView as default };

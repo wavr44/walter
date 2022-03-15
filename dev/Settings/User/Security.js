@@ -1,23 +1,32 @@
-import ko from 'ko';
+import { koComputable } from 'External/ko';
 
-import { pInt, settingsSaveHelperSimpleFunction } from 'Common/Utils';
-import { Capa, SaveSettingsStep } from 'Common/Enums';
-import { Settings } from 'Common/Globals';
+import { SettingsCapa } from 'Common/Globals';
 import { i18n, trigger as translatorTrigger } from 'Common/Translator';
+
+import { AbstractViewSettings } from 'Knoin/AbstractViews';
 
 import { SettingsUserStore } from 'Stores/User/Settings';
 
+import { GnuPGUserStore } from 'Stores/User/GnuPG';
+import { OpenPGPUserStore } from 'Stores/User/OpenPGP';
+
 import Remote from 'Remote/User/Fetch';
 
-export class SecurityUserSettings {
+import { showScreenPopup } from 'Knoin/Knoin';
+
+import { OpenPgpImportPopupView } from 'View/Popup/OpenPgpImport';
+import { OpenPgpGeneratePopupView } from 'View/Popup/OpenPgpGenerate';
+
+export class UserSettingsSecurity extends AbstractViewSettings {
 	constructor() {
-		this.capaAutoLogout = Settings.capa(Capa.AutoLogout);
+		super();
+
+		this.capaAutoLogout = SettingsCapa('AutoLogout');
 
 		this.autoLogout = SettingsUserStore.autoLogout;
-		this.autoLogoutTrigger = ko.observable(SaveSettingsStep.Idle);
 
 		let i18nLogout = (key, params) => i18n('SETTINGS_SECURITY/AUTOLOGIN_' + key, params);
-		this.autoLogoutOptions = ko.computed(() => {
+		this.autoLogoutOptions = koComputable(() => {
 			translatorTrigger();
 			return [
 				{ id: 0, name: i18nLogout('NEVER_OPTION_NAME') },
@@ -32,10 +41,37 @@ export class SecurityUserSettings {
 		});
 
 		if (this.capaAutoLogout) {
-			this.autoLogout.subscribe(value => Remote.saveSetting(
-				'AutoLogout', pInt(value),
-				settingsSaveHelperSimpleFunction(this.autoLogoutTrigger, this)
-			));
+			this.addSetting('AutoLogout');
 		}
+
+		this.gnupgPublicKeys = GnuPGUserStore.publicKeys;
+		this.gnupgPrivateKeys = GnuPGUserStore.privateKeys;
+
+		this.openpgpkeysPublic = OpenPGPUserStore.publicKeys;
+		this.openpgpkeysPrivate = OpenPGPUserStore.privateKeys;
+
+		this.canOpenPGP = SettingsCapa('OpenPGP');
+		this.canGnuPG = GnuPGUserStore.isSupported();
+		this.canMailvelope = !!window.mailvelope;
+
+		this.allowDraftAutosave = SettingsUserStore.allowDraftAutosave;
+
+		this.allowDraftAutosave.subscribe(value => Remote.saveSetting('AllowDraftAutosave', value))
+	}
+
+	addOpenPgpKey() {
+		showScreenPopup(OpenPgpImportPopupView);
+	}
+
+	generateOpenPgpKey() {
+		showScreenPopup(OpenPgpGeneratePopupView);
+	}
+
+	onBuild() {
+		/**
+		 * Create an iframe to display the Mailvelope keyring settings.
+		 * The iframe will be injected into the container identified by selector.
+		 */
+		window.mailvelope && mailvelope.createSettingsContainer('#mailvelope-settings'/*[, keyring], options*/);
 	}
 }

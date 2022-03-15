@@ -1,7 +1,7 @@
 /* RainLoop Webmail (c) RainLoop Team | Licensed under AGPL 3 */
 const gulp = require('gulp');
 
-const concat = require('gulp-concat-util'),
+const concat = require('gulp-concat'),
 	header = require('gulp-header'),
 	rename = require('gulp-rename'),
 	replace = require('gulp-replace'),
@@ -37,15 +37,8 @@ const jsServiceWorker = () => {
 // OpenPGP
 const jsOpenPGP = () => {
 	return gulp
-		.src('node_modules/openpgp/dist/openpgp.min.js')
-		.pipe(gulp.dest(config.paths.staticMinJS));
-};
-
-// OpenPGP Worker
-const jsOpenPGPWorker = () => {
-	return gulp
-		.src('node_modules/openpgp/dist/openpgp.worker.min.js')
-		.pipe(gulp.dest(config.paths.staticMinJS));
+		.src('vendors/openpgp-5/dist/openpgp.js')
+		.pipe(gulp.dest(config.paths.staticJS));
 };
 
 // libs
@@ -59,6 +52,15 @@ const jsLibs = () => {
 		.pipe(replace(/sourceMappingURL=[a-z0-9.\-_]{1,20}\.map/gi, ''))
 		.pipe(gulp.dest(config.paths.staticJS));
 };
+
+// sieve
+const jsSieve = async () =>
+	(await rollupJS(config.paths.js.sieve.name))
+//		.pipe(sourcemaps.write('.'))
+		.pipe(header(getHead() + '\n'))
+		.pipe(eol('\n', true))
+		.pipe(gulp.dest(config.paths.staticJS))
+		.on('error', gutil.log);
 
 // app
 const jsApp = async () =>
@@ -127,9 +129,10 @@ const jsLint = () =>
 		.pipe(eslint.format())
 		.pipe(eslint.failAfterError());
 
-const jsState1 = gulp.series(jsLint);
-const jsState3 = gulp.parallel(jsBoot, jsServiceWorker, jsOpenPGP, jsOpenPGPWorker, jsLibs, jsApp, jsAdmin);
-const jsState2 = gulp.series(jsClean, jsState3, jsMin);
-
 exports.jsLint = jsLint;
-exports.js = gulp.parallel(jsState1, jsState2);
+exports.js = gulp.series(
+	jsClean,
+	jsLint,
+	gulp.parallel(jsBoot, jsServiceWorker, jsOpenPGP, jsLibs, jsSieve, jsApp, jsAdmin),
+	jsMin
+);

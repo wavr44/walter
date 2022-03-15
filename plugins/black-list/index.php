@@ -3,10 +3,12 @@
 class BlackListPlugin extends \RainLoop\Plugins\AbstractPlugin
 {
 	const
-		NAME = 'Black list',
-		VERSION = '2.0',
+		NAME = 'Blacklist',
+		VERSION = '2.1',
+		RELEASE = '2021-04-21',
+		REQUIRED = '2.5.0',
 		CATEGORY = 'Login',
-		DESCRIPTION = 'Simple black list plugin (with wildcard and exceptions functionality).';
+		DESCRIPTION = 'Simple blacklist extension (with wildcard and exceptions functionality).';
 
 	public function Init() : void
 	{

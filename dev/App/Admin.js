@@ -1,4 +1,4 @@
-import 'External/Admin/ko';
+import 'External/ko';
 
 import { Settings, SettingsGet } from 'Common/Globals';
 
@@ -16,12 +16,8 @@ class AdminApp extends AbstractApp {
 		this.weakPassword = ko.observable(false);
 	}
 
-	bootstart() {
-		super.bootstart();
-
-		this.hideLoading();
-
-		if (!Settings.app('allowAdminPanel')) {
+	start() {
+		if (!Settings.app('adminAllowed')) {
 			rl.route.root();
 			setTimeout(() => location.href = '/', 1);
 		} else if (SettingsGet('Auth')) {
@@ -30,8 +26,6 @@ class AdminApp extends AbstractApp {
 		} else {
 			startScreens([LoginAdminScreen]);
 		}
-
-		progressJs.end();
 	}
 }
 

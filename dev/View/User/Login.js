@@ -1,10 +1,7 @@
-import ko from 'ko';
-
 import { Notification } from 'Common/Enums';
-import { ClientSideKeyName } from 'Common/EnumsUser';
-import { Settings, SettingsGet } from 'Common/Globals';
-import { getNotification, reload as translatorReload, convertLangName } from 'Common/Translator';
-import { runHook } from 'Common/Plugins';
+import { ClientSideKeyNameLastSignMe } from 'Common/EnumsUser';
+import { SettingsGet, fireEvent } from 'Common/Globals';
+import { getNotification, translatorReload, convertLangName } from 'Common/Translator';
 
 import { LanguageStore } from 'Stores/Language';
 
@@ -13,29 +10,19 @@ import * as Local from 'Storage/Client';
 import Remote from 'Remote/User/Fetch';
 
 import { decorateKoCommands, showScreenPopup } from 'Knoin/Knoin';
-import { AbstractViewCenter } from 'Knoin/AbstractViews';
+import { AbstractViewLogin } from 'Knoin/AbstractViews';
 
 import { LanguagesPopupView } from 'View/Popup/Languages';
 
 const
-	LoginSignMeType = {
-		DefaultOff: 0,
-		DefaultOn: 1,
-		Unused: 2
-	},
-
-	LoginSignMeTypeAsString = {
-		DefaultOff: 'defaultoff',
-		DefaultOn: 'defaulton',
-		Unused: 'unused'
-	};
+	SignMeOff = 0,
+	SignMeOn = 1,
+	SignMeUnused = 2;
 
 
-class LoginUserView extends AbstractViewCenter {
+export class LoginUserView extends AbstractViewLogin {
 	constructor() {
-		super('User/Login', 'Login');
-
-		this.hideSubmitButton = Settings.app('hideSubmitButton');
+		super();
 
 		this.addObservables({
 			loadingDesc: SettingsGet('LoadingDescription'),
@@ -47,21 +34,14 @@ class LoginUserView extends AbstractViewCenter {
 			emailError: false,
 			passwordError: false,
 
-			formHidden: false,
-
 			submitRequest: false,
 			submitError: '',
 			submitErrorAddidional: '',
 
 			langRequest: false,
 
-			signMeType: LoginSignMeType.Unused
+			signMeType: SignMeUnused
 		});
-
-		this.forgotPasswordLinkUrl = Settings.app('forgotPasswordLinkUrl');
-		this.registrationLinkUrl = Settings.app('registrationLinkUrl');
-
-		this.formError = ko.observable(false).extend({ falseTimeout: 500 });
 
 		this.allowLanguagesOnLogin = !!SettingsGet('AllowLanguagesOnLogin');
 
@@ -74,19 +54,17 @@ class LoginUserView extends AbstractViewCenter {
 
 			languageFullName: () => convertLangName(this.language()),
 
-			signMeVisibility: () => LoginSignMeType.Unused !== this.signMeType()
+			signMeVisibility: () => SignMeUnused !== this.signMeType()
 		});
 
 		this.addSubscribables({
-			email: () => {
-				this.emailError(false);
-			},
+			email: () => this.emailError(false),
 
 			password: () => this.passwordError(false),
 
 			submitError: value => value || this.submitErrorAddidional(''),
 
-			signMeType: iValue => this.signMe(LoginSignMeType.DefaultOn === iValue),
+			signMeType: iValue => this.signMe(SignMeOn === iValue),
 
 			language: value => {
 				this.langRequest(true);
@@ -110,96 +88,75 @@ class LoginUserView extends AbstractViewCenter {
 	}
 
 	submitCommand(self, event) {
-		let email = this.email().trim(),
-			valid = event.target.form.reportValidity() && email,
-			pass = this.password();
+		let form = event.target.form,
+			data = new FormData(form),
+			valid = form.reportValidity() && fireEvent('sm-user-login', data);
 
-		this.emailError(!email);
-		this.passwordError(!pass);
-
-		let pluginResultCode = 0, pluginResultMessage = '';
-		runHook('user-login-submit', [(iResultCode, sResultMessage) => {
-			pluginResultCode = iResultCode;
-			pluginResultMessage = sResultMessage;
-		}]);
-		if (0 < pluginResultCode) {
-			this.submitError(getNotification(pluginResultCode));
-			valid = false;
-		} else if (pluginResultMessage) {
-			this.submitError(pluginResultMessage);
-			valid = false;
-		}
-
+		this.emailError(!this.email());
+		this.passwordError(!this.password());
 		this.formError(!valid);
 
 		if (valid) {
 			this.submitRequest(true);
-
-			Remote.login(
+			data.set('Language', this.bSendLanguage ? this.language() : '');
+			data.set('SignMe', this.signMe() ? 1 : 0);
+			Remote.request('Login',
 				(iError, oData) => {
+					fireEvent('sm-user-login-response', {
+						error: iError,
+						data: oData
+					});
 					if (iError) {
 						this.submitRequest(false);
 						if (Notification.InvalidInputArgument == iError) {
 							iError = Notification.AuthError;
 						}
-						this.submitError(getNotification(iError, oData.ErrorMessage, Notification.UnknownNotification));
+						this.submitError(getNotification(iError, (oData ? oData.ErrorMessage : ''),
+							Notification.UnknownNotification));
 						this.submitErrorAddidional((oData && oData.ErrorMessageAdditional) || '');
 					} else {
-						rl.route.reload();
+						rl.setData(oData.Result);
 					}
 				},
-				email,
-				pass,
-				!!this.signMe(),
-				this.bSendLanguage ? this.language() : ''
+				data
 			);
 
-			Local.set(ClientSideKeyName.LastSignMe, this.signMe() ? '-1-' : '-0-');
+			Local.set(ClientSideKeyNameLastSignMe, this.signMe() ? '-1-' : '-0-');
 		}
 
 		return valid;
 	}
 
-	onShow() {
-		rl.route.off();
-	}
+	onBuild(dom) {
+		super.onBuild(dom);
 
-	onBuild() {
-		const signMeLocal = Local.get(ClientSideKeyName.LastSignMe),
-			signMe = (SettingsGet('SignMe') || 'unused').toLowerCase();
+		const signMe = (SettingsGet('SignMe') || '').toLowerCase();
 
 		switch (signMe) {
-			case LoginSignMeTypeAsString.DefaultOff:
-			case LoginSignMeTypeAsString.DefaultOn:
+			case 'defaultoff':
+			case 'defaulton':
 				this.signMeType(
-					LoginSignMeTypeAsString.DefaultOn === signMe ? LoginSignMeType.DefaultOn : LoginSignMeType.DefaultOff
+					'defaulton' === signMe ? SignMeOn : SignMeOff
 				);
 
-				switch (signMeLocal) {
+				switch (Local.get(ClientSideKeyNameLastSignMe)) {
 					case '-1-':
-						this.signMeType(LoginSignMeType.DefaultOn);
+						this.signMeType(SignMeOn);
 						break;
 					case '-0-':
-						this.signMeType(LoginSignMeType.DefaultOff);
+						this.signMeType(SignMeOff);
 						break;
 					// no default
 				}
 
 				break;
-			case LoginSignMeTypeAsString.Unused:
 			default:
-				this.signMeType(LoginSignMeType.Unused);
+				this.signMeType(SignMeUnused);
 				break;
 		}
-	}
-
-	submitForm() {
-//		return false;
 	}
 
 	selectLanguage() {
 		showScreenPopup(LanguagesPopupView, [this.language, this.languages(), LanguageStore.userLanguage()]);
 	}
 }
-
-export { LoginUserView };

@@ -1,5 +1,5 @@
 import * as Links from 'Common/Links';
-import { doc } from 'Common/Globals';
+import { doc, SettingsGet, fireEvent, addEventsListener } from 'Common/Globals';
 
 let notificator = null,
 	player = null,
@@ -12,7 +12,7 @@ let notificator = null,
 			player.src = url;
 			player.play();
 			name = name.trim();
-			dispatchEvent(new CustomEvent('audio.start', {detail:name.replace(/\.([a-z0-9]{3})$/, '') || 'audio'}));
+			fireEvent('audio.start', name.replace(/\.([a-z0-9]{3})$/, '') || 'audio');
 		}
 	},
 
@@ -73,8 +73,7 @@ export const SMAudio = new class {
 		this.supportedOgg = canPlay('audio/ogg; codecs="vorbis"');
 		if (player) {
 			const stopFn = () => this.pause();
-			player.addEventListener('ended', stopFn);
-			player.addEventListener('error', stopFn);
+			addEventsListener(player, ['ended','error'], stopFn);
 			addEventListener('audio.api.stop', stopFn);
 		}
 	}
@@ -89,7 +88,7 @@ export const SMAudio = new class {
 
 	pause() {
 		player && player.pause();
-		dispatchEvent(new CustomEvent('audio.stop'));
+		fireEvent('audio.stop');
 	}
 
 	playMp3(url, name) {
@@ -106,11 +105,11 @@ export const SMAudio = new class {
 
 	playNotification(silent) {
 		if ('running' == audioCtx.state && (this.supportedMp3 || this.supportedOgg)) {
-			if (!notificator) {
-				notificator = createNewObject();
-				notificator.src = Links.staticLink('sounds/new-mail.'+ (this.supportedMp3 ? 'mp3' : 'ogg'));
-			}
+			notificator = notificator || createNewObject();
 			if (notificator) {
+				notificator.src = Links.staticLink('sounds/'
+					+ SettingsGet('NotificationSound')
+					+ (this.supportedMp3 ? '.mp3' : '.ogg'));
 				notificator.volume = silent ? 0.01 : 1;
 				notificator.play();
 			}

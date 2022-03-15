@@ -1,15 +1,16 @@
 import ko from 'ko';
 
-import { Capa, Scope } from 'Common/Enums';
-import { leftPanelDisabled, moveAction, Settings } from 'Common/Globals';
+import { Scope } from 'Common/Enums';
+import { moveAction, addShortcut } from 'Common/Globals';
 import { mailBox, settings } from 'Common/Links';
 import { setFolderHash } from 'Common/Cache';
+import { addComputablesTo } from 'External/ko';
 
 import { AppUserStore } from 'Stores/User/App';
 import { SettingsUserStore } from 'Stores/User/Settings';
 import { FolderUserStore } from 'Stores/User/Folder';
 import { MessageUserStore } from 'Stores/User/Message';
-import { ThemeStore } from 'Stores/Theme';
+import { MessagelistUserStore } from 'Stores/User/Messagelist';
 
 import { showScreenPopup } from 'Knoin/Knoin';
 import { AbstractViewLeft } from 'Knoin/AbstractViews';
@@ -18,9 +19,13 @@ import { showMessageComposer } from 'Common/UtilsUser';
 import { FolderCreatePopupView } from 'View/Popup/FolderCreate';
 import { ContactsPopupView } from 'View/Popup/Contacts';
 
-export class FolderListMailBoxUserView extends AbstractViewLeft {
+import { moveMessagesToFolder } from 'Common/Folders';
+
+import { setExpandedFolder } from 'Model/FolderCollection';
+
+export class MailFolderList extends AbstractViewLeft {
 	constructor() {
-		super('User/MailBox/FolderList', 'MailFolderList');
+		super();
 
 		this.oContentScrollable = null;
 
@@ -32,74 +37,44 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 
 		this.moveAction = moveAction;
 
-		this.foldersListWithSingleInboxRootFolder = FolderUserStore.foldersListWithSingleInboxRootFolder;
+		this.foldersListWithSingleInboxRootFolder = ko.observable(false);
 
-		this.leftPanelDisabled = leftPanelDisabled;
-
-		this.allowComposer = Settings.capa(Capa.Composer);
 		this.allowContacts = AppUserStore.allowContacts();
 
-		this.folderListFocused = ko.computed(() => Scope.FolderList === AppUserStore.focusedState());
-
-		this.isInboxStarred = ko.computed(
-			() =>
-				FolderUserStore.currentFolder() &&
-				FolderUserStore.currentFolder().isInbox() &&
-				MessageUserStore.listSearch().trim().includes('is:flagged')
-		);
+		addComputablesTo(this, {
+			folderListVisible: () => {
+				let multiple = false,
+					inbox, visible,
+					result = FolderUserStore.folderList().filter(folder => {
+						if (folder.isInbox()) {
+							inbox = folder;
+						}
+						visible = folder.visible();
+						multiple |= visible && !folder.isInbox();
+						return visible;
+					});
+				if (inbox && !multiple) {
+					inbox.collapsed(false);
+				}
+				this.foldersListWithSingleInboxRootFolder(!multiple);
+				return result;
+			}
+		});
 	}
 
 	onBuild(dom) {
 		const qs = s => dom.querySelector(s),
-			eqs = (ev, s) => ev.target.closestWithin(s, dom),
-			fSelectFolder = (el, event, starred) => {
-				const isMove = moveAction();
-				ThemeStore.isMobile() && leftPanelDisabled(true);
-
-				event.preventDefault();
-
-				if (starred) {
-					event.stopPropagation();
-				}
-
-				const folder = ko.dataFor(el);
-				if (folder) {
-					if (isMove) {
-						moveAction(false);
-						rl.app.moveMessagesToFolder(
-							FolderUserStore.currentFolderFullNameRaw(),
-							MessageUserStore.listCheckedOrSelectedUidsWithSubMails(),
-							folder.fullNameRaw,
-							event.ctrlKey
-						);
-					} else {
-						if (!SettingsUserStore.usePreviewPane()) {
-							MessageUserStore.message(null);
-						}
-
-						if (folder.fullNameRaw === FolderUserStore.currentFolderFullNameRaw()) {
-							setFolderHash(folder.fullNameRaw, '');
-						}
-
-						rl.route.setHash(starred
-							? mailBox(folder.fullNameHash, 1, 'is:flagged')
-							: mailBox(folder.fullNameHash)
-						);
-					}
-
-					AppUserStore.focusedState(Scope.MessageList);
-				}
-			};
+			eqs = (ev, s) => ev.target.closestWithin(s, dom);
 
 		this.oContentScrollable = qs('.b-content');
 
 		dom.addEventListener('click', event => {
-			let el = event.target.closest('.e-collapsed-sign');
+			let el = eqs(event, '.e-collapsed-sign');
 			if (el) {
 				const folder = ko.dataFor(el);
 				if (folder) {
 					const collapsed = folder.collapsed();
-					rl.app.setExpandedFolder(folder.fullNameHash, collapsed);
+					setExpandedFolder(folder.fullName, collapsed);
 
 					folder.collapsed(!collapsed);
 					event.preventDefault();
@@ -108,16 +83,43 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 				}
 			}
 
-			el = eqs(event, '.b-folders .e-item .e-link.selectable .inbox-star-icon');
-			el && fSelectFolder(el, event, !this.isInboxStarred());
+			el = eqs(event, 'a');
+			if (el && el.matches('.selectable')) {
+				event.preventDefault();
+				const folder = ko.dataFor(el);
+				if (folder) {
+					if (moveAction()) {
+						moveAction(false);
+						moveMessagesToFolder(
+							FolderUserStore.currentFolderFullName(),
+							MessagelistUserStore.listCheckedOrSelectedUidsWithSubMails(),
+							folder.fullName,
+							event.ctrlKey
+						);
+					} else {
+						if (!SettingsUserStore.usePreviewPane()) {
+							MessageUserStore.message(null);
+						}
 
-			el = eqs(event, '.b-folders .e-item .e-link.selectable');
-			el && fSelectFolder(el, event, false);
+						if (folder.fullName === FolderUserStore.currentFolderFullName()) {
+							setFolderHash(folder.fullName, '');
+						}
+
+						hasher.setHash(
+							mailBox(folder.fullNameHash, 1,
+								(event.target.matches('.flag-icon') && !folder.isFlagged()) ? 'flagged' : ''
+							)
+						);
+					}
+
+					AppUserStore.focusedState(Scope.MessageList);
+				}
+			}
 		});
 
-		shortcuts.add('arrowup,arrowdown', '', Scope.FolderList, event => {
+		addShortcut('arrowup,arrowdown', '', Scope.FolderList, event => {
 			let items = [], index = 0;
-			dom.querySelectorAll('.b-folders .e-item .e-link:not(.hidden)').forEach(node => {
+			dom.querySelectorAll('li a:not(.hidden)').forEach(node => {
 				if (node.offsetHeight || node.getClientRects().length) {
 					items.push(node);
 					if (node.matches('.focused')) {
@@ -139,8 +141,8 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 			return false;
 		});
 
-		shortcuts.add('enter,open', '', Scope.FolderList, () => {
-			const item = qs('.b-folders .e-item .e-link:not(.hidden).focused');
+		addShortcut('enter,open', '', Scope.FolderList, () => {
+			const item = qs('li a:not(.hidden).focused');
 			if (item) {
 				AppUserStore.focusedState(Scope.MessageList);
 				item.click();
@@ -149,31 +151,31 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 			return false;
 		});
 
-		shortcuts.add('space', '', Scope.FolderList, () => {
-			const item = qs('.b-folders .e-item .e-link:not(.hidden).focused'),
+		addShortcut('space', '', Scope.FolderList, () => {
+			const item = qs('li a:not(.hidden).focused'),
 				folder = item && ko.dataFor(item);
 			if (folder) {
 				const collapsed = folder.collapsed();
-				rl.app.setExpandedFolder(folder.fullNameHash, collapsed);
+				setExpandedFolder(folder.fullName, collapsed);
 				folder.collapsed(!collapsed);
 			}
 
 			return false;
 		});
 
-//		shortcuts.add('tab', 'shift', Scope.FolderList, () => {
-		shortcuts.add('escape,tab,arrowright', '', Scope.FolderList, () => {
+//		addShortcut('tab', 'shift', Scope.FolderList, () => {
+		addShortcut('escape,tab,arrowright', '', Scope.FolderList, () => {
 			AppUserStore.focusedState(Scope.MessageList);
 			moveAction(false);
 			return false;
 		});
 
 		AppUserStore.focusedState.subscribe(value => {
-			let el = qs('.b-folders .e-item .e-link.focused');
-			el && qs('.b-folders .e-item .e-link.focused').classList.remove('focused');
+			let el = qs('li a.focused');
+			el && el.classList.remove('focused');
 			if (Scope.FolderList === value) {
-				el = qs('.b-folders .e-item .e-link.selected');
-				el && qs('.b-folders .e-item .e-link.selected').classList.add('focused');
+				el = qs('li a.selected');
+				el && el.classList.add('focused');
 			}
 		});
 	}
@@ -181,7 +183,7 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 	scrollToFocused() {
 		const scrollable = this.oContentScrollable;
 		if (scrollable) {
-			let block, focused = scrollable.querySelector('.e-item .e-link.focused');
+			let block, focused = scrollable.querySelector('li a.focused');
 			if (focused) {
 				const fRect = focused.getBoundingClientRect(),
 					sRect = scrollable.getBoundingClientRect();
@@ -204,7 +206,7 @@ export class FolderListMailBoxUserView extends AbstractViewLeft {
 	}
 
 	configureFolders() {
-		rl.route.setHash(settings('folders'));
+		hasher.setHash(settings('folders'));
 	}
 
 	contactsClick() {

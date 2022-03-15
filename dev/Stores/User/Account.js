@@ -1,32 +1,13 @@
-import ko from 'ko';
-import { SettingsGet } from 'Common/Globals';
-import { addObservablesTo } from 'Common/Utils';
+import { addObservablesTo, koArrayWithDestroy } from 'External/ko';
 
 export const AccountUserStore = {
-	accounts: ko.observableArray(),
+	accounts: koArrayWithDestroy(),
 	loading: ko.observable(false).extend({ debounce: 100 }),
 
-	getEmailAddresses: () => AccountUserStore.accounts.map(item => item ? item.email : null).filter(v => v),
-
-	accountsUnreadCount: ko.computed(() => 0),
-	// accountsUnreadCount: ko.computed(() => {
-	// 	let result = 0;
-	// 	AccountUserStore.accounts().forEach(item => {
-	// 		if (item) {
-	// 			result += item.count();
-	// 		}
-	// 	});
-	// 	return result;
-	// }),
-
-	populate: () => {
-		AccountUserStore.email(SettingsGet('Email'));
-		AccountUserStore.parentEmail(SettingsGet('ParentEmail'));
-	}
+	getEmailAddresses: () => AccountUserStore.accounts.map(item => item.email)
 };
 
 addObservablesTo(AccountUserStore, {
 	email: '',
-	parentEmail: '',
 	signature: ''
 });

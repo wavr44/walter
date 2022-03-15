@@ -2,158 +2,211 @@ import ko from 'ko';
 import { Notification, UploadErrorCode } from 'Common/Enums';
 import { langLink } from 'Common/Links';
 import { doc, createElement } from 'Common/Globals';
+import { getKeyByValue, forEachObjectEntry } from 'Common/Utils';
 
-let I18N_DATA = window.snappymailI18N || {};
+let I18N_DATA = {};
 
-export const trigger = ko.observable(false);
-
-/**
- * @param {string} key
- * @param {Object=} valueList
- * @param {string=} defaulValue
- * @returns {string}
- */
-export function i18n(key, valueList, defaulValue) {
-	let path = key.split('/');
-	if (!I18N_DATA[path[0]] || !path[1]) {
-		return defaulValue || key;
-	}
-	let result = I18N_DATA[path[0]][path[1]] || defaulValue || key;
-	if (valueList) {
-		Object.entries(valueList).forEach(([key, value]) => {
-			result = result.replace('%' + key + '%', value);
-		});
-	}
-	return result;
-}
-
-const i18nToNode = element => {
-	const key = element.dataset.i18n;
-	if (key) {
-		if ('[' === key.substr(0, 1)) {
-			switch (key.substr(0, 6)) {
-				case '[html]':
-					element.innerHTML = i18n(key.substr(6));
-					break;
-				case '[place':
-					element.placeholder = i18n(key.substr(13));
-					break;
-				case '[title':
-					element.title = i18n(key.substr(7));
-					break;
-				// no default
+const
+	i18nToNode = element => {
+		const key = element.dataset.i18n;
+		if (key) {
+			if ('[' === key.slice(0, 1)) {
+				switch (key.slice(0, 6)) {
+					case '[html]':
+						element.innerHTML = i18n(key.slice(6));
+						break;
+					case '[place':
+						element.placeholder = i18n(key.slice(13));
+						break;
+					case '[title':
+						element.title = i18n(key.slice(7));
+						break;
+					// no default
+				}
+			} else {
+				element.textContent = i18n(key);
 			}
-		} else {
-			element.textContent = i18n(key);
 		}
-	}
-},
+	},
+
+	init = () => {
+		if (rl.I18N) {
+			I18N_DATA = rl.I18N;
+			Date.defineRelativeTimeFormat(rl.relativeTime || {});
+			rl.I18N = null;
+			return 1;
+		}
+	},
 
 	i18nKey = key => key.replace(/([a-z])([A-Z])/g, '$1_$2').toUpperCase(),
 
-	getKeyByValue = (o, v) => Object.keys(o).find(key => o[key] === v);
+	getNotificationMessage = code => {
+		let key = getKeyByValue(Notification, code);
+		return key ? I18N_DATA.NOTIFICATIONS[i18nKey(key).replace('_NOTIFICATION', '_ERROR')] : '';
+	};
 
-/**
- * @param {Object} elements
- * @param {boolean=} animate = false
- */
-export function i18nToNodes(element) {
-	setTimeout(() =>
-		element.querySelectorAll('[data-i18n]').forEach(item => i18nToNode(item))
-	, 1);
-}
+export const
+	trigger = ko.observable(false),
 
-/**
- * @param {Function} startCallback
- * @param {Function=} langCallback = null
- */
-export function initOnStartOrLangChange(startCallback, langCallback = null) {
-	startCallback && startCallback();
-	startCallback && trigger.subscribe(startCallback);
-	langCallback && trigger.subscribe(langCallback);
-}
-
-function getNotificationMessage(code) {
-	let key = getKeyByValue(Notification, code);
-	if (key) {
-		key = i18nKey(key).replace('_NOTIFICATION', '_ERROR');
-		return I18N_DATA.NOTIFICATIONS[key];
-	}
-}
-
-/**
- * @param {number} code
- * @param {*=} message = ''
- * @param {*=} defCode = null
- * @returns {string}
- */
-export function getNotification(code, message = '', defCode = 0) {
-	code = parseInt(code, 10) || 0;
-	if (Notification.ClientViewError === code && message) {
-		return message;
-	}
-
-	return getNotificationMessage(code)
-		|| getNotificationMessage(parseInt(defCode, 10))
-		|| '';
-}
-
-/**
- * @param {*} code
- * @returns {string}
- */
-export function getUploadErrorDescByCode(code) {
-	let result = 'UNKNOWN';
-	code = parseInt(code, 10) || 0;
-	switch (code) {
-		case UploadErrorCode.FileIsTooBig:
-		case UploadErrorCode.FilePartiallyUploaded:
-		case UploadErrorCode.NoFileUploaded:
-		case UploadErrorCode.MissingTempFolder:
-		case UploadErrorCode.OnSavingFile:
-		case UploadErrorCode.FileType:
-			result = i18nKey(getKeyByValue(UploadErrorCode, code));
-			break;
-	}
-	return i18n('UPLOAD/ERROR_' + result);
-}
-
-/**
- * @param {boolean} admin
- * @param {string} language
- */
-export function reload(admin, language) {
-	return new Promise((resolve, reject) => {
-		const script = createElement('script');
-		script.onload = () => {
-			// reload the data
-			if (window.snappymailI18N) {
-				I18N_DATA = window.snappymailI18N;
-				i18nToNodes(doc);
-				dispatchEvent(new CustomEvent('reload-time'));
-				trigger(!trigger());
+	/**
+	 * @param {string} key
+	 * @param {Object=} valueList
+	 * @param {string=} defaulValue
+	 * @returns {string}
+	 */
+	i18n = (key, valueList, defaulValue) => {
+		let result = defaulValue || key;
+		if (key) {
+			let path = key.split('/');
+			if (I18N_DATA[path[0]] && path[1]) {
+				result = I18N_DATA[path[0]][path[1]] || result;
 			}
-			window.snappymailI18N = null;
-			script.remove();
-			resolve();
-		};
-		script.onerror = () => reject(new Error('Language '+language+' failed'));
-		script.src = langLink(language, admin);
-//		script.async = true;
-		doc.head.append(script);
-	});
-}
+		}
+		if (valueList) {
+			forEachObjectEntry(valueList, (key, value) => {
+				result = result.replace('%' + key + '%', value);
+			});
+		}
+		return result;
+	},
 
-/**
- *
- * @param {string} language
- * @param {boolean=} isEng = false
- * @returns {string}
- */
-export function convertLangName(language, isEng = false) {
-	return i18n(
-		'LANGS_NAMES' + (true === isEng ? '_EN' : '') + '/' + language,
-		null,
-		language
-	);
-}
+	/**
+	 * @param {Object} elements
+	 * @param {boolean=} animate = false
+	 */
+	i18nToNodes = element =>
+		setTimeout(() =>
+			element.querySelectorAll('[data-i18n]').forEach(item => i18nToNode(item))
+		, 1),
+
+	timestampToString = (timeStampInUTC, formatStr) => {
+		const now = Date.now(),
+			time = 0 < timeStampInUTC ? Math.min(now, timeStampInUTC * 1000) : (0 === timeStampInUTC ? now : 0);
+
+		if (31536000000 < time) {
+			const m = new Date(time);
+			switch (formatStr) {
+				case 'FROMNOW':
+					return m.fromNow();
+				case 'SHORT': {
+					if (4 >= (now - time) / 3600000)
+						return m.fromNow();
+					const mt = m.getTime(), date = new Date,
+						dt = date.setHours(0,0,0,0);
+					if (mt > dt)
+						return i18n('MESSAGE_LIST/TODAY_AT', {TIME: m.format('LT')});
+					if (mt > dt - 86400000)
+						return i18n('MESSAGE_LIST/YESTERDAY_AT', {TIME: m.format('LT')});
+					if (date.getFullYear() === m.getFullYear())
+						return m.format('d M');
+					return m.format('LL');
+				}
+				case 'FULL':
+					return m.format('LLL');
+				default:
+					return m.format(formatStr);
+			}
+		}
+
+		return '';
+	},
+
+	timeToNode = (element, time) => {
+		try {
+			if (time) {
+				element.dateTime = (new Date(time * 1000)).format('Y-m-d\\TH:i:s');
+			} else {
+				time = Date.parse(element.dateTime) / 1000;
+			}
+
+			let key = element.dataset.momentFormat;
+			if (key) {
+				element.textContent = timestampToString(time, key);
+			}
+
+			if ((key = element.dataset.momentFormatTitle)) {
+				element.title = timestampToString(time, key);
+			}
+		} catch (e) {
+			// prevent knockout crashes
+			console.error(e);
+		}
+	},
+
+	reloadTime = () => setTimeout(() =>
+			doc.querySelectorAll('time').forEach(element => timeToNode(element))
+			, 1),
+
+	/**
+	 * @param {Function} startCallback
+	 * @param {Function=} langCallback = null
+	 */
+	initOnStartOrLangChange = (startCallback, langCallback = null) => {
+		startCallback && startCallback();
+		startCallback && trigger.subscribe(startCallback);
+		langCallback && trigger.subscribe(langCallback);
+	},
+
+	/**
+	 * @param {number} code
+	 * @param {*=} message = ''
+	 * @param {*=} defCode = null
+	 * @returns {string}
+	 */
+	getNotification = (code, message = '', defCode = 0) => {
+		code = parseInt(code, 10) || 0;
+		if (Notification.ClientViewError === code && message) {
+			return message;
+		}
+
+		return getNotificationMessage(code)
+			|| getNotificationMessage(parseInt(defCode, 10))
+			|| '';
+	},
+
+	/**
+	 * @param {*} code
+	 * @returns {string}
+	 */
+	getUploadErrorDescByCode = code => {
+		let key = getKeyByValue(UploadErrorCode, parseInt(code, 10));
+		return i18n('UPLOAD/ERROR_' + (key ? i18nKey(key) : 'UNKNOWN'));
+	},
+
+	/**
+	 * @param {boolean} admin
+	 * @param {string} language
+	 */
+	translatorReload = (admin, language) =>
+		new Promise((resolve, reject) => {
+			const script = createElement('script');
+			script.onload = () => {
+				// reload the data
+				if (init()) {
+					i18nToNodes(doc);
+					admin || reloadTime();
+					trigger(!trigger());
+				}
+				script.remove();
+				resolve();
+			};
+			script.onerror = () => reject(new Error('Language '+language+' failed'));
+			script.src = langLink(language, admin);
+	//		script.async = true;
+			doc.head.append(script);
+		}),
+
+	/**
+	 *
+	 * @param {string} language
+	 * @param {boolean=} isEng = false
+	 * @returns {string}
+	 */
+	convertLangName = (language, isEng = false) =>
+		i18n(
+			'LANGS_NAMES' + (true === isEng ? '_EN' : '') + '/' + language,
+			null,
+			language
+		);
+
+init();

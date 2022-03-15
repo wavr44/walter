@@ -1,41 +1,30 @@
 import { Notification } from 'Common/Enums';
-import { Settings } from 'Common/Globals';
 import { isArray, pInt, pString } from 'Common/Utils';
 import { serverRequest } from 'Common/Links';
 import { runHook } from 'Common/Plugins';
+import { getNotification } from 'Common/Translator';
 
-let iJsonErrorCount = 0,
-	iTokenErrorCount = 0;
+let iJsonErrorCount = 0;
 
 const getURL = (add = '') => serverRequest('Json') + add,
 
-updateToken = data => {
-	if (data.UpdateToken) {
-		rl.hash.set();
-		Settings.set('AuthAccountHash', data.UpdateToken);
-	}
-},
-
 checkResponseError = data => {
 	const err = data ? data.ErrorCode : null;
-	if (Notification.InvalidToken === err && 10 < ++iTokenErrorCount) {
+	if (Notification.InvalidToken === err) {
+		alert(getNotification(err));
 		rl.logoutReload();
-	} else {
-		if ([
-				Notification.AuthError,
-				Notification.ConnectionError,
-				Notification.DomainNotAllowed,
-				Notification.AccountNotAllowed,
-				Notification.MailServerError,
-				Notification.UnknownNotification,
-				Notification.UnknownError
-			].includes(err)
-		) {
-			++iJsonErrorCount;
-		}
-		if (data.ClearAuth || data.Logout || 7 < iJsonErrorCount) {
-			rl.hash.clear();
-			data.ClearAuth || rl.logoutReload();
+	} else if ([
+			Notification.AuthError,
+			Notification.ConnectionError,
+			Notification.DomainNotAllowed,
+			Notification.AccountNotAllowed,
+			Notification.MailServerError,
+			Notification.UnknownNotification,
+			Notification.UnknownError
+		].includes(err)
+	) {
+		if (7 < ++iJsonErrorCount) {
+			rl.logoutReload();
 		}
 	}
 },
@@ -57,7 +46,11 @@ abort = (sAction, bClearOnly) => {
 fetchJSON = (action, sGetAdd, params, timeout, jsonCallback) => {
 	sGetAdd = pString(sGetAdd);
 	params = params || {};
-	params.Action = action;
+	if (params instanceof FormData) {
+		params.set('Action', action);
+	} else {
+		params.Action = action;
+	}
 	let init = {};
 	if (window.AbortController) {
 		abort(action);
@@ -69,11 +62,58 @@ fetchJSON = (action, sGetAdd, params, timeout, jsonCallback) => {
 	return rl.fetchJSON(getURL(sGetAdd), init, sGetAdd ? null : params).then(jsonCallback);
 };
 
+class FetchError extends Error
+{
+	constructor(code, message) {
+		super(message);
+		this.code = code || Notification.JsonFalse;
+	}
+}
+
 export class AbstractFetchRemote
 {
 	abort(sAction, bClearOnly) {
 		abort(sAction, bClearOnly);
 		return this;
+	}
+
+	/**
+	 * Allows quicker visual responses to the user.
+	 * Can be used to stream lines of json encoded data, but does not work on all servers.
+	 * Apache needs 'flushpackets' like in <Proxy "fcgi://...." flushpackets=on></Proxy>
+	 */
+	streamPerLine(fCallback, sGetAdd) {
+		rl.fetch(getURL(sGetAdd))
+		.then(response => response.body)
+		.then(body => {
+			// Firefox TextDecoderStream is not defined
+		//	const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+			const reader = body.getReader(),
+				re = /\r\n|\n|\r/gm,
+				utf8decoder = new TextDecoder();
+			let buffer = '';
+			function processText({ done, value }) {
+				buffer += value ? utf8decoder.decode(value, {stream: true}) : '';
+				for (;;) {
+					let result = re.exec(buffer);
+					if (!result) {
+						if (done) {
+							break;
+						}
+						reader.read().then(processText);
+						return;
+					}
+					fCallback(buffer.slice(0, result.index));
+					buffer = buffer.slice(result.index + 1);
+					re.lastIndex = 0;
+				}
+				if (buffer.length) {
+					// last line didn't end in a newline char
+					fCallback(buffer);
+				}
+			}
+			reader.read().then(processText);
+		})
 	}
 
 	/**
@@ -84,7 +124,7 @@ export class AbstractFetchRemote
 	 * @param {string=} sGetAdd = ''
 	 * @param {Array=} aAbortActions = []
 	 */
-	defaultRequest(fCallback, sAction, params, iTimeout, sGetAdd, abortActions) {
+	request(sAction, fCallback, params, iTimeout, sGetAdd, abortActions) {
 		params = params || {};
 
 		const start = Date.now();
@@ -100,12 +140,8 @@ export class AbstractFetchRemote
 			undefined === iTimeout ? 30000 : pInt(iTimeout),
 			data => {
 				let cached = false;
-				if (data) {
-					if (data.Time) {
-						cached = pInt(data.Time) > Date.now() - start;
-					}
-
-					updateToken(data);
+				if (data && data.Time) {
+					cached = pInt(data.Time) > Date.now() - start;
 				}
 
 				let iError = 0;
@@ -123,7 +159,7 @@ export class AbstractFetchRemote
 					}
 */
 					if (data.Result) {
-						iJsonErrorCount = iTokenErrorCount = 0;
+						iJsonErrorCount = 0;
 					} else {
 						checkResponseError(data);
 						iError = data.ErrorCode || Notification.UnknownError
@@ -156,29 +192,8 @@ export class AbstractFetchRemote
 	/**
 	 * @param {?Function} fCallback
 	 */
-	noop(fCallback) {
-		this.defaultRequest(fCallback, 'Noop');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
 	getPublicKey(fCallback) {
-		this.defaultRequest(fCallback, 'GetPublicKey');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 * @param {string} sVersion
-	 */
-	jsVersion(fCallback, sVersion) {
-		this.defaultRequest(fCallback, 'Version', {
-			Version: sVersion
-		});
-	}
-
-	fastResolve(mData) {
-		return Promise.resolve(mData);
+		this.request('GetPublicKey', fCallback);
 	}
 
 	setTrigger(trigger, value) {
@@ -190,17 +205,15 @@ export class AbstractFetchRemote
 		}
 	}
 
-	postRequest(action, fTrigger, params, timeOut) {
+	post(action, fTrigger, params, timeOut) {
 		this.setTrigger(fTrigger, true);
 		return fetchJSON(action, '', params, pInt(timeOut, 30000),
 			data => {
 				abort(action, true);
 
 				if (!data) {
-					return Promise.reject(Notification.JsonParse);
+					return Promise.reject(new FetchError(Notification.JsonParse));
 				}
-
-				updateToken(data);
 /*
 				let isCached = false, type = '';
 				if (data && data.Time) {
@@ -223,8 +236,10 @@ export class AbstractFetchRemote
 
 				if (!data.Result || action !== data.Action) {
 					checkResponseError(data);
-					const err = data ? data.ErrorCode : 0;
-					return Promise.reject(err || Notification.JsonFalse);
+					return Promise.reject(new FetchError(
+						data ? data.ErrorCode : 0,
+						data ? (data.ErrorMessageAdditional || data.ErrorMessage) : ''
+					));
 				}
 
 				return data;

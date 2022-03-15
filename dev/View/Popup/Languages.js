@@ -1,10 +1,11 @@
 import ko from 'ko';
+import { koComputable } from 'External/ko';
 
 import { convertLangName } from 'Common/Translator';
 
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-class LanguagesPopupView extends AbstractViewPopup {
+export class LanguagesPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Languages');
 
@@ -13,7 +14,7 @@ class LanguagesPopupView extends AbstractViewPopup {
 
 		this.langs = ko.observableArray();
 
-		this.languages = ko.computed(() => {
+		this.languages = koComputable(() => {
 			const userLanguage = this.userLanguage();
 			return this.langs.map(language => ({
 				key: language,
@@ -27,8 +28,7 @@ class LanguagesPopupView extends AbstractViewPopup {
 	}
 
 	languageTooltipName(language) {
-		const result = convertLangName(language, true);
-		return convertLangName(language, false) === result ? '' : result;
+		return convertLangName(language, true);
 	}
 
 	setLanguageSelection() {
@@ -36,7 +36,7 @@ class LanguagesPopupView extends AbstractViewPopup {
 		this.languages().forEach(item => item.selected(item.key === currentLang));
 	}
 
-	onBeforeShow() {
+	beforeShow() {
 		this.fLang = null;
 		this.userLanguage('');
 
@@ -52,8 +52,6 @@ class LanguagesPopupView extends AbstractViewPopup {
 
 	changeLanguage(lang) {
 		this.fLang && this.fLang(lang);
-		this.cancelCommand();
+		this.close();
 	}
 }
-
-export { LanguagesPopupView, LanguagesPopupView as default };

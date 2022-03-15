@@ -110,15 +110,14 @@
 					// Notification.CurrentPasswordIncorrect
 					this.currentPasswordError(true);
 				}
-				this.errorDescription((data && data.ErrorMessageAdditional)
+				this.errorDescription((data && rl.i18n(data.ErrorMessageAdditional))
 					|| rl.i18n('NOTIFICATIONS/COULD_NOT_SAVE_NEW_PASSWORD'));
 			} else {
 				this.currentPassword('');
 				this.newPassword('');
 				this.newPassword2('');
 				this.passwordUpdateSuccess(true);
-				rl.hash.set();
-				rl.settings.set('AuthAccountHash', data.Result);
+				rl.setData(data.Result);
 			}
 		}
 	}

@@ -2,7 +2,7 @@
 
 namespace RainLoop\Actions;
 
-use \RainLoop\Enumerations\Capa;
+use RainLoop\Enumerations\Capa;
 
 trait Filters
 {
@@ -18,7 +18,7 @@ trait Filters
 	{
 		$oAccount = $this->getAccountFromToken();
 
-		if (!$this->GetCapa(false, Capa::SIEVE, $oAccount))
+		if (!$this->GetCapa(Capa::SIEVE, $oAccount))
 		{
 			return $this->FalseResponse(__FUNCTION__);
 		}
@@ -33,7 +33,7 @@ trait Filters
 	{
 		$oAccount = $this->getAccountFromToken();
 
-		if (!$this->GetCapa(false, Capa::SIEVE, $oAccount)) {
+		if (!$this->GetCapa(Capa::SIEVE, $oAccount)) {
 			return $this->FalseResponse(__FUNCTION__);
 		}
 
@@ -68,7 +68,7 @@ trait Filters
 	{
 		$oAccount = $this->getAccountFromToken();
 
-		if (!$this->GetCapa(false, Capa::SIEVE, $oAccount)) {
+		if (!$this->GetCapa(Capa::SIEVE, $oAccount)) {
 			return $this->FalseResponse(__FUNCTION__);
 		}
 
@@ -84,7 +84,7 @@ trait Filters
 	{
 		$oAccount = $this->getAccountFromToken();
 
-		if (!$this->GetCapa(false, Capa::SIEVE, $oAccount)) {
+		if (!$this->GetCapa(Capa::SIEVE, $oAccount)) {
 			return $this->FalseResponse(__FUNCTION__);
 		}
 

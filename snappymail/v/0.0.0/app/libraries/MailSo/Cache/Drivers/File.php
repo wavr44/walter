@@ -74,13 +74,12 @@ class File implements \MailSo\Cache\DriverInterface
 
 	public function GC(int $iTimeToClearInHours = 24) : bool
 	{
-		if (0 < $iTimeToClearInHours)
-		{
-			\MailSo\Base\Utils::RecTimeDirRemove($this->sCacheFolder, 60 * 60 * $iTimeToClearInHours, \time());
-			return true;
+		if (0 === $iTimeToClearInHours) {
+			\MailSo\Base\Utils::RecRmDir($this->sCacheFolder);
+		} else {
+			\MailSo\Base\Utils::RecTimeDirRemove($this->sCacheFolder, 3600 * $iTimeToClearInHours);
 		}
-
-		return false;
+		return true;
 	}
 
 	private function generateCachedFileName(string $sKey, bool $bMkDir = false) : string

@@ -1,33 +1,37 @@
-import ko from 'ko';
+import { addObservablesTo } from 'External/ko';
 
-import { SaveSettingsStep, UploadErrorCode, Capa } from 'Common/Enums';
+import { SaveSettingsStep, UploadErrorCode } from 'Common/Enums';
 import { changeTheme, convertThemeName } from 'Common/Utils';
-import { userBackground, themePreviewLink, serverRequest } from 'Common/Links';
+import { themePreviewLink, serverRequest } from 'Common/Links';
 import { i18n } from 'Common/Translator';
-import { doc, $htmlCL, Settings } from 'Common/Globals';
+import { SettingsCapa } from 'Common/Globals';
 
 import { ThemeStore } from 'Stores/Theme';
 
 import Remote from 'Remote/User/Fetch';
 
-export class ThemesUserSettings {
+const themeBackground = {
+	name: ThemeStore.userBackgroundName,
+	hash: ThemeStore.userBackgroundHash
+};
+addObservablesTo(themeBackground, {
+	uploaderButton: null,
+	loading: false,
+	error: ''
+});
+
+export class UserSettingsThemes /*extends AbstractViewSettings*/ {
 	constructor() {
 		this.theme = ThemeStore.theme;
 		this.themes = ThemeStore.themes;
 		this.themesObjects = ko.observableArray();
 
-		this.background = {};
-		this.background.name = ThemeStore.userBackgroundName;
-		this.background.hash = ThemeStore.userBackgroundHash;
-		this.background.uploaderButton = ko.observable(null);
-		this.background.loading = ko.observable(false);
-		this.background.error = ko.observable('');
-
-		this.capaUserBackground = ko.observable(Settings.capa(Capa.UserBackground));
+		themeBackground.enabled = SettingsCapa('UserBackground');
+		this.background = themeBackground;
 
 		this.themeTrigger = ko.observable(SaveSettingsStep.Idle).extend({ debounce: 100 });
 
-		this.theme.subscribe((value) => {
+		ThemeStore.theme.subscribe(value => {
 			this.themesObjects.forEach(theme => {
 				theme.selected(value === theme.name);
 			});
@@ -38,23 +42,13 @@ export class ThemesUserSettings {
 				Theme: value
 			});
 		});
-
-		this.background.hash.subscribe((value) => {
-			if (!value) {
-				$htmlCL.remove('UserBackground');
-				doc.body.removeAttribute('style');
-			} else {
-				$htmlCL.add('UserBackground');
-				doc.body.style.backgroundImage = "url("+userBackground(value)+")";
-			}
-		});
 	}
 
 	onBuild() {
-		const currentTheme = this.theme();
+		const currentTheme = ThemeStore.theme();
 
 		this.themesObjects(
-			this.themes.map(theme => ({
+			ThemeStore.themes.map(theme => ({
 				name: theme,
 				nameDisplay: convertThemeName(theme),
 				selected: ko.observable(theme === currentTheme),
@@ -62,48 +56,30 @@ export class ThemesUserSettings {
 			}))
 		);
 
-		this.initUploader();
-	}
+		// initUploader
 
-	onShow() {
-		this.background.error('');
-	}
-
-	clearBackground() {
-		if (this.capaUserBackground()) {
-			Remote.clearUserBackground(() => {
-				this.background.name('');
-				this.background.hash('');
-			});
-		}
-	}
-
-	initUploader() {
-		if (this.background.uploaderButton() && this.capaUserBackground()) {
+		if (themeBackground.uploaderButton() && themeBackground.enabled) {
 			const oJua = new Jua({
 				action: serverRequest('UploadBackground'),
-				name: 'uploader',
-				queueSize: 1,
-				multipleSizeLimit: 1,
-				disableMultiple: true,
-				clickElement: this.background.uploaderButton()
+				limit: 1,
+				clickElement: themeBackground.uploaderButton()
 			});
 
 			oJua
 				.on('onStart', () => {
-					this.background.loading(true);
-					this.background.error('');
+					themeBackground.loading(true);
+					themeBackground.error('');
 					return true;
 				})
 				.on('onComplete', (id, result, data) => {
-					this.background.loading(false);
+					themeBackground.loading(false);
 
 					if (result && id && data && data.Result && data.Result.Name && data.Result.Hash) {
-						this.background.name(data.Result.Name);
-						this.background.hash(data.Result.Hash);
+						themeBackground.name(data.Result.Name);
+						themeBackground.hash(data.Result.Hash);
 					} else {
-						this.background.name('');
-						this.background.hash('');
+						themeBackground.name('');
+						themeBackground.hash('');
 
 						let errorMsg = '';
 						if (data.ErrorCode) {
@@ -122,11 +98,24 @@ export class ThemesUserSettings {
 							errorMsg = data.ErrorMessage;
 						}
 
-						this.background.error(errorMsg || i18n('SETTINGS_THEMES/ERROR_UNKNOWN'));
+						themeBackground.error(errorMsg || i18n('SETTINGS_THEMES/ERROR_UNKNOWN'));
 					}
 
 					return true;
 				});
+		}
+	}
+
+	onShow() {
+		themeBackground.error('');
+	}
+
+	clearBackground() {
+		if (themeBackground.enabled) {
+			Remote.request('ClearUserBackground', () => {
+				themeBackground.name('');
+				themeBackground.hash('');
+			});
 		}
 	}
 }

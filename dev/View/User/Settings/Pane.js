@@ -7,10 +7,11 @@ import { ThemeStore } from 'Stores/Theme';
 
 import { AbstractViewRight } from 'Knoin/AbstractViews';
 
-export class PaneSettingsUserView extends AbstractViewRight {
+export class SettingsPaneUserView extends AbstractViewRight {
 	constructor() {
-		super('User/Settings/Pane', 'SettingsPane');
+		super();
 
+		this.isMobile = ThemeStore.isMobile;
 		this.leftPanelDisabled = leftPanelDisabled;
 	}
 
@@ -18,25 +19,13 @@ export class PaneSettingsUserView extends AbstractViewRight {
 		MessageUserStore.message(null);
 	}
 
-	hideLeft(item, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		leftPanelDisabled(true);
-	}
-
-	showLeft(item, event) {
-		event.preventDefault();
-		event.stopPropagation();
-
-		leftPanelDisabled(false);
-	}
-
 	onBuild(dom) {
-		dom.addEventListener('click', () => ThemeStore.isMobile() && leftPanelDisabled(true));
+		dom.addEventListener('click', () =>
+			ThemeStore.isMobile() && !event.target.closestWithin('.toggleLeft', dom) && leftPanelDisabled(true)
+		);
 	}
 
 	backToMailBoxClick() {
-		rl.route.setHash(mailbox(getFolderInboxName()));
+		hasher.setHash(mailbox(getFolderInboxName()));
 	}
 }

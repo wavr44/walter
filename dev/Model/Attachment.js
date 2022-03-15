@@ -21,17 +21,20 @@ export class AttachmentModel extends AbstractModel {
 		this.fileNameExt = '';
 		this.fileType = FileType.Unknown;
 		this.friendlySize = '';
-		this.isInline = false;
-		this.isLinked = false;
 		this.isThumbnail = false;
 		this.cid = '';
-		this.cidWithoutTags = '';
 		this.contentLocation = '';
 		this.download = '';
 		this.folder = '';
 		this.uid = '';
+		this.url = '';
 		this.mimeIndex = '';
 		this.framed = false;
+
+		this.addObservables({
+			isInline: false,
+			isLinked: false
+		});
 	}
 
 	/**
@@ -43,12 +46,15 @@ export class AttachmentModel extends AbstractModel {
 		const attachment = super.reviveFromJson(json);
 		if (attachment) {
 			attachment.friendlySize = FileInfo.friendlySize(json.EstimatedSize);
-			attachment.cidWithoutTags = attachment.cid.replace(/^<+/, '').replace(/>+$/, '');
 
 			attachment.fileNameExt = FileInfo.getExtension(attachment.fileName);
 			attachment.fileType = FileInfo.getType(attachment.fileNameExt, attachment.mimeType);
 		}
 		return attachment;
+	}
+
+	contentId() {
+		return this.cid.replace(/^<+|>+$/g, '');
 	}
 
 	/**
@@ -122,29 +128,21 @@ export class AttachmentModel extends AbstractModel {
 	 * @returns {string}
 	 */
 	linkDownload() {
-		return attachmentDownload(this.download);
+		return this.url || attachmentDownload(this.download);
 	}
 
 	/**
 	 * @returns {string}
 	 */
 	linkPreview() {
-		return serverRequestRaw('View', this.download);
-	}
-
-	/**
-	 * @returns {string}
-	 */
-	linkThumbnail() {
-		return this.hasThumbnail() ? serverRequestRaw('ViewThumbnail', this.download) : '';
+		return this.url || serverRequestRaw('View', this.download);
 	}
 
 	/**
 	 * @returns {string}
 	 */
 	linkThumbnailPreviewStyle() {
-		const link = this.linkThumbnail();
-		return link ? 'background:url(' + link + ')' : '';
+		return this.hasThumbnail() ? 'background:url(' + serverRequestRaw('ViewThumbnail', this.download) + ')' : '';
 	}
 
 	/**
@@ -175,7 +173,7 @@ export class AttachmentModel extends AbstractModel {
 		const localEvent = event.originalEvent || event;
 		if (attachment && localEvent && localEvent.dataTransfer && localEvent.dataTransfer.setData) {
 			let link = this.linkDownload();
-			if ('http' !== link.substr(0, 4)) {
+			if ('http' !== link.slice(0, 4)) {
 				link = location.protocol + '//' + location.host + location.pathname + link;
 			}
 			localEvent.dataTransfer.setData('DownloadURL', this.mimeType + ':' + this.fileName + ':' + link);

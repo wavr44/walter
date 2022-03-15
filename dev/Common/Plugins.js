@@ -1,5 +1,6 @@
 import { settingsAddViewModel } from 'Screen/AbstractSettings';
 import { SettingsGet } from 'Common/Globals';
+import { AbstractViewPopup } from 'Knoin/AbstractViews';
 import { isArray, isFunction } from 'Common/Utils';
 
 const SIMPLE_HOOKS = {},
@@ -36,7 +37,7 @@ export function runHook(name, args = []) {
  * @param {?number=} timeout
  */
 rl.pluginRemoteRequest = (callback, action, parameters, timeout) => {
-	rl.app && rl.app.Remote.defaultRequest(callback, 'Plugin' + action, parameters, timeout);
+	rl.app.Remote.request('Plugin' + action, callback, parameters, timeout);
 };
 
 /**
@@ -78,3 +79,5 @@ rl.pluginSettingsGet = (pluginSection, name) => {
 	plugins = plugins && null != plugins[pluginSection] ? plugins[pluginSection] : null;
 	return plugins ? (null == plugins[name] ? null : plugins[name]) : null;
 };
+
+rl.pluginPopupView = AbstractViewPopup;

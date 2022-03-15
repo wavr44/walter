@@ -2,9 +2,9 @@
 
 namespace RainLoop\Actions;
 
-use \RainLoop\Enumerations\Capa;
-use \RainLoop\Notifications;
-use \RainLoop\Utils;
+use RainLoop\Enumerations\Capa;
+use RainLoop\Notifications;
+use RainLoop\Utils;
 
 trait Response
 {
@@ -100,6 +100,7 @@ trait Response
 		$sActionName = \preg_replace('/[^a-zA-Z0-9_]+/', '', $sActionName);
 
 		$aResult = array(
+//			'Version' => APP_VERSION,
 			'Action' => $sActionName,
 			'Result' => $this->responseObject($mResult, $sActionName)
 		);
@@ -123,65 +124,19 @@ trait Response
 		static $aCache = array();
 
 		$sExt = \MailSo\Base\Utils::GetFileExtension($sFileName);
-		if (isset($aCache[$sExt]))
-		{
+		if (isset($aCache[$sExt])) {
 			return $aCache[$sExt];
 		}
 
-		$bResult = \function_exists('gd_info');
-		if ($bResult)
-		{
-			$bResult = false;
-			switch ($sExt)
-			{
-				case 'png':
-					$bResult = \function_exists('imagecreatefrompng');
-					break;
-				case 'gif':
-					$bResult = \function_exists('imagecreatefromgif');
-					break;
-				case 'jpg':
-				case 'jpeg':
-					$bResult = \function_exists('imagecreatefromjpeg');
-					break;
-			}
-		}
+		$bResult = (
+			\extension_loaded('gd')
+			|| \extension_loaded('gmagick')
+			|| \extension_loaded('imagick')
+		) && \in_array($sExt, ['png', 'gif', 'jpg', 'jpeg']);
 
 		$aCache[$sExt] = $bResult;
 
 		return $bResult;
-	}
-
-	private function hashFolderFullName(string $sFolderFullName) : string
-	{
-		return \in_array(\strtolower($sFolderFullName), array('inbox', 'sent', 'send', 'drafts',
-			'spam', 'junk', 'bin', 'trash', 'archive', 'allmail', 'all')) ?
-				$sFolderFullName : \md5($sFolderFullName);
-	}
-
-	private function objectData(object $oData, string $sParent, array $aParameters = array()) : array
-	{
-		$mResult = array();
-		if (\is_object($oData))
-		{
-			$aNames = \explode('\\', \get_class($oData));
-			$mResult = array(
-				'@Object' => \end($aNames)
-			);
-
-			if ($oData instanceof \MailSo\Base\Collection)
-			{
-				$mResult['@Object'] = 'Collection/'.$mResult['@Object'];
-				$mResult['@Count'] = $oData->Count();
-				$mResult['@Collection'] = $this->responseObject($oData->getArrayCopy(), $sParent, $aParameters);
-			}
-			else
-			{
-				$mResult['@Object'] = 'Object/'.$mResult['@Object'];
-			}
-		}
-
-		return $mResult;
 	}
 
 	/**
@@ -189,9 +144,8 @@ trait Response
 	 *
 	 * @return mixed
 	 */
-	private $oAccount = null;
 	private $aCheckableFolder = null;
-	private function responseObject($mResponse, string $sParent = '', array $aParameters = array())
+	private function responseObject($mResponse, string $sParent = '')
 	{
 		if (!($mResponse instanceof \JsonSerializable))
 		{
@@ -204,7 +158,7 @@ trait Response
 			{
 				foreach ($mResponse as $iKey => $oItem)
 				{
-					$mResponse[$iKey] = $this->responseObject($oItem, $sParent, $aParameters);
+					$mResponse[$iKey] = $this->responseObject($oItem, $sParent);
 				}
 			}
 
@@ -215,12 +169,9 @@ trait Response
 		{
 			$mResult = $mResponse->jsonSerialize();
 
-			if (null === $this->oAccount) {
-				$this->oAccount = $this->getAccountFromToken(false);
-			}
-			$oAccount = $this->oAccount;
+			$oAccount = $this->getAccountFromToken();
 
-			if (!$mResult['DateTimeStampInUTC'] || !!$this->Config()->Get('labs', 'date_from_headers', false)) {
+			if (!$mResult['DateTimeStampInUTC'] || $this->Config()->Get('labs', 'date_from_headers', false)) {
 				$iDateTimeStampInUTC = $mResponse->HeaderTimeStampInUTC();
 				if ($iDateTimeStampInUTC) {
 					$mResult['DateTimeStampInUTC'] = $iDateTimeStampInUTC;
@@ -229,116 +180,47 @@ trait Response
 
 			// \MailSo\Mime\EmailCollection
 			foreach (['ReplyTo','From','To','Cc','Bcc','Sender','DeliveredTo','ReplyTo'] as $prop) {
-				$mResult[$prop] = $this->responseObject($mResult[$prop], $sParent, $aParameters);
+				$mResult[$prop] = $this->responseObject($mResult[$prop], $sParent);
 			}
 
 			$sSubject = $mResult['Subject'];
 			$mResult['Hash'] = \md5($mResult['Folder'].$mResult['Uid']);
 			$mResult['RequestHash'] = Utils::EncodeKeyValuesQ(array(
 				'V' => APP_VERSION,
-				'Account' => $oAccount ? \md5($oAccount->Hash()) : '',
+				'Account' => $oAccount->Hash(),
 				'Folder' => $mResult['Folder'],
 				'Uid' => $mResult['Uid'],
 				'MimeType' => 'message/rfc822',
-				'FileName' => (0 === \strlen($sSubject) ? 'message-'.$mResult['Uid'] : \MailSo\Base\Utils::ClearXss($sSubject)).'.eml'
+				'FileName' => (\strlen($sSubject) ? \MailSo\Base\Utils::ClearXss($sSubject) : 'message-'.$mResult['Uid']) . '.eml'
 			));
 
-			$sForwardedFlag = $this->Config()->Get('labs', 'imap_forwarded_flag', '');
-			$sReadReceiptFlag = $this->Config()->Get('labs', 'imap_read_receipt_flag', '');
-
-			$aFlags = $mResponse->FlagsLowerCase();
-			$mResult['IsForwarded'] = \strlen($sForwardedFlag) && \in_array(\strtolower($sForwardedFlag), $aFlags);
-			$mResult['IsReadReceipt'] = \strlen($sReadReceiptFlag) && \in_array(\strtolower($sReadReceiptFlag), $aFlags);
-
-			if (!$this->GetCapa(false, Capa::COMPOSER, $oAccount))
-			{
-				$mResult['IsReadReceipt'] = true;
-			}
+			$sForwardedFlag = \strtolower($this->Config()->Get('labs', 'imap_forwarded_flag', ''));
+			$sReadReceiptFlag = \strtolower($this->Config()->Get('labs', 'imap_read_receipt_flag', ''));
+			\strlen($sForwardedFlag) && \in_array($sForwardedFlag, $mResult['Flags']) && \array_push($mResult['Flags'], '$forwarded');
+			\strlen($sReadReceiptFlag) && \in_array($sReadReceiptFlag, $mResult['Flags']) && \array_push($mResult['Flags'], '$mdnsent');
+			$mResult['Flags'] = \array_unique($mResult['Flags']);
 
 			if ('Message' === $sParent)
 			{
-				$oAttachments = /* @var \MailSo\Mail\AttachmentCollection */  $mResponse->Attachments();
-
-				$bHasExternals = false;
-				$mFoundedCIDs = array();
-				$aContentLocationUrls = array();
-				$mFoundedContentLocationUrls = array();
-
-				if ($oAttachments && 0 < $oAttachments->Count())
-				{
-					foreach ($oAttachments as /* @var \MailSo\Mail\Attachment */ $oAttachment)
-					{
-						if ($oAttachment)
-						{
-							$sContentLocation = $oAttachment->ContentLocation();
-							if ($sContentLocation && 0 < \strlen($sContentLocation))
-							{
-								$aContentLocationUrls[] = $oAttachment->ContentLocation();
-							}
-						}
-					}
-				}
-
-				$sPlain = '';
-				$sHtml = \trim($mResponse->Html());
-
-				if (0 === \strlen($sHtml))
-				{
-					$sPlain = \trim($mResponse->Plain());
-				}
-
 				$mResult['DraftInfo'] = $mResponse->DraftInfo();
 				$mResult['InReplyTo'] = $mResponse->InReplyTo();
 				$mResult['UnsubsribeLinks'] = $mResponse->UnsubsribeLinks();
 				$mResult['References'] = $mResponse->References();
 
-				$fAdditionalExternalFilter = null;
-				if (!!$this->Config()->Get('labs', 'use_local_proxy_for_external_images', false))
-				{
-					$fAdditionalExternalFilter = function ($sUrl) {
-						return './?/ProxyExternal/'.Utils::EncodeKeyValuesQ(array(
-							'Rnd' => \md5(\microtime(true)),
-							'Token' => Utils::GetConnectionToken(),
-							'Url' => $sUrl
-						)).'/';
-					};
-				}
+				$mResult['Html'] = $mResponse->Html();
+				$mResult['Plain'] = $mResponse->Plain();
 
-				$sHtml = \preg_replace_callback('/(<pre[^>]*>)([\s\S\r\n\t]*?)(<\/pre>)/mi', function ($aMatches) {
-					return \preg_replace('/[\r\n]+/', '<br />', $aMatches[1].\trim($aMatches[2]).$aMatches[3]);
-				}, $sHtml);
+//				$this->GetCapa(Capa::OPEN_PGP) || $this->GetCapa(Capa::GNUPG)
+				$mResult['PgpSigned'] = $mResponse->PgpSigned();
+				$mResult['PgpEncrypted'] = $mResponse->PgpEncrypted();
 
-				$mResult['Html'] = 0 === \strlen($sHtml) ? '' : \MailSo\Base\HtmlUtils::ClearHtml(
-					$sHtml, $bHasExternals, $mFoundedCIDs, $aContentLocationUrls, $mFoundedContentLocationUrls, false, false,
-					$fAdditionalExternalFilter, null, !!$this->Config()->Get('labs', 'try_to_detect_hidden_images', false)
-				);
-
-				$mResult['ExternalProxy'] = null !== $fAdditionalExternalFilter;
-
-				$mResult['Plain'] = $sPlain;
-//				$mResult['Plain'] = 0 === \strlen($sPlain) ? '' : \MailSo\Base\HtmlUtils::ConvertPlainToHtml($sPlain);
-
-				$mResult['TextHash'] = \md5($mResult['Html'].$mResult['Plain']);
-
-				$mResult['isPgpSigned'] = $mResponse->isPgpSigned();
-				$mResult['isPgpEncrypted'] = $mResponse->isPgpEncrypted();
-				$mResult['PgpSignature'] = $mResponse->PgpSignature();
-
-				unset($sHtml, $sPlain);
-
-				$mResult['HasExternals'] = $bHasExternals;
-				$mResult['HasInternals'] = (\is_array($mFoundedCIDs) && 0 < \count($mFoundedCIDs)) ||
-					(\is_array($mFoundedContentLocationUrls) && 0 < \count($mFoundedContentLocationUrls));
-				$mResult['FoundedCIDs'] = $mFoundedCIDs;
-				$mResult['Attachments'] = $this->responseObject($oAttachments, $sParent, \array_merge($aParameters, array(
-					'FoundedCIDs' => $mFoundedCIDs,
-					'FoundedContentLocationUrls' => $mFoundedContentLocationUrls
-				)));
+				$mResult['Attachments'] = $this->responseObject($mResponse->Attachments(), $sParent);
 
 				$mResult['ReadReceipt'] = $mResponse->ReadReceipt();
-				if (0 < \strlen($mResult['ReadReceipt']) && !$mResult['IsReadReceipt'])
+
+				if (\strlen($mResult['ReadReceipt']) && !\in_array('$forwarded', $mResult['Flags']))
 				{
-					if (0 < \strlen($mResult['ReadReceipt']))
+					if (\strlen($mResult['ReadReceipt']))
 					{
 						try
 						{
@@ -351,7 +233,7 @@ trait Response
 						catch (\Throwable $oException) { unset($oException); }
 					}
 
-					if (0 < \strlen($mResult['ReadReceipt']) && '1' === $this->Cacher($oAccount)->Get(
+					if (\strlen($mResult['ReadReceipt']) && '1' === $this->Cacher($oAccount)->Get(
 						\RainLoop\KeyPathHelper::ReadReceiptCache($oAccount->Email(), $mResult['Folder'], $mResult['Uid']), '0'))
 					{
 						$mResult['ReadReceipt'] = '';
@@ -364,37 +246,11 @@ trait Response
 		if ($mResponse instanceof \MailSo\Mail\Attachment)
 		{
 			$mResult = $mResponse->jsonSerialize();
-
-			if (null === $this->oAccount) {
-				$this->oAccount = $this->getAccountFromToken(false);
-			}
-
-			$mFoundedCIDs = isset($aParameters['FoundedCIDs']) && \is_array($aParameters['FoundedCIDs']) &&
-				0 < \count($aParameters['FoundedCIDs']) ?
-					$aParameters['FoundedCIDs'] : null;
-
-			$mFoundedContentLocationUrls = isset($aParameters['FoundedContentLocationUrls']) &&
-				\is_array($aParameters['FoundedContentLocationUrls']) &&
-				0 < \count($aParameters['FoundedContentLocationUrls']) ?
-					$aParameters['FoundedContentLocationUrls'] : null;
-
-			if ($mFoundedCIDs || $mFoundedContentLocationUrls)
-			{
-				$mFoundedCIDs = \array_merge($mFoundedCIDs ? $mFoundedCIDs : array(),
-					$mFoundedContentLocationUrls ? $mFoundedContentLocationUrls : array());
-
-				$mFoundedCIDs = 0 < \count($mFoundedCIDs) ? $mFoundedCIDs : null;
-			}
-
-			$mResult['IsLinked'] = ($mFoundedCIDs && \in_array(\trim(\trim($mResponse->Cid()), '<>'), $mFoundedCIDs))
-				|| ($mFoundedContentLocationUrls && \in_array(\trim($mResponse->ContentLocation()), $mFoundedContentLocationUrls));
-
 			$mResult['Framed'] = $this->isFileHasFramedPreview($mResult['FileName']);
-			$mResult['IsThumbnail'] = $this->GetCapa(false, Capa::ATTACHMENT_THUMBNAILS) && $this->isFileHasThumbnail($mResult['FileName']);
-
+			$mResult['IsThumbnail'] = $this->GetCapa(Capa::ATTACHMENT_THUMBNAILS) && $this->isFileHasThumbnail($mResult['FileName']);
 			$mResult['Download'] = Utils::EncodeKeyValuesQ(array(
 				'V' => APP_VERSION,
-				'Account' => $this->oAccount ? \md5($this->oAccount->Hash()) : '',
+				'Account' => $this->getAccountFromToken()->Hash(),
 				'Folder' => $mResult['Folder'],
 				'Uid' => $mResult['Uid'],
 				'MimeIndex' => $mResult['MimeIndex'],
@@ -408,28 +264,23 @@ trait Response
 		if ($mResponse instanceof \MailSo\Mail\Folder)
 		{
 			$aExtended = null;
-
-//			$mStatus = $mResponse->Status();
-//			if (\is_array($mStatus) && isset($mStatus['MESSAGES'], $mStatus['UNSEEN'], $mStatus['UIDNEXT']))
-//			{
-//				$aExtended = array(
-//					'MessageCount' => (int) $mStatus['MESSAGES'],
-//					'MessageUnseenCount' => (int) $mStatus['UNSEEN'],
-//					'UidNext' => (string) $mStatus['UIDNEXT'],
-//					'Hash' => $this->MailClient()->GenerateFolderHash(
-//						$mResponse->FullNameRaw(), $mStatus['MESSAGES'], $mStatus['UNSEEN'], $mStatus['UIDNEXT'],
-//							empty($mStatus['HIGHESTMODSEQ']) ? '' : $mStatus['HIGHESTMODSEQ'])
-//				);
-//			}
+			$aStatus = $mResponse->Status();
+			if ($aStatus && isset($aStatus['MESSAGES'], $aStatus['UNSEEN'], $aStatus['UIDNEXT'])) {
+				$aExtended = array(
+					'MessageCount' => (int) $aStatus['MESSAGES'],
+					'MessageUnseenCount' => (int) $aStatus['UNSEEN'],
+					'UidNext' => (int) $aStatus['UIDNEXT'],
+					'Hash' => $this->MailClient()->GenerateFolderHash(
+						$mResponse->FullName(), $aStatus['MESSAGES'], $aStatus['UIDNEXT'],
+							empty($aStatus['HIGHESTMODSEQ']) ? 0 : $aStatus['HIGHESTMODSEQ'])
+				);
+			}
 
 			if (null === $this->aCheckableFolder)
 			{
-				if (null === $this->oAccount) {
-					$this->oAccount = $this->getAccountFromToken(false);
-				}
 				$aCheckable = \json_decode(
 					$this->SettingsProvider(true)
-					->Load($this->oAccount)
+					->Load($this->getAccountFromToken())
 					->GetConf('CheckableFolder', '[]')
 				);
 				$this->aCheckableFolder = \is_array($aCheckable) ? $aCheckable : array();
@@ -438,10 +289,8 @@ trait Response
 			return \array_merge(
 				$mResponse->jsonSerialize(),
 				array(
-					'FullNameHash' => $this->hashFolderFullName($mResponse->FullNameRaw(), $mResponse->FullName()),
-					'Checkable' => \in_array($mResponse->FullNameRaw(), $this->aCheckableFolder),
+					'Checkable' => \in_array($mResponse->FullName(), $this->aCheckableFolder),
 					'Extended' => $aExtended,
-					'SubFolders' => $this->responseObject($mResponse->SubFolders(), $sParent, $aParameters)
 				)
 			);
 		}
@@ -449,9 +298,9 @@ trait Response
 		if ($mResponse instanceof \MailSo\Base\Collection)
 		{
 			$mResult = $mResponse->jsonSerialize();
-			$mResult['@Collection'] = $this->responseObject($mResult['@Collection'], $sParent, $aParameters);
+			$mResult['@Collection'] = $this->responseObject($mResult['@Collection'], $sParent);
 			if ($mResponse instanceof \MailSo\Mail\EmailCollection) {
-				return array_slice($mResult['@Collection'], 0, 100);
+				return \array_slice($mResult['@Collection'], 0, 100);
 			}
 			if ($mResponse instanceof \MailSo\Mail\AttachmentCollection
 			 || $mResponse instanceof \MailSo\Mail\FolderCollection

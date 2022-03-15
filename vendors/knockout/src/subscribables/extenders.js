@@ -16,7 +16,7 @@ ko.extenders = {
     },
 
     'notify': (target, notifyWhen) => {
-        target["equalityComparer"] = notifyWhen == "always" ?
+        target.equalityComparer = notifyWhen == "always" ?
             null :  // null equalityComparer means to always notify
             valuesArePrimitiveAndEqual;
     }
@@ -31,7 +31,7 @@ function throttle(callback, timeout) {
     var timeoutInstance;
     return () => {
         if (!timeoutInstance) {
-            timeoutInstance = ko.utils.setTimeout(() => {
+            timeoutInstance = setTimeout(() => {
                 timeoutInstance = 0;
                 callback();
             }, timeout);
@@ -43,7 +43,7 @@ function debounce(callback, timeout) {
     var timeoutInstance;
     return () => {
         clearTimeout(timeoutInstance);
-        timeoutInstance = ko.utils.setTimeout(callback, timeout);
+        timeoutInstance = setTimeout(callback, timeout);
     };
 }
 

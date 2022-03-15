@@ -15,7 +15,7 @@ namespace MailSo\Log;
  * @category MailSo
  * @package Log
  */
-class Logger extends \MailSo\Base\Collection
+class Logger extends \SplFixedArray
 {
 	private $bUsed = false;
 
@@ -23,7 +23,7 @@ class Logger extends \MailSo\Base\Collection
 
 	private $aSecretWords = [];
 
-	private $bShowSecter = false;
+	private $bShowSecrets = false;
 
 	function __construct(bool $bRegPhpErrorHandler = true)
 	{
@@ -31,10 +31,10 @@ class Logger extends \MailSo\Base\Collection
 
 		if ($bRegPhpErrorHandler)
 		{
-			\set_error_handler(array(&$this, '__phpErrorHandler'));
+			\set_error_handler(array($this, '__phpErrorHandler'));
 		}
 
-		\register_shutdown_function(array(&$this, '__loggerShutDown'));
+		\register_shutdown_function(array($this, '__loggerShutDown'));
 	}
 
 	/**
@@ -59,7 +59,7 @@ class Logger extends \MailSo\Base\Collection
 	/**
 	 * @param mixed $mData
 	 */
-	public static function SystemLog($mData, int $iType = \MailSo\Log\Enumerations\Type::INFO)
+	public static function SystemLog($mData, int $iType = Enumerations\Type::INFO)
 	{
 		if (\MailSo\Config::$SystemLogger instanceof Logger)
 		{
@@ -75,40 +75,43 @@ class Logger extends \MailSo\Base\Collection
 		static $sCache = null;
 		if (null === $sCache)
 		{
-			$sCache = \substr(\MailSo\Base\Utils::Md5Rand(), -8);
+			$sCache = \substr(\MailSo\Base\Utils::Sha1Rand(), -8);
 		}
 
 		return $sCache;
 	}
 
-	public function Ping() : bool
+	public function append($oDriver) : void
 	{
-		return true;
+		if ($oDriver) {
+			$this->setSize(1);
+			$this[0] = $oDriver;
+		}
 	}
 
 	public function IsEnabled() : bool
 	{
-		return 0 < $this->Count();
+		return 0 < $this->count();
 	}
 
 	public function AddSecret(string $sWord) : void
 	{
-		if (0 < \strlen(\trim($sWord)))
+		if (\strlen(\trim($sWord)))
 		{
 			$this->aSecretWords[] = $sWord;
 			$this->aSecretWords = \array_unique($this->aSecretWords);
 		}
 	}
 
-	public function SetShowSecter(bool $bShow) : self
+	public function SetShowSecrets(bool $bShow) : self
 	{
-		$this->bShowSecter = $bShow;
+		$this->bShowSecrets = $bShow;
 		return $this;
 	}
 
 	public function IsShowSecter() : bool
 	{
-		return $this->bShowSecter;
+		return $this->bShowSecrets;
 	}
 
 	public function AddForbiddenType(int $iType) : self
@@ -118,26 +121,34 @@ class Logger extends \MailSo\Base\Collection
 		return $this;
 	}
 
-	public function RemoveForbiddenType(int $iType) : self
-	{
-		$this->aForbiddenTypes[$iType] = false;
-		return $this;
-	}
-
 	public function __phpErrorHandler(int $iErrNo, string $sErrStr, string $sErrFile, int $iErrLine) : bool
 	{
 		if (\error_reporting() & $iErrNo) {
-			$iType = \MailSo\Log\Enumerations\Type::NOTICE_PHP;
+			$iType = Enumerations\Type::NOTICE_PHP;
 			switch ($iErrNo)
 			{
 				 case E_USER_ERROR:
-					 $iType = \MailSo\Log\Enumerations\Type::ERROR_PHP;
+					 $iType = Enumerations\Type::ERROR_PHP;
 					 break;
 				 case E_USER_WARNING:
-					 $iType = \MailSo\Log\Enumerations\Type::WARNING_PHP;
+					 $iType = Enumerations\Type::WARNING_PHP;
 					 break;
 			}
-
+/*
+				case E_ERROR:
+				case E_WARNING:
+				case E_PARSE:
+				case E_NOTICE:
+				case E_CORE_ERROR:
+				case E_CORE_WARNING:
+				case E_COMPILE_ERROR:
+				case E_COMPILE_WARNING:
+				case E_USER_NOTICE:
+				case E_STRICT:
+				case E_RECOVERABLE_ERROR:
+				case E_DEPRECATED:
+				case E_USER_DEPRECATED:
+*/
 			$this->Write($sErrFile.' [line:'.$iErrLine.', code:'.$iErrNo.']', $iType, 'PHP');
 			$this->Write('Error: '.$sErrStr, $iType, 'PHP');
 		}
@@ -147,18 +158,11 @@ class Logger extends \MailSo\Base\Collection
 
 	public function __loggerShutDown() : void
 	{
-		if ($this->bUsed && $aStatistic = \MailSo\Base\Loader::Statistic())
+		if ($this->bUsed)
 		{
-			if (isset($aStatistic['php']['memory_get_peak_usage']))
-			{
-				$this->Write('Memory peak usage: '.$aStatistic['php']['memory_get_peak_usage'],
-					\MailSo\Log\Enumerations\Type::MEMORY);
-			}
-
-			if (isset($aStatistic['time']))
-			{
-				$this->Write('Time delta: '.$aStatistic['time'], \MailSo\Log\Enumerations\Type::TIME_DELTA);
-			}
+			$this->Write('Memory peak usage: '.\MailSo\Base\Utils::FormatFileSize(\memory_get_peak_usage(true), 2),
+				Enumerations\Type::MEMORY);
+			$this->Write('Time delta: '.(\microtime(true) - $_SERVER['REQUEST_TIME_FLOAT']), Enumerations\Type::TIME_DELTA);
 		}
 	}
 
@@ -174,24 +178,22 @@ class Logger extends \MailSo\Base\Collection
 		return (bool) $iResult;
 	}
 
-	public function Write(string $sDesc, int $iType = \MailSo\Log\Enumerations\Type::INFO,
+	public function Write(string $sDesc, int $iType = Enumerations\Type::INFO,
 		string $sName = '', bool $bSearchSecretWords = true, bool $bDiplayCrLf = false) : bool
 	{
-		if (isset($this->aForbiddenTypes[$iType]) && true === $this->aForbiddenTypes[$iType])
+		if (!empty($this->aForbiddenTypes[$iType]))
 		{
 			return true;
 		}
 
 		$this->bUsed = true;
 
-		$oLogger = null;
-		$aLoggers = array();
-		$iResult = 1;
-
-		if ($bSearchSecretWords && !$this->bShowSecter && 0 < \count($this->aSecretWords))
+		if ($bSearchSecretWords && !$this->bShowSecrets && \count($this->aSecretWords))
 		{
 			$sDesc = \str_replace($this->aSecretWords, '*******', $sDesc);
 		}
+
+		$iResult = 1;
 
 		foreach ($this as /* @var $oLogger \MailSo\Log\Driver */ $oLogger)
 		{
@@ -204,13 +206,13 @@ class Logger extends \MailSo\Base\Collection
 	/**
 	 * @param mixed $oValue
 	 */
-	public function WriteDump($oValue, int $iType = \MailSo\Log\Enumerations\Type::INFO, string $sName = '',
+	public function WriteDump($oValue, int $iType = Enumerations\Type::INFO, string $sName = '',
 		bool $bSearchSecretWords = false, bool $bDiplayCrLf = false) : bool
 	{
 		return $this->Write(\print_r($oValue, true), $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 	}
 
-	public function WriteException(\Throwable $oException, int $iType = \MailSo\Log\Enumerations\Type::NOTICE, string $sName = '',
+	public function WriteException(\Throwable $oException, int $iType = Enumerations\Type::NOTICE, string $sName = '',
 		bool $bSearchSecretWords = true, bool $bDiplayCrLf = false) : bool
 	{
 		if ($oException instanceof \Throwable)
@@ -228,7 +230,7 @@ class Logger extends \MailSo\Base\Collection
 		return false;
 	}
 
-	public function WriteExceptionShort(\Throwable $oException, int $iType = \MailSo\Log\Enumerations\Type::NOTICE, string $sName = '',
+	public function WriteExceptionShort(\Throwable $oException, int $iType = Enumerations\Type::NOTICE, string $sName = '',
 		bool $bSearchSecretWords = true, bool $bDiplayCrLf = false) : bool
 	{
 		if ($oException instanceof \Throwable)
@@ -252,24 +254,16 @@ class Logger extends \MailSo\Base\Collection
 	public function WriteMixed($mData, int $iType = null, string $sName = '',
 		bool $bSearchSecretWords = true, bool $bDiplayCrLf = false) : bool
 	{
-		$iType = null === $iType ? \MailSo\Log\Enumerations\Type::INFO : $iType;
+		$iType = null === $iType ? Enumerations\Type::INFO : $iType;
 		if (\is_array($mData) || \is_object($mData))
 		{
 			if ($mData instanceof \Throwable)
 			{
-				$iType = null === $iType ? \MailSo\Log\Enumerations\Type::NOTICE : $iType;
+				$iType = null === $iType ? Enumerations\Type::NOTICE : $iType;
 				return $this->WriteException($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 			}
-			else
-			{
-				return  $this->WriteDump($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
-			}
+			return  $this->WriteDump($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 		}
-		else
-		{
-			return $this->Write($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
-		}
-
-		return false;
+		return $this->Write($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 	}
 }

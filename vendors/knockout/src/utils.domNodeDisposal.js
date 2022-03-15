@@ -1,28 +1,26 @@
 
-ko.utils.domNodeDisposal = new (function () {
+ko.utils.domNodeDisposal = (() => {
     var domDataKey = ko.utils.domData.nextKey();
-    var cleanableNodeTypes = { 1: true, 8: true, 9: true };       // Element, Comment, Document
-    var cleanableNodeTypesWithDescendants = { 1: true, 9: true }; // Element, Document
+    var cleanableNodeTypes = { 1: 1, 8: 1, 9: 1 };       // Element, Comment, Document
+    var cleanableNodeTypesWithDescendants = { 1: 1, 9: 1 }; // Element, Document
 
-    function getDisposeCallbacksCollection(node, createIfNotFound) {
+    const getDisposeCallbacksCollection = (node, createIfNotFound) => {
         var allDisposeCallbacks = ko.utils.domData.get(node, domDataKey);
-        if ((allDisposeCallbacks === undefined) && createIfNotFound) {
-            allDisposeCallbacks = [];
+        if (createIfNotFound && !allDisposeCallbacks) {
+            allDisposeCallbacks = new Set;
             ko.utils.domData.set(node, domDataKey, allDisposeCallbacks);
         }
         return allDisposeCallbacks;
-    }
-    function destroyCallbacksCollection(node) {
-        ko.utils.domData.set(node, domDataKey, undefined);
-    }
+    },
 
-    function cleanSingleNode(node) {
+    destroyCallbacksCollection = node => ko.utils.domData.set(node, domDataKey, null),
+
+    cleanSingleNode = node => {
         // Run all the dispose callbacks
-        var callbacks = getDisposeCallbacksCollection(node, false);
+        var callbacks = getDisposeCallbacksCollection(node);
         if (callbacks) {
-            callbacks = callbacks.slice(0); // Clone, as the array may be modified during iteration (typically, callbacks will remove themselves)
-            for (var i = 0; i < callbacks.length; i++)
-                callbacks[i](node);
+            // Clone, as the array may be modified during iteration (typically, callbacks will remove themselves)
+            (new Set(callbacks)).forEach(callback => callback(node));
         }
 
         // Erase the DOM data
@@ -30,12 +28,11 @@ ko.utils.domNodeDisposal = new (function () {
 
         // Clear any immediate-child comment nodes, as these wouldn't have been found by
         // node.getElementsByTagName("*") in cleanNode() (comment nodes aren't elements)
-        if (cleanableNodeTypesWithDescendants[node.nodeType]) {
-            cleanNodesInList(node.childNodes, true/*onlyComments*/);
-        }
-    }
+        cleanableNodeTypesWithDescendants[node.nodeType]
+        && cleanNodesInList(node.childNodes, true/*onlyComments*/);
+    },
 
-    function cleanNodesInList(nodeList, onlyComments) {
+    cleanNodesInList = (nodeList, onlyComments) => {
         var cleanedNodes = [], lastCleanedNode;
         for (var i = 0; i < nodeList.length; i++) {
             if (!onlyComments || nodeList[i].nodeType === 8) {
@@ -45,21 +42,20 @@ ko.utils.domNodeDisposal = new (function () {
                 }
             }
         }
-    }
+    };
 
     return {
         addDisposeCallback : (node, callback) => {
             if (typeof callback != "function")
                 throw new Error("Callback must be a function");
-            getDisposeCallbacksCollection(node, true).push(callback);
+            getDisposeCallbacksCollection(node, 1).add(callback);
         },
 
         removeDisposeCallback : (node, callback) => {
-            var callbacksCollection = getDisposeCallbacksCollection(node, false);
+            var callbacksCollection = getDisposeCallbacksCollection(node);
             if (callbacksCollection) {
-                ko.utils.arrayRemoveItem(callbacksCollection, callback);
-                if (callbacksCollection.length == 0)
-                    destroyCallbacksCollection(node);
+                callbacksCollection.delete(callback);
+                callbacksCollection.size || destroyCallbacksCollection(node);
             }
         },
 
@@ -70,9 +66,8 @@ ko.utils.domNodeDisposal = new (function () {
                     cleanSingleNode(node);
 
                     // ... then its descendants, where applicable
-                    if (cleanableNodeTypesWithDescendants[node.nodeType]) {
-                        cleanNodesInList(node.getElementsByTagName("*"));
-                    }
+                    cleanableNodeTypesWithDescendants[node.nodeType]
+                    && cleanNodesInList(node.getElementsByTagName("*"));
                 }
             });
 
@@ -81,8 +76,7 @@ ko.utils.domNodeDisposal = new (function () {
 
         removeNode : node => {
             ko.cleanNode(node);
-            if (node.parentNode)
-                node.parentNode.removeChild(node);
+            node.parentNode && node.parentNode.removeChild(node);
         }
     };
 })();

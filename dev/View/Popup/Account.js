@@ -2,10 +2,9 @@ import { getNotification } from 'Common/Translator';
 
 import Remote from 'Remote/User/Fetch';
 
-import { decorateKoCommands } from 'Knoin/Knoin';
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-class AccountPopupView extends AbstractViewPopup {
+export class AccountPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Account');
 
@@ -26,45 +25,42 @@ class AccountPopupView extends AbstractViewPopup {
 		this.email.subscribe(() => this.emailError(false));
 
 		this.password.subscribe(() => this.passwordError(false));
-
-		decorateKoCommands(this, {
-			addAccountCommand: self => !self.submitRequest()
-		});
 	}
 
-	addAccountCommand() {
-		this.emailError(!this.email().trim());
-		this.passwordError(!this.password().trim());
-
-		if (this.emailError() || this.passwordError()) {
-			return false;
+	submitForm() {
+		if (!this.submitRequest()) {
+			const email = this.email().trim(), pass = this.password();
+			this.emailError(!email);
+			this.passwordError(!pass);
+			if (!this.emailError() && pass) {
+				this.submitRequest(true);
+				Remote.request('AccountSetup', (iError, data) => {
+						this.submitRequest(false);
+						if (iError) {
+							this.submitError(getNotification(iError));
+							this.submitErrorAdditional((data && data.ErrorMessageAdditional) || '');
+						} else {
+							rl.app.accountsAndIdentities();
+							this.close();
+						}
+					}, {
+						Email: email,
+						Password: pass,
+						New: this.isNew() ? 1 : 0
+					}
+				);
+			}
 		}
-
-		this.submitRequest(true);
-
-		Remote.accountSetup(
-			(iError, data) => {
-				this.submitRequest(false);
-				if (iError) {
-					this.submitError(getNotification(iError));
-					this.submitErrorAdditional((data && data.ErrorMessageAdditional) || '');
-				} else {
-					rl.app.accountsAndIdentities();
-					this.cancelCommand();
-				}
-			},
-			this.email(),
-			this.password(),
-			this.isNew()
-		);
-
-		return true;
 	}
 
-	clearPopup() {
-		this.isNew(true);
-
-		this.email('');
+	onShow(account) {
+		if (account && account.isAdditional()) {
+			this.isNew(false);
+			this.email(account.email);
+		} else {
+			this.isNew(true);
+			this.email('');
+		}
 		this.password('');
 
 		this.emailError(false);
@@ -74,14 +70,4 @@ class AccountPopupView extends AbstractViewPopup {
 		this.submitError('');
 		this.submitErrorAdditional('');
 	}
-
-	onShow(account) {
-		this.clearPopup();
-		if (account && account.canBeEdit()) {
-			this.isNew(false);
-			this.email(account.email);
-		}
-	}
 }
-
-export { AccountPopupView, AccountPopupView as default };

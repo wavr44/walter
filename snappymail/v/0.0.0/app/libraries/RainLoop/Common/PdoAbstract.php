@@ -104,7 +104,7 @@ abstract class PdoAbstract
 				}
 //				else if ('sqlite' === $sType && 'sqlite' === $sPdoType && $this->bSqliteCollate)
 //				{
-//					if (\method_exists($oPdo, 'sqliteCreateCollation') && \MailSo\Base\Utils::FunctionExistsAndEnabled('mb_strtoupper'))
+//					if (\method_exists($oPdo, 'sqliteCreateCollation'))
 //					{
 //						$oPdo->sqliteCreateCollation('SQLITE_NOCASE_UTF8', array($this, 'sqliteNoCaseCollationHelper'));
 //						$bCaseFunc = true;
@@ -419,7 +419,7 @@ rl_email text NOT NULL DEFAULT \'\'
 					break;
 			}
 
-			if (0 < \count($aQ))
+			if (\count($aQ))
 			{
 				try
 				{

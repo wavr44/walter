@@ -96,74 +96,43 @@ class Domain implements \JsonSerializable
 	/**
 	 * @var string
 	 */
-	private $sAliasName;
+	private $sAliasName = '';
 
-	function __construct(string $sName,
-		string $sIncHost, int $iIncPort, int $iIncSecure, bool $bIncShortLogin,
-		bool $bUseSieve, string $sSieveHost, int $iSievePort, int $iSieveSecure,
-		string $sOutHost, int $iOutPort, int $iOutSecure, bool $bOutShortLogin,
-		bool $bOutAuth, bool $bOutSetSender, bool $bOutUsePhpMail = false,
-		string $sWhiteList = '')
+	function __construct(string $sName)
 	{
 		$this->sName = $sName;
-		$this->sIncHost = $sIncHost;
-		$this->iIncPort = $iIncPort;
-		$this->iIncSecure = $iIncSecure;
-		$this->bIncShortLogin = $bIncShortLogin;
-
-		$this->sOutHost = $sOutHost;
-		$this->iOutPort = $iOutPort;
-		$this->iOutSecure = $iOutSecure;
-		$this->bOutShortLogin = $bOutShortLogin;
-		$this->bOutAuth = $bOutAuth;
-		$this->bOutSetSender = $bOutSetSender;
-		$this->bOutUsePhpMail = $bOutUsePhpMail;
-
-		$this->bUseSieve = $bUseSieve;
-		$this->sSieveHost = $sSieveHost;
-		$this->iSievePort = $iSievePort;
-		$this->iSieveSecure = $iSieveSecure;
-
-		$this->sWhiteList = \trim($sWhiteList);
-		$this->sAliasName = '';
 	}
 
+	/**
+	 * See ToIniString() for valid values
+	 */
 	public static function NewInstanceFromDomainConfigArray(string $sName, array $aDomain) : ?self
 	{
 		$oDomain = null;
 
-		if (0 < \strlen($sName) && 0 < \strlen($aDomain['imap_host']) && 0 < \strlen($aDomain['imap_port']))
+		if (\strlen($sName) && \strlen($aDomain['imap_host']) && \strlen($aDomain['imap_port']))
 		{
-			$sIncHost = (string) $aDomain['imap_host'];
-			$iIncPort = (int) $aDomain['imap_port'];
-			$iIncSecure = self::StrConnectionSecurityTypeToCons(
-				!empty($aDomain['imap_secure']) ? $aDomain['imap_secure'] : '');
+			$oDomain = new self($sName);
 
-			$bUseSieve = !empty($aDomain['sieve_use']);
+			$oDomain->sIncHost = (string) $aDomain['imap_host'];
+			$oDomain->iIncPort = (int) $aDomain['imap_port'];
+			$oDomain->iIncSecure = self::StrConnectionSecurityTypeToCons(empty($aDomain['imap_secure']) ? '' : $aDomain['imap_secure']);
+			$oDomain->bIncShortLogin = !empty($aDomain['imap_short_login']);
 
-			$sSieveHost = empty($aDomain['sieve_host']) ? '' : (string) $aDomain['sieve_host'];
-			$iSievePort = empty($aDomain['sieve_port']) ? 4190 : (int) $aDomain['sieve_port'];
-			$iSieveSecure = self::StrConnectionSecurityTypeToCons(
-				!empty($aDomain['sieve_secure']) ? $aDomain['sieve_secure'] : '');
+			$oDomain->bUseSieve = !empty($aDomain['sieve_use']);
+			$oDomain->sSieveHost = empty($aDomain['sieve_host']) ? '' : (string) $aDomain['sieve_host'];
+			$oDomain->iSievePort = empty($aDomain['sieve_port']) ? 4190 : (int) $aDomain['sieve_port'];
+			$oDomain->iSieveSecure = self::StrConnectionSecurityTypeToCons(empty($aDomain['sieve_secure']) ? '' : $aDomain['sieve_secure']);
 
-			$sOutHost = empty($aDomain['smtp_host']) ? '' : (string) $aDomain['smtp_host'];
-			$iOutPort = empty($aDomain['smtp_port']) ? 25 : (int) $aDomain['smtp_port'];
-			$iOutSecure = self::StrConnectionSecurityTypeToCons(
-				!empty($aDomain['smtp_secure']) ? $aDomain['smtp_secure'] : '');
+			$oDomain->sOutHost = empty($aDomain['smtp_host']) ? '' : (string) $aDomain['smtp_host'];
+			$oDomain->iOutPort = empty($aDomain['smtp_port']) ? 25 : (int) $aDomain['smtp_port'];
+			$oDomain->iOutSecure = self::StrConnectionSecurityTypeToCons(empty($aDomain['smtp_secure']) ? '' : $aDomain['smtp_secure']);
+			$oDomain->bOutShortLogin = !empty($aDomain['smtp_short_login']);
+			$oDomain->bOutAuth = !empty($aDomain['smtp_auth']);
+			$oDomain->bOutSetSender = !empty($aDomain['smtp_set_sender']);
+			$oDomain->bOutUsePhpMail = !empty($aDomain['smtp_php_mail']);
 
-			$bOutAuth = !empty($aDomain['smtp_auth']);
-			$bOutSetSender = !empty($aDomain['smtp_set_sender']);
-			$bOutUsePhpMail = !empty($aDomain['smtp_php_mail']);
-			$sWhiteList = (string) ($aDomain['white_list'] ?? '');
-
-			$bIncShortLogin = !empty($aDomain['imap_short_login']);
-			$bOutShortLogin = !empty($aDomain['smtp_short_login']);
-
-			$oDomain = new self($sName,
-				$sIncHost, $iIncPort, $iIncSecure, $bIncShortLogin,
-				$bUseSieve, $sSieveHost, $iSievePort, $iSieveSecure,
-				$sOutHost, $iOutPort, $iOutSecure, $bOutShortLogin, $bOutAuth, $bOutSetSender, $bOutUsePhpMail,
-				$sWhiteList);
+			$oDomain->sWhiteList = (string) ($aDomain['white_list'] ?? '');
 		}
 
 		return $oDomain;
@@ -251,24 +220,24 @@ class Domain implements \JsonSerializable
 		return $sType;
 	}
 
-	public function UpdateInstance(
+	public function SetConfig(
 		string $sIncHost, int $iIncPort, int $iIncSecure, bool $bIncShortLogin,
 		bool $bUseSieve, string $sSieveHost, int $iSievePort, int $iSieveSecure,
 		string $sOutHost, int $iOutPort, int $iOutSecure, bool $bOutShortLogin,
 		bool $bOutAuth, bool $bOutSetSender, bool $bOutUsePhpMail,
 		string $sWhiteList = '') : self
 	{
-		$this->sIncHost = \MailSo\Base\Utils::IdnToAscii($sIncHost);
+		$this->sIncHost = $sIncHost;
 		$this->iIncPort = $iIncPort;
 		$this->iIncSecure = $iIncSecure;
 		$this->bIncShortLogin = $bIncShortLogin;
 
 		$this->bUseSieve = $bUseSieve;
-		$this->sSieveHost = \MailSo\Base\Utils::IdnToAscii($sSieveHost);
+		$this->sSieveHost = $sSieveHost;
 		$this->iSievePort = $iSievePort;
 		$this->iSieveSecure = $iSieveSecure;
 
-		$this->sOutHost = \MailSo\Base\Utils::IdnToAscii($sOutHost);
+		$this->sOutHost = $sOutHost;
 		$this->iOutPort = $iOutPort;
 		$this->iOutSecure = $iOutSecure;
 		$this->bOutShortLogin = $bOutShortLogin;
@@ -381,7 +350,7 @@ class Domain implements \JsonSerializable
 	public function ValidateWhiteList(string $sEmail, string $sLogin = '') : bool
 	{
 		$sW = \trim($this->sWhiteList);
-		if (0 < strlen($sW))
+		if (\strlen($sW))
 		{
 			$sEmail = \MailSo\Base\Utils::IdnToUtf8($sEmail, true);
 			$sLogin = \MailSo\Base\Utils::IdnToUtf8($sLogin, true);
@@ -389,34 +358,45 @@ class Domain implements \JsonSerializable
 			$sW = \preg_replace('/([^\s]+)@[^\s]*/', '$1', $sW);
 			$sW = ' '.\trim(\preg_replace('/[\s;,\r\n\t]+/', ' ', $sW)).' ';
 
-			$sUserPart = \MailSo\Base\Utils::GetAccountNameFromEmail(0 < \strlen($sLogin) ? $sLogin : $sEmail);
+			$sUserPart = \MailSo\Base\Utils::GetAccountNameFromEmail(\strlen($sLogin) ? $sLogin : $sEmail);
 			return false !== \stripos($sW, ' '.$sUserPart.' ');
 		}
 
 		return true;
 	}
 
-	public function ToSimpleJSON() : array
+	public function ImapSettings() : array
 	{
 		return array(
-			'Name' => $this->Name(),
-			'IncHost' => $this->IncHost(),
-			'IncPort' => $this->IncPort(),
-			'IncSecure' => $this->IncSecure(),
-			'IncShortLogin' => $this->IncShortLogin(),
-			'UseSieve' => $this->UseSieve(),
-			'SieveHost' => $this->SieveHost(),
-			'SievePort' => $this->SievePort(),
-			'SieveSecure' => $this->SieveSecure(),
-			'OutHost' => $this->OutHost(),
-			'OutPort' => $this->OutPort(),
-			'OutSecure' => $this->OutSecure(),
-			'OutShortLogin' => $this->OutShortLogin(),
-			'OutAuth' => $this->OutAuth(),
-			'OutSetSender' => $this->OutSetSender(),
-			'OutUsePhpMail' => $this->OutUsePhpMail(),
-			'WhiteList' => $this->WhiteList(),
-			'AliasName' => $this->AliasName()
+			'UseConnect' => true,
+			'UseAuth' => true,
+			'Host' => $this->sIncHost,
+			'Port' => $this->iIncPort,
+			'Secure' => $this->iIncSecure,
+		);
+	}
+
+	public function SmtpSettings() : array
+	{
+		return array(
+			'UseConnect' => !$this->bOutUsePhpMail,
+			'UseAuth' => $this->bOutAuth,
+			'Host' => $this->sOutHost,
+			'Port' => $this->iOutPort,
+			'Secure' => $this->iOutSecure,
+			'Ehlo' => \MailSo\Smtp\SmtpClient::EhloHelper(),
+			'UsePhpMail' => $this->bOutUsePhpMail
+		);
+	}
+
+	public function SieveSettings() : array
+	{
+		return array(
+			'UseConnect' => true,
+			'UseAuth' => true,
+			'Host' => $this->sSieveHost,
+			'Port' => $this->iSievePort,
+			'Secure' => $this->iSieveSecure
 		);
 	}
 
@@ -424,24 +404,24 @@ class Domain implements \JsonSerializable
 	{
 		return array(
 //			'@Object' => 'Object/Domain',
-			'Name' => \MailSo\Base\Utils::IdnToUtf8($this->Name()),
-			'IncHost' => \MailSo\Base\Utils::IdnToUtf8($this->IncHost()),
-			'IncPort' => $this->IncPort(),
-			'IncSecure' => $this->IncSecure(),
-			'IncShortLogin' => $this->IncShortLogin(),
-			'UseSieve' => $this->UseSieve(),
-			'SieveHost' => \MailSo\Base\Utils::IdnToUtf8($this->SieveHost()),
-			'SievePort' => $this->SievePort(),
-			'SieveSecure' => $this->SieveSecure(),
-			'OutHost' => \MailSo\Base\Utils::IdnToUtf8($this->OutHost()),
-			'OutPort' => $this->OutPort(),
-			'OutSecure' => $this->OutSecure(),
-			'OutShortLogin' => $this->OutShortLogin(),
-			'OutAuth' => $this->OutAuth(),
-			'OutSetSender' => $this->OutSetSender(),
-			'OutUsePhpMail' => $this->OutUsePhpMail(),
-			'WhiteList' => $this->WhiteList(),
-			'AliasName' => $this->AliasName()
+			'name' => \MailSo\Base\Utils::IdnToUtf8($this->sName),
+			'imapHost' => \MailSo\Base\Utils::IdnToUtf8($this->sIncHost),
+			'imapPort' => $this->iIncPort,
+			'imapSecure' => $this->iIncSecure,
+			'imapShortLogin' => $this->bIncShortLogin,
+			'useSieve' => $this->bUseSieve,
+			'sieveHost' => \MailSo\Base\Utils::IdnToUtf8($this->sSieveHost),
+			'sievePort' => $this->iSievePort,
+			'sieveSecure' => $this->iSieveSecure,
+			'smtpHost' => \MailSo\Base\Utils::IdnToUtf8($this->sOutHost),
+			'smtpPort' => $this->iOutPort,
+			'smtpSecure' => $this->iOutSecure,
+			'smtpShortLogin' => $this->bOutShortLogin,
+			'smtpAuth' => $this->bOutAuth,
+			'smtpSetSender' => $this->bOutSetSender,
+			'smtpPhpMail' => $this->bOutUsePhpMail,
+			'whiteList' => $this->sWhiteList,
+			'aliasName' => $this->sAliasName
 		);
 	}
 }

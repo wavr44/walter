@@ -9,6 +9,7 @@
 }
 
 .fontastic,
+[data-icon]::before,
 [class^="icon-"]::before,
 [class*=" icon-"]::before {
   font-family: "snappymail" !important;
@@ -16,10 +17,15 @@
   font-weight: normal !important;
   font-variant: normal !important;
   line-height: 1;
-  text-transform: none !important;
   speak: never;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-icon]::before {
+	content: attr(data-icon);
+	display: inline-block;
+	margin-right: 0.5em;
+	min-width: 1em;
 }
 
 .icon-arrows-in::before {
@@ -39,9 +45,6 @@
 }
 .icon-down-mini::before {
   content: "\e01f"; /* › rotate 90 */
-}
-.icon-list-add::before {
-  content: "\e024";
 }
 .icon-warning-alt::before {
   content: "\e02a";
@@ -85,17 +88,11 @@
 .icon-folder-add::before {
   content: "\e03c";
 }
-.icon-download::before {
-  content: "\e043";
-}
 .icon-popup::before {
   content: "\e045";
 }
 .icon-mail::before {
   content: "✉";
-}
-.icon-archive::before {
-  content: "\e05f"; /* 🗃 🗄️ */
 }
 .icon-filter::before {
   content: "\e061"; /* ⊆ */

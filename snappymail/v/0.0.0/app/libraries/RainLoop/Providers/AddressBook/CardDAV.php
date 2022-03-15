@@ -2,7 +2,7 @@
 
 namespace RainLoop\Providers\AddressBook;
 
-use \SnappyMail\DAV\Client as DAVClient;
+use SnappyMail\DAV\Client as DAVClient;
 
 trait CardDAV
 {
@@ -79,7 +79,7 @@ trait CardDAV
 		return $mResult;
 	}
 
-	protected function davClientRequest(DAVClient $oClient, string $sCmd, string $sUrl, $mData = null) : ?array
+	protected function davClientRequest(DAVClient $oClient, string $sCmd, string $sUrl, $mData = null) : ?\SnappyMail\HTTP\Response
 	{
 		\MailSo\Base\Utils::ResetTimeLimit();
 
@@ -91,18 +91,17 @@ trait CardDAV
 //			$this->oLogger->Write($mData, \MailSo\Log\Enumerations\Type::INFO, 'DAV');
 //		}
 
-		$aResponse = null;
 		try
 		{
 			if (('PUT' === $sCmd || 'POST' === $sCmd) && null !== $mData)
 			{
-				$aResponse = $oClient->request($sCmd, $sUrl, $mData, array(
+				return $oClient->request($sCmd, $sUrl, $mData, array(
 					'Content-Type' => 'text/vcard; charset=utf-8'
 				));
 			}
 			else
 			{
-				$aResponse = $oClient->request($sCmd, $sUrl);
+				return $oClient->request($sCmd, $sUrl);
 			}
 
 //			if ('GET' === $sCmd)
@@ -115,7 +114,7 @@ trait CardDAV
 			$this->oLogger->WriteException($oException);
 		}
 
-		return $aResponse;
+		return null;
 	}
 
 	private function detectionPropFind(DAVClient $oClient, string $sPath) : ?array
@@ -410,7 +409,7 @@ trait CardDAV
 		if (\preg_match('/\|(.+)$/', $sUrl, $aMatch) && !empty($aMatch[1]))
 		{
 			$sUserAddressBookNameName = \trim($aMatch[1]);
-			$sUserAddressBookNameName = \MailSo\Base\Utils::StrToLowerIfAscii($sUserAddressBookNameName);
+			$sUserAddressBookNameName = \mb_strtolower($sUserAddressBookNameName);
 
 			$sUrl = \preg_replace('/\|(.+)$/', '', $sUrl);
 		}
@@ -435,7 +434,7 @@ trait CardDAV
 					{
 						foreach ($aPaths as $sKey => $sValue)
 						{
-							$sValue = \MailSo\Base\Utils::StrToLowerIfAscii(\trim($sValue));
+							$sValue = \mb_strtolower(\trim($sValue));
 							if ($sValue === $sUserAddressBookNameName)
 							{
 								$sNewPath = $sKey;
@@ -448,7 +447,7 @@ trait CardDAV
 					{
 						foreach ($aPaths as $sKey => $sValue)
 						{
-							$sValue = \MailSo\Base\Utils::StrToLowerIfAscii($sValue);
+							$sValue = \mb_strtolower($sValue);
 							if (\in_array($sValue, array('contacts', 'default', 'addressbook', 'address book')))
 							{
 								$sNewPath = $sKey;
