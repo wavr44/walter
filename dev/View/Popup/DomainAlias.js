@@ -7,7 +7,7 @@ import Remote from 'Remote/Admin/Fetch';
 import { decorateKoCommands } from 'Knoin/Knoin';
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-class DomainAliasPopupView extends AbstractViewPopup {
+export class DomainAliasPopupView extends AbstractViewPopup {
 	constructor() {
 		super('DomainAlias');
 
@@ -35,15 +35,19 @@ class DomainAliasPopupView extends AbstractViewPopup {
 
 	createCommand() {
 		this.saving(true);
-		Remote.createDomainAlias(iError => {
-			this.saving(false);
-			if (iError) {
-				this.savingError(getNotification(iError));
-			} else {
-				DomainAdminStore.fetch();
-				this.closeCommand();
-			}
-		}, this.name(), this.alias());
+		Remote.request('AdminDomainAliasSave',
+			iError => {
+				this.saving(false);
+				if (iError) {
+					this.savingError(getNotification(iError));
+				} else {
+					DomainAdminStore.fetch();
+					this.close();
+				}
+			}, {
+				Name: this.name(),
+				Alias: this.alias()
+			});
 	}
 
 	onShow() {
@@ -59,5 +63,3 @@ class DomainAliasPopupView extends AbstractViewPopup {
 		this.alias('');
 	}
 }
-
-export { DomainAliasPopupView, DomainAliasPopupView as default };

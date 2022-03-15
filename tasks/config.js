@@ -30,9 +30,6 @@ config.paths.less = {
 		options: {
 			paths: [path.join(__dirname, 'dev', 'Styles'), path.join(__dirname, 'vendors', 'bootstrap', 'less')]
 		}
-	},
-	admin: {
-		src: 'dev/Styles/@Admin.less'
 	}
 };
 
@@ -45,7 +42,11 @@ config.paths.css = {
 		]
 	},
 	admin: {
-		name: 'admin.css'
+		name: 'admin.css',
+		src: [
+			'vendors/fontastic/styles.css',
+			'dev/Styles/@Admin.less'
+		]
 	},
 	boot: {
 		name: 'boot.css',
@@ -59,7 +60,6 @@ config.paths.js = {
 	libs: {
 		name: 'libs.js',
 		src: [
-			'dev/polyfill.js',
 			'dev/prototype.js',
 			'dev/External/ifvisible.js',
 			'dev/dragdropgecko.js',
@@ -72,6 +72,9 @@ config.paths.js = {
 			'vendors/squire/build/squire-raw.js',
 			'dev/External/SquireUI.js'
 		]
+	},
+	sieve: {
+		name: 'sieve.js'
 	},
 	app: {
 		name: 'app.js'

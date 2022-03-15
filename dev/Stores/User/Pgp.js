@@ -1,370 +1,235 @@
-import ko from 'ko';
+import { SettingsCapa, SettingsGet } from 'Common/Globals';
+import { staticLink } from 'Common/Links';
 
-import { i18n } from 'Common/Translator';
-import { isArray, arrayLength, pString, addComputablesTo } from 'Common/Utils';
-import { createElement } from 'Common/Globals';
+//import { showScreenPopup } from 'Knoin/Knoin';
 
-import { AccountUserStore } from 'Stores/User/Account';
+//import { EmailModel } from 'Model/Email';
+//import { OpenPgpKeyModel } from 'Model/OpenPgpKey';
 
-import { showScreenPopup } from 'Knoin/Knoin';
+import { GnuPGUserStore } from 'Stores/User/GnuPG';
+import { OpenPGPUserStore } from 'Stores/User/OpenPGP';
 
-import { MessageOpenPgpPopupView } from 'View/Popup/MessageOpenPgp';
+export const
+	BEGIN_PGP_MESSAGE = '-----BEGIN PGP MESSAGE-----',
+//	BEGIN_PGP_SIGNATURE = '-----BEGIN PGP SIGNATURE-----',
+//	BEGIN_PGP_SIGNED = '-----BEGIN PGP SIGNED MESSAGE-----',
 
-function controlsHelper(dom, verControl, success, title, text)
-{
-	dom.classList.toggle('error', !success);
-	dom.classList.toggle('success', success);
-	verControl.classList.toggle('error', !success);
-	verControl.classList.toggle('success', success);
-	dom.title = verControl.title = title;
-
-	if (undefined !== text) {
-		dom.textContent = text.trim();
-	}
-}
-
-function domControlEncryptedClickHelper(store, dom, armoredMessage, recipients) {
-	return function() {
-		let message = null;
-
-		if (this.classList.contains('success')) {
-			return false;
+	PgpUserStore = new class {
+		constructor() {
+			// https://mailvelope.github.io/mailvelope/Keyring.html
+			this.mailvelopeKeyring = null;
 		}
 
-		try {
-			message = store.openpgp.message.readArmored(armoredMessage);
-		} catch (e) {
-			console.log(e);
+		init() {
+			if (SettingsCapa('OpenPGP') && window.crypto && crypto.getRandomValues) {
+				rl.loadScript(staticLink('js/min/openpgp.min.js'))
+					.then(() => this.loadKeyrings())
+					.catch(e => {
+						this.loadKeyrings();
+						console.error(e);
+					});
+			} else {
+				this.loadKeyrings();
+			}
 		}
 
-		if (message && message.getText && message.verify && message.decrypt) {
-			store.decryptMessage(
-				message,
-				recipients,
-				(validPrivateKey, decryptedMessage, validPublicKey, signingKeyIds) => {
-					if (decryptedMessage) {
-						if (validPublicKey) {
-							controlsHelper(
-								dom,
-								this,
-								true,
-								i18n('PGP_NOTIFICATIONS/GOOD_SIGNATURE', {
-									USER: validPublicKey.user + ' (' + validPublicKey.id + ')'
-								}),
-								decryptedMessage.getText()
-							);
-						} else if (validPrivateKey) {
-							const keyIds = arrayLength(signingKeyIds) ? signingKeyIds : null,
-								additional = keyIds
-									? keyIds.map(item => (item && item.toHex ? item.toHex() : null)).filter(v => v).join(', ')
-									: '';
-
-							controlsHelper(
-								dom,
-								this,
-								false,
-								i18n('PGP_NOTIFICATIONS/UNVERIFIRED_SIGNATURE') + (additional ? ' (' + additional + ')' : ''),
-								decryptedMessage.getText()
-							);
-						} else {
-							controlsHelper(dom, this, false, i18n('PGP_NOTIFICATIONS/DECRYPTION_ERROR'));
-						}
+		loadKeyrings(identifier) {
+			identifier = identifier || SettingsGet('Email');
+			if (window.mailvelope) {
+				const fn = keyring => {
+						this.mailvelopeKeyring = keyring;
+						console.log('mailvelope ready');
+					};
+				mailvelope.getKeyring().then(fn, err => {
+					if (identifier) {
+						// attempt to create a new keyring for this app/user
+						mailvelope.createKeyring(identifier).then(fn, err => console.error(err));
 					} else {
-						controlsHelper(dom, this, false, i18n('PGP_NOTIFICATIONS/DECRYPTION_ERROR'));
+						console.error(err);
 					}
+				});
+				addEventListener('mailvelope-disconnect', event => {
+					alert('Mailvelope is updated to version ' + event.detail.version + '. Reload page');
+				}, false);
+			} else {
+				addEventListener('mailvelope', () => this.loadKeyrings(identifier));
+			}
+
+			if (OpenPGPUserStore.isSupported()) {
+				OpenPGPUserStore.loadKeyrings();
+			}
+
+			if (SettingsCapa('GnuPG')) {
+				GnuPGUserStore.loadKeyrings();
+			}
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		isSupported() {
+			return !!(OpenPGPUserStore.isSupported() || GnuPGUserStore.isSupported() || window.mailvelope);
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		isEncrypted(text) {
+			return 0 === text.trim().indexOf(BEGIN_PGP_MESSAGE);
+		}
+
+		async mailvelopeHasPublicKeyForEmails(recipients) {
+			const
+				keyring = this.mailvelopeKeyring,
+				mailvelope = keyring && await keyring.validKeyForAddress(recipients)
+					/*.then(LookupResult => Object.entries(LookupResult))*/,
+				entries = mailvelope && Object.entries(mailvelope);
+			return entries && entries.filter(value => value[1]).length === recipients.length;
+		}
+
+		/**
+		 * Checks if verifying/encrypting a message is possible with given email addresses.
+		 * Returns the first library that can.
+		 */
+		async hasPublicKeyForEmails(recipients) {
+			const count = recipients.length;
+			if (count) {
+				if (GnuPGUserStore.hasPublicKeyForEmails(recipients)) {
+					return 'gnupg';
 				}
-			);
-
-			return false;
-		}
-
-		controlsHelper(dom, this, false, i18n('PGP_NOTIFICATIONS/DECRYPTION_ERROR'));
-		return false;
-	};
-}
-
-function domControlSignedClickHelper(store, dom, armoredMessage) {
-	return function() {
-		let message = null;
-
-		if (this.classList.contains('success') || this.classList.contains('error')) {
-			return false;
-		}
-
-		try {
-			message = store.openpgp.cleartext.readArmored(armoredMessage);
-		} catch (e) {
-			console.log(e);
-		}
-
-		if (message && message.getText && message.verify) {
-			store.verifyMessage(message, (validKey, signingKeyIds) => {
-				if (validKey) {
-					controlsHelper(
-						dom,
-						this,
-						true,
-						i18n('PGP_NOTIFICATIONS/GOOD_SIGNATURE', {
-							USER: validKey.user + ' (' + validKey.id + ')'
-						}),
-						message.getText()
-					);
-				} else {
-					const keyIds = arrayLength(signingKeyIds) ? signingKeyIds : null,
-						additional = keyIds
-							? keyIds.map(item => (item && item.toHex ? item.toHex() : null)).filter(v => v).join(', ')
-							: '';
-
-					controlsHelper(
-						dom,
-						this,
-						false,
-						i18n('PGP_NOTIFICATIONS/UNVERIFIRED_SIGNATURE') + (additional ? ' (' + additional + ')' : '')
-					);
+				if (OpenPGPUserStore.hasPublicKeyForEmails(recipients)) {
+					return 'openpgp';
 				}
-			});
-
+			}
 			return false;
 		}
 
-		controlsHelper(dom, this, false, i18n('PGP_NOTIFICATIONS/DECRYPTION_ERROR'));
-		return false;
-	};
-}
-
-export const PgpUserStore = new class {
-	constructor() {
-		this.capaOpenPGP = ko.observable(false);
-
-		this.openpgp = null;
-
-		this.openpgpkeys = ko.observableArray();
-		this.openpgpKeyring = null;
-
-		addComputablesTo(this, {
-			openpgpkeysPublic: () => this.openpgpkeys.filter(item => item && !item.isPrivate),
-			openpgpkeysPrivate: () => this.openpgpkeys.filter(item => item && item.isPrivate)
-		});
-	}
-
-	/**
-	 * @returns {boolean}
-	 */
-	isSupported() {
-		return !!this.openpgp;
-	}
-
-	findKeyByHex(keys, hash) {
-		return keys.find(item => hash && item && (hash === item.id || item.ids.includes(hash)));
-	}
-
-	findPublicKeyByHex(hash) {
-		return this.findKeyByHex(this.openpgpkeysPublic(), hash);
-	}
-
-	findPrivateKeyByHex(hash) {
-		return this.findKeyByHex(this.openpgpkeysPrivate(), hash);
-	}
-
-	findPublicKeysByEmail(email) {
-		return this.openpgpkeysPublic().map(item => {
-			const key = item && item.emails.includes(email) ? item : null;
-			return key ? key.getNativeKeys() : [null];
-		}).flat().filter(v => v);
-	}
-
-	findPublicKeysBySigningKeyIds(signingKeyIds) {
-		return signingKeyIds.map(id => {
-			const key = id && id.toHex ? this.findPublicKeyByHex(id.toHex()) : null;
-			return key ? key.getNativeKeys() : [null];
-		}).flat().filter(v => v);
-	}
-
-	findPrivateKeysByEncryptionKeyIds(encryptionKeyIds, recipients, returnWrapKeys) {
-		let result = isArray(encryptionKeyIds)
-			? encryptionKeyIds.map(id => {
-					const key = id && id.toHex ? this.findPrivateKeyByHex(id.toHex()) : null;
-					return key ? (returnWrapKeys ? [key] : key.getNativeKeys()) : [null];
-				}).flat().filter(v => v)
-			: [];
-
-		if (!result.length && arrayLength(recipients)) {
-			result = recipients.map(sEmail => {
-				const keys = sEmail ? this.findAllPrivateKeysByEmailNotNative(sEmail) : null;
-				return keys
-					? returnWrapKeys
-						? keys
-						: keys.map(key => key.getNativeKeys()).flat()
-					: [null];
-			}).flat().validUnique(key => key.id);
+		async getMailvelopePrivateKeyFor(email/*, sign*/) {
+			let keyring = this.mailvelopeKeyring;
+			if (keyring && await keyring.hasPrivateKey({email:email})) {
+				return ['mailvelope', email];
+			}
+			return false;
 		}
 
-		return result;
-	}
+		/**
+		 * Checks if signing a message is possible with given email address.
+		 * Returns the first library that can.
+		 */
+		async getKeyForSigning(email) {
+			let key = OpenPGPUserStore.getPrivateKeyFor(email, 1);
+			if (key) {
+				return ['openpgp', key];
+			}
 
-	/**
-	 * @param {string} email
-	 * @returns {?}
-	 */
-	findPublicKeyByEmailNotNative(email) {
-		return this.openpgpkeysPublic().find(item => item && item.emails.includes(email)) || null;
-	}
+			key = GnuPGUserStore.getPrivateKeyFor(email, 1);
+			if (key) {
+				return ['gnupg', key];
+			}
 
-	/**
-	 * @param {string} email
-	 * @returns {?}
-	 */
-	findPrivateKeyByEmailNotNative(email) {
-		return this.openpgpkeysPrivate().find(item => item && item.emails.includes(email)) || null;
-	}
+	//		return await this.getMailvelopePrivateKeyFor(email, 1);
+		}
 
-	/**
-	 * @param {string} email
-	 * @returns {?}
-	 */
-	findAllPublicKeysByEmailNotNative(email) {
-		return this.openpgpkeysPublic().filter(item => item && item.emails.includes(email)) || null;
-	}
+		async decrypt(message) {
+			const sender = message.from[0].email,
+				armoredText = message.plain();
 
-	/**
-	 * @param {string} email
-	 * @returns {?}
-	 */
-	findAllPrivateKeysByEmailNotNative(email) {
-		return this.openpgpkeysPrivate().filter(item => item && item.emails.includes(email)) || null;
-	}
+			if (!this.isEncrypted(armoredText)) {
+				return;
+			}
 
-	/**
-	 * @param {string} email
-	 * @param {string=} password
-	 * @returns {?}
-	 */
-	findPrivateKeyByEmail(email, password) {
-		let privateKey = null;
-		const key = this.openpgpkeysPrivate().find(item => item && item.emails.includes(email));
+			// Try OpenPGP.js
+			let result = await OpenPGPUserStore.decrypt(armoredText, sender);
+			if (result) {
+				return result;
+			}
 
-		if (key) {
+			// Try Mailvelope (does not support inline images)
 			try {
-				privateKey = key.getNativeKeys()[0] || null;
-				if (privateKey) {
-					privateKey.decrypt(pString(password));
-				}
-			} catch (e) {
-				privateKey = null;
-			}
-		}
-
-		return privateKey;
-	}
-
-	/**
-	 * @param {string=} password
-	 * @returns {?}
-	 */
-	findSelfPrivateKey(password) {
-		return this.findPrivateKeyByEmail(AccountUserStore.email(), password);
-	}
-
-	decryptMessage(message, recipients, fCallback) {
-		if (message && message.getEncryptionKeyIds) {
-			const privateKeys = this.findPrivateKeysByEncryptionKeyIds(message.getEncryptionKeyIds(), recipients, true);
-			if (privateKeys && privateKeys.length) {
-				showScreenPopup(MessageOpenPgpPopupView, [
-					(decryptedKey) => {
-						if (decryptedKey) {
-							message.decrypt(decryptedKey).then(
-								(decryptedMessage) => {
-									let privateKey = null;
-									if (decryptedMessage) {
-										privateKey = this.findPrivateKeyByHex(decryptedKey.primaryKey.keyid.toHex());
-										if (privateKey) {
-											this.verifyMessage(decryptedMessage, (oValidKey, aSigningKeyIds) => {
-												fCallback(privateKey, decryptedMessage, oValidKey || null, aSigningKeyIds || null);
-											});
-										} else {
-											fCallback(privateKey, decryptedMessage);
-										}
-									} else {
-										fCallback(privateKey, decryptedMessage);
-									}
-								},
-								() => {
-									fCallback(null, null);
-								}
-							);
-						} else {
-							fCallback(null, null);
+				let key = await this.getMailvelopePrivateKeyFor(message.to[0].email);
+				if (key) {
+					/**
+					* https://mailvelope.github.io/mailvelope/Mailvelope.html#createEncryptedFormContainer
+					* Creates an iframe to display an encrypted form
+					*/
+	//				mailvelope.createEncryptedFormContainer('#mailvelope-form');
+					/**
+					* https://mailvelope.github.io/mailvelope/Mailvelope.html#createDisplayContainer
+					* Creates an iframe to display the decrypted content of the encrypted mail.
+					*/
+					const body = message.body;
+					body.textContent = '';
+					result = await mailvelope.createDisplayContainer(
+						'#'+body.id,
+						armoredText,
+						this.mailvelopeKeyring,
+						{
+							senderAddress: sender
 						}
-					},
-					privateKeys
-				]);
-
-				return false;
-			}
-		}
-
-		fCallback(null, null);
-
-		return false;
-	}
-
-	verifyMessage(message, fCallback) {
-		if (message && message.getSigningKeyIds) {
-			const signingKeyIds = message.getSigningKeyIds();
-			if (signingKeyIds && signingKeyIds.length) {
-				const publicKeys = this.findPublicKeysBySigningKeyIds(signingKeyIds);
-				if (publicKeys && publicKeys.length) {
-					try {
-						const result = message.verify(publicKeys),
-							valid = (isArray(result) ? result : []).find(item => item && item.valid && item.keyid);
-
-						if (valid && valid.keyid && valid.keyid && valid.keyid.toHex) {
-							fCallback(this.findPublicKeyByHex(valid.keyid.toHex()));
+					);
+					if (result) {
+						if (result.error && result.error.message) {
+							if ('PWD_DIALOG_CANCEL' !== result.error.code) {
+								alert(result.error.code + ': ' + result.error.message);
+							}
+						} else {
+							body.classList.add('mailvelope');
 							return true;
 						}
-					} catch (e) {
-						console.log(e);
 					}
 				}
-
-				fCallback(null, signingKeyIds);
-				return false;
+			} catch (err) {
+				console.error(err);
 			}
+
+			// Now try GnuPG
+			return GnuPGUserStore.decrypt(message);
 		}
 
-		fCallback(null);
-		return false;
-	}
-
-	/**
-	 * @param {*} dom
-	 * @param {MessageModel} rainLoopMessage
-	 */
-	initMessageBodyControls(dom, rainLoopMessage) {
-		const cl = dom && dom.classList;
-		if (!cl.contains('inited')) {
-			cl.add('inited');
-
-			const encrypted = cl.contains('encrypted'),
-				signed = cl.contains('signed'),
-				recipients = rainLoopMessage ? rainLoopMessage.getEmails(['from', 'to', 'cc']) : [];
-
-			let verControl = null;
-
-			if (encrypted || signed) {
-				const domText = dom.textContent;
-
-				verControl = Element.fromHTML('<div class="b-openpgp-control"><i class="fontastic">🔒</i></div>');
-				if (encrypted) {
-					verControl.title = i18n('MESSAGE/PGP_ENCRYPTED_MESSAGE_DESC');
-					verControl.addEventListener('click', domControlEncryptedClickHelper(this, dom, domText, recipients));
-				} else {
-					verControl.title = i18n('MESSAGE/PGP_SIGNED_MESSAGE_DESC');
-					verControl.addEventListener('click', domControlSignedClickHelper(this, dom, domText));
+		async verify(message) {
+			const signed = message.pgpSigned();
+			if (signed) {
+				const sender = message.from[0].email,
+					gnupg = GnuPGUserStore.hasPublicKeyForEmails([sender]),
+					openpgp = OpenPGPUserStore.hasPublicKeyForEmails([sender]);
+				// Detached signature use GnuPG first, else we must download whole message
+				if (gnupg && signed.SigPartId) {
+					return GnuPGUserStore.verify(message);
 				}
-
-				dom.before(verControl, createElement('div'));
+				if (openpgp) {
+					return OpenPGPUserStore.verify(message);
+				}
+				if (gnupg) {
+					return GnuPGUserStore.verify(message);
+				}
+				// Mailvelope can't
+				// https://github.com/mailvelope/mailvelope/issues/434
 			}
 		}
-	}
-};
+
+		/**
+		 * Returns headers that should be added to an outgoing email.
+		 * So far this is only the autocrypt header.
+		 */
+	/*
+		this.mailvelopeKeyring.additionalHeadersForOutgoingEmail(headers)
+		this.mailvelopeKeyring.addSyncHandler(syncHandlerObj)
+		this.mailvelopeKeyring.createKeyBackupContainer(selector, options)
+		this.mailvelopeKeyring.createKeyGenContainer(selector, {
+	//		userIds: [],
+			keySize: 4096
+		})
+
+		this.mailvelopeKeyring.exportOwnPublicKey(emailAddr).then(<AsciiArmored, Error>)
+		this.mailvelopeKeyring.importPublicKey(armored)
+
+		// https://mailvelope.github.io/mailvelope/global.html#SyncHandlerObject
+		this.mailvelopeKeyring.addSyncHandler({
+			uploadSync
+			downloadSync
+			backup
+			restore
+		});
+	*/
+
+	};

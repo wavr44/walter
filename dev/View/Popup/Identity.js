@@ -2,12 +2,11 @@ import { getNotification } from 'Common/Translator';
 
 import Remote from 'Remote/User/Fetch';
 
-import { decorateKoCommands } from 'Knoin/Knoin';
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
 const reEmail = /^[^@\s]+@[^@\s]+$/;
 
-class IdentityPopupView extends AbstractViewPopup {
+export class IdentityPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Identity');
 
@@ -60,60 +59,57 @@ class IdentityPopupView extends AbstractViewPopup {
 		this.replyTo.valueHasMutated();
 		this.bcc.valueHasMutated();
 */
-		decorateKoCommands(this, {
-			addOrEditIdentityCommand: self => !self.submitRequest()
-		});
 	}
 
-	addOrEditIdentityCommand() {
-		if (this.signature && this.signature.__fetchEditorValue) {
-			this.signature.__fetchEditorValue();
-		}
-
-		if (!this.emailHasError()) {
-			this.emailHasError(!this.email().trim());
-		}
-
-		if (this.emailHasError()) {
-			if (!this.owner()) {
-				this.emailFocused(true);
+	submitForm() {
+		if (!this.submitRequest()) {
+			if (this.signature && this.signature.__fetchEditorValue) {
+				this.signature.__fetchEditorValue();
 			}
 
-			return false;
-		}
+			if (!this.emailHasError()) {
+				this.emailHasError(!this.email().trim());
+			}
 
-		if (this.replyToHasError()) {
-			this.replyToFocused(true);
-			return false;
-		}
-
-		if (this.bccHasError()) {
-			this.bccFocused(true);
-			return false;
-		}
-
-		this.submitRequest(true);
-
-		Remote.identityUpdate(
-			iError => {
-				this.submitRequest(false);
-				if (iError) {
-					this.submitError(getNotification(iError));
-				} else {
-					rl.app.accountsAndIdentities();
-					this.cancelCommand();
+			if (this.emailHasError()) {
+				if (!this.owner()) {
+					this.emailFocused(true);
 				}
-			},
-			this.id,
-			this.email(),
-			this.name(),
-			this.replyTo(),
-			this.bcc(),
-			this.signature(),
-			this.signatureInsertBefore()
-		);
 
-		return true;
+				return;
+			}
+
+			if (this.replyToHasError()) {
+				this.replyToFocused(true);
+				return;
+			}
+
+			if (this.bccHasError()) {
+				this.bccFocused(true);
+				return;
+			}
+
+			this.submitRequest(true);
+
+			Remote.request('IdentityUpdate', iError => {
+					this.submitRequest(false);
+					if (iError) {
+						this.submitError(getNotification(iError));
+					} else {
+						rl.app.accountsAndIdentities();
+						this.close();
+					}
+				}, {
+					Id: this.id,
+					Email: this.email(),
+					Name: this.name(),
+					ReplyTo: this.replyTo(),
+					Bcc: this.bcc(),
+					Signature: this.signature(),
+					SignatureInsertBefore: this.signatureInsertBefore() ? 1 : 0
+				}
+			);
+		}
 	}
 
 	clearPopup() {
@@ -162,13 +158,11 @@ class IdentityPopupView extends AbstractViewPopup {
 		}
 	}
 
-	onShowWithDelay() {
+	afterShow() {
 		this.owner() || this.emailFocused(true);
 	}
 
-	onHideWithDelay() {
+	afterHide() {
 		this.clearPopup();
 	}
 }
-
-export { IdentityPopupView, IdentityPopupView as default };

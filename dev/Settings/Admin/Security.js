@@ -1,33 +1,39 @@
-import { Capa } from 'Common/Enums';
-import { Settings, SettingsGet } from 'Common/Globals';
-import { addObservablesTo, addSubscribablesTo } from 'Common/Utils';
+import { SettingsGet, SettingsCapa } from 'Common/Globals';
+import { addObservablesTo, addSubscribablesTo } from 'External/ko';
 
 import Remote from 'Remote/Admin/Fetch';
 
 import { decorateKoCommands } from 'Knoin/Knoin';
+import { AbstractViewSettings } from 'Knoin/AbstractViews';
 
-export class SecurityAdminSettings {
+export class AdminSettingsSecurity extends AbstractViewSettings {
 	constructor() {
+		super();
+
+		this.addSettings(['UseLocalProxyForExternalImages','VerifySslCertificate','AllowSelfSigned']);
+
 		this.weakPassword = rl.app.weakPassword;
 
 		addObservablesTo(this, {
-			useLocalProxyForExternalImages: !!SettingsGet('UseLocalProxyForExternalImages'),
-
-			verifySslCertificate: !!SettingsGet('VerifySslCertificate'),
-			allowSelfSigned: !!SettingsGet('AllowSelfSigned'),
-
 			adminLogin: SettingsGet('AdminLogin'),
 			adminLoginError: false,
 			adminPassword: '',
 			adminPasswordNew: '',
 			adminPasswordNew2: '',
 			adminPasswordNewError: false,
+			adminTOTP: SettingsGet('AdminTOTP'),
 
 			adminPasswordUpdateError: false,
 			adminPasswordUpdateSuccess: false,
 
-			capaOpenPGP: Settings.capa(Capa.OpenPGP)
+			capaOpenPGP: SettingsCapa('OpenPGP')
 		});
+
+		const reset = () => {
+			this.adminPasswordUpdateError(false);
+			this.adminPasswordUpdateSuccess(false);
+			this.adminPasswordNewError(false);
+		};
 
 		addSubscribablesTo(this, {
 			adminPassword: () => {
@@ -37,39 +43,11 @@ export class SecurityAdminSettings {
 
 			adminLogin: () => this.adminLoginError(false),
 
-			adminPasswordNew: () => {
-				this.adminPasswordUpdateError(false);
-				this.adminPasswordUpdateSuccess(false);
-				this.adminPasswordNewError(false);
-			},
+			adminPasswordNew: reset,
 
-			adminPasswordNew2: () => {
-				this.adminPasswordUpdateError(false);
-				this.adminPasswordUpdateSuccess(false);
-				this.adminPasswordNewError(false);
-			},
+			adminPasswordNew2: reset,
 
-			capaOpenPGP: value =>
-				Remote.saveAdminConfig(null, {
-					CapaOpenPGP: value ? 1 : 0
-				}),
-
-			useLocalProxyForExternalImages: value =>
-				Remote.saveAdminConfig(null, {
-					UseLocalProxyForExternalImages: value ? 1 : 0
-				}),
-
-			verifySslCertificate: value => {
-				value => value || this.allowSelfSigned(true);
-				Remote.saveAdminConfig(null, {
-					VerifySslCertificate: value ? 1 : 0
-				});
-			},
-
-			allowSelfSigned: value =>
-				Remote.saveAdminConfig(null, {
-					AllowSelfSigned: value ? 1 : 0
-				})
+			capaOpenPGP: value => Remote.saveSetting('CapaOpenPGP', value)
 		});
 
 		decorateKoCommands(this, {
@@ -91,7 +69,7 @@ export class SecurityAdminSettings {
 		this.adminPasswordUpdateError(false);
 		this.adminPasswordUpdateSuccess(false);
 
-		Remote.saveNewAdminPassword((iError, data) => {
+		Remote.request('AdminPasswordUpdate', (iError, data) => {
 			if (iError) {
 				this.adminPasswordUpdateError(true);
 			} else {
@@ -106,7 +84,8 @@ export class SecurityAdminSettings {
 		}, {
 			'Login': this.adminLogin(),
 			'Password': this.adminPassword(),
-			'NewPassword': this.adminPasswordNew()
+			'NewPassword': this.adminPasswordNew(),
+			'TOTP': this.adminTOTP()
 		});
 
 		return true;

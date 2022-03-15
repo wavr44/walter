@@ -1,30 +1,28 @@
 import { Notification } from 'Common/Enums';
 import { isArray, pInt, pString } from 'Common/Utils';
 import { serverRequest } from 'Common/Links';
+import { getNotification } from 'Common/Translator';
 
-let iJsonErrorCount = 0,
-	iTokenErrorCount = 0;
+let iJsonErrorCount = 0;
 
 const getURL = (add = '') => serverRequest('Json') + add,
 
 checkResponseError = data => {
 	const err = data ? data.ErrorCode : null;
-	if (Notification.InvalidToken === err && 10 < ++iTokenErrorCount) {
+	if (Notification.InvalidToken === err) {
+		alert(getNotification(err));
 		rl.logoutReload();
-	} else {
-		if ([
-				Notification.AuthError,
-				Notification.ConnectionError,
-				Notification.DomainNotAllowed,
-				Notification.AccountNotAllowed,
-				Notification.MailServerError,
-				Notification.UnknownNotification,
-				Notification.UnknownError
-			].includes(err)
-		) {
-			++iJsonErrorCount;
-		}
-		if (data.Logout || 7 < iJsonErrorCount) {
+	} else if ([
+			Notification.AuthError,
+			Notification.ConnectionError,
+			Notification.DomainNotAllowed,
+			Notification.AccountNotAllowed,
+			Notification.MailServerError,
+			Notification.UnknownNotification,
+			Notification.UnknownError
+		].includes(err)
+	) {
+		if (7 < ++iJsonErrorCount) {
 			rl.logoutReload();
 		}
 	}
@@ -79,6 +77,45 @@ export class AbstractFetchRemote
 	}
 
 	/**
+	 * Allows quicker visual responses to the user.
+	 * Can be used to stream lines of json encoded data, but does not work on all servers.
+	 * Apache needs 'flushpackets' like in <Proxy "fcgi://...." flushpackets=on></Proxy>
+	 */
+	streamPerLine(fCallback, sGetAdd) {
+		rl.fetch(getURL(sGetAdd))
+		.then(response => response.body)
+		.then(body => {
+			// Firefox TextDecoderStream is not defined
+		//	const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+			const reader = body.getReader(),
+				re = /\r\n|\n|\r/gm,
+				utf8decoder = new TextDecoder();
+			let buffer = '';
+			function processText({ done, value }) {
+				buffer += value ? utf8decoder.decode(value, {stream: true}) : '';
+				for (;;) {
+					let result = re.exec(buffer);
+					if (!result) {
+						if (done) {
+							break;
+						}
+						reader.read().then(processText);
+						return;
+					}
+					fCallback(buffer.slice(0, result.index));
+					buffer = buffer.slice(result.index + 1);
+					re.lastIndex = 0;
+				}
+				if (buffer.length) {
+					// last line didn't end in a newline char
+					fCallback(buffer);
+				}
+			}
+			reader.read().then(processText);
+		})
+	}
+
+	/**
 	 * @param {?Function} fCallback
 	 * @param {string} sAction
 	 * @param {Object=} oParameters
@@ -86,7 +123,7 @@ export class AbstractFetchRemote
 	 * @param {string=} sGetAdd = ''
 	 * @param {Array=} aAbortActions = []
 	 */
-	defaultRequest(fCallback, sAction, params, iTimeout, sGetAdd, abortActions) {
+	request(sAction, fCallback, params, iTimeout, sGetAdd, abortActions) {
 		params = params || {};
 
 		const start = Date.now();
@@ -119,7 +156,7 @@ export class AbstractFetchRemote
 					}
 */
 					if (data.Result) {
-						iJsonErrorCount = iTokenErrorCount = 0;
+						iJsonErrorCount = 0;
 					} else {
 						checkResponseError(data);
 						iError = data.ErrorCode || Notification.UnknownError
@@ -144,29 +181,8 @@ export class AbstractFetchRemote
 	/**
 	 * @param {?Function} fCallback
 	 */
-	noop(fCallback) {
-		this.defaultRequest(fCallback, 'Noop');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 */
 	getPublicKey(fCallback) {
-		this.defaultRequest(fCallback, 'GetPublicKey');
-	}
-
-	/**
-	 * @param {?Function} fCallback
-	 * @param {string} sVersion
-	 */
-	jsVersion(fCallback, sVersion) {
-		this.defaultRequest(fCallback, 'Version', {
-			Version: sVersion
-		});
-	}
-
-	fastResolve(mData) {
-		return Promise.resolve(mData);
+		this.request('GetPublicKey', fCallback);
 	}
 
 	setTrigger(trigger, value) {
@@ -178,7 +194,7 @@ export class AbstractFetchRemote
 		}
 	}
 
-	postRequest(action, fTrigger, params, timeOut) {
+	post(action, fTrigger, params, timeOut) {
 		this.setTrigger(fTrigger, true);
 		return fetchJSON(action, '', params, pInt(timeOut, 30000),
 			data => {

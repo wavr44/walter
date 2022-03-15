@@ -24,8 +24,20 @@ abstract class FolderType
 	const DRAFTS = 3;
 	const JUNK = 4;
 	const TRASH = 5;
+	const ARCHIVE = 6;
 	const IMPORTANT = 10;
 	const FLAGGED = 11;
-	const ARCHIVE = 12;
 	const ALL = 13;
+
+	// TODO: SnappyMail
+	const TEMPLATES = 19;
+
+	// Kolab
+	const CONFIGURATION = 20;
+	const CALENDAR = 21;
+	const CONTACTS = 22;
+	const TASKS    = 23;
+	const NOTES    = 24;
+	const FILES    = 25;
+	const JOURNAL  = 26;
 }

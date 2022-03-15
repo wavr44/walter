@@ -17,29 +17,10 @@ namespace MailSo\Base;
  */
 abstract class Utils
 {
-	/**
-	 * @var string
-	 */
-	static $sValidUtf8Regexp = <<<'END'
-/
-  (
-    (?: [\x00-\x7F]                 # single-byte sequences   0xxxxxxx
-    |   [\xC0-\xDF][\x80-\xBF]      # double-byte sequences   110xxxxx 10xxxxxx
-    |   [\xE0-\xEF][\x80-\xBF]{2}   # triple-byte sequences   1110xxxx 10xxxxxx * 2
-    |   [\xF0-\xF7][\x80-\xBF]{3}   # quadruple-byte sequence 11110xxx 10xxxxxx * 3
-    ){1,100}                        # ...one or more times
-  )
-| .                                 # anything else
-/x
-END;
 
 	public static function NormalizeCharset(string $sEncoding, bool $bAsciAsUtf8 = false) : string
 	{
-		$sEncoding = \strtolower($sEncoding);
-
-		$sEncoding = \preg_replace('/^iso8/', 'iso-8', $sEncoding);
-		$sEncoding = \preg_replace('/^cp-([\d])/', 'cp$1', $sEncoding);
-		$sEncoding = \preg_replace('/^windows?12/', 'windows-12', $sEncoding);
+		$sEncoding = \preg_replace('/^iso8/', 'iso-8', \strtolower($sEncoding));
 
 		switch ($sEncoding)
 		{
@@ -47,37 +28,39 @@ END;
 			case 'ascii':
 			case 'us-asci':
 			case 'us-ascii':
-				$sEncoding = $bAsciAsUtf8 ? Enumerations\Charset::UTF_8 :
+				return $bAsciAsUtf8 ? Enumerations\Charset::UTF_8 :
 					Enumerations\Charset::ISO_8859_1;
-				break;
+
 			case 'unicode-1-1-utf-7':
 			case 'unicode-1-utf-7':
 			case 'unicode-utf-7':
-				$sEncoding = Enumerations\Charset::UTF_7;
-				break;
+				return 'utf-7';
+
 			case 'utf8':
 			case 'utf-8':
-				$sEncoding = Enumerations\Charset::UTF_8;
-				break;
+				return Enumerations\Charset::UTF_8;
+
 			case 'utf7imap':
 			case 'utf-7imap':
 			case 'utf7-imap':
 			case 'utf-7-imap':
-				$sEncoding = Enumerations\Charset::UTF_7_IMAP;
-				break;
+				return 'utf7-imap';
+
 			case 'ks-c-5601-1987':
 			case 'ks_c_5601-1987':
 			case 'ks_c_5601_1987':
-				$sEncoding = 'euc-kr';
-				break;
+				return 'euc-kr';
+
 			case 'x-gbk':
-				$sEncoding = 'gb2312';
-				break;
+				return 'gb2312';
+
 			case 'iso-8859-i':
 			case 'iso-8859-8-i':
-				$sEncoding = Enumerations\Charset::ISO_8859_8;
-				break;
+				return 'iso-8859-8';
 		}
+
+		$sEncoding = \preg_replace('/^cp-([\d])/', 'cp$1', $sEncoding);
+		$sEncoding = \preg_replace('/^windows?12/', 'windows-12', $sEncoding);
 
 		return $sEncoding;
 	}
@@ -88,7 +71,7 @@ END;
 
 		if (Enumerations\Charset::UTF_8 !== $sCharset &&
 			static::IsUtf8($sValue) &&
-			false === \strpos($sCharset, Enumerations\Charset::ISO_2022_JP)
+			!\str_contains($sCharset, Enumerations\Charset::ISO_2022_JP)
 		)
 		{
 			$sCharset = Enumerations\Charset::UTF_8;
@@ -110,7 +93,7 @@ END;
 			};
 		}
 
-		if (!\call_user_func($fFileExistsCallback, $sFilePath))
+		if (!$fFileExistsCallback($sFilePath))
 		{
 			return $sFilePath;
 		}
@@ -129,7 +112,7 @@ END;
 				(empty($aFileInfo['extension']) ? '' : '.'.$aFileInfo['extension'])
 			;
 
-			if (!\call_user_func($fFileExistsCallback, $sFilePathNew))
+			if (!$fFileExistsCallback($sFilePathNew))
 			{
 				$sFilePath = $sFilePathNew;
 				break;
@@ -152,9 +135,8 @@ END;
 			$aSupportedEncodings = \array_map('strtoupper', \array_unique(
 				\array_merge(
 					$aSupportedEncodings,
-					\call_user_func_array(
-						'array_merge',
-						\array_map(
+					\array_merge(
+						...\array_map(
 							'mb_encoding_aliases',
 							$aSupportedEncodings
 						)
@@ -167,12 +149,6 @@ END;
 
 	public static function MbConvertEncoding(string $sInputString, ?string $sInputFromEncoding, string $sInputToEncoding) : string
 	{
-		static $sMbstringSubCh = null;
-		if (null === $sMbstringSubCh)
-		{
-			$sMbstringSubCh = \mb_substitute_character();
-		}
-
 		if ($sInputFromEncoding) {
 			$sInputFromEncoding = \strtoupper($sInputFromEncoding);
 			if (!static::MbSupportedEncoding($sInputFromEncoding)) {
@@ -188,7 +164,7 @@ END;
 
 		\mb_substitute_character('none');
 		$sResult = \mb_convert_encoding($sInputString, \strtoupper($sInputToEncoding), $sInputFromEncoding);
-		\mb_substitute_character($sMbstringSubCh);
+		\mb_substitute_character(0xFFFD);
 
 		return (false !== $sResult) ? $sResult : $sInputString;
 	}
@@ -205,36 +181,22 @@ END;
 			return $sInputString;
 		}
 
-		if ($sFromEncoding === Enumerations\Charset::ISO_8859_1
-		 && $sToEncoding === Enumerations\Charset::UTF_8
-		 && \function_exists('utf8_encode')) {
-			return \utf8_encode($sInputString);
+		if ($sToEncoding === Enumerations\Charset::UTF_8) {
+			if ($sFromEncoding === Enumerations\Charset::ISO_8859_1) {
+				return \utf8_encode($sInputString);
+			}
+			if ($sFromEncoding === 'utf7-imap') {
+				return static::Utf7ModifiedToUtf8($sInputString);
+			}
 		}
 
-		if ($sFromEncoding === Enumerations\Charset::UTF_8
-		 && $sToEncoding === Enumerations\Charset::ISO_8859_1
-		 && \function_exists('utf8_decode')) {
-			return \utf8_decode($sInputString);
-		}
-
-		if ($sFromEncoding === Enumerations\Charset::UTF_7_IMAP
-		 && $sToEncoding === Enumerations\Charset::UTF_8) {
-			$sResult = static::Utf7ModifiedToUtf8($sInputString);
-			return (false !== $sResult) ? $sResult : $sInputString;
-		}
-
-		if ($sFromEncoding === Enumerations\Charset::UTF_8
-		 && $sToEncoding === Enumerations\Charset::UTF_7_IMAP) {
-			$sResult = static::Utf8ToUtf7Modified($sInputString);
-			return (false !== $sResult) ? $sResult : $sInputString;
-		}
-
-		if ($sFromEncoding === Enumerations\Charset::UTF_7_IMAP) {
-			return static::ConvertEncoding(
-				static::ModifiedToPlainUtf7($sInputString),
-				Enumerations\Charset::UTF_7,
-				$sToEncoding
-			);
+		if ($sFromEncoding === Enumerations\Charset::UTF_8) {
+			if ($sToEncoding === Enumerations\Charset::ISO_8859_1) {
+				return \utf8_decode($sInputString);
+			}
+			if ($sToEncoding === 'utf7-imap') {
+				return static::Utf8ToUtf7Modified($sInputString);
+			}
 		}
 
 		return static::MbConvertEncoding($sInputString, $sFromEncoding, $sToEncoding);
@@ -242,30 +204,16 @@ END;
 
 	public static function IsAscii(string $sValue) : bool
 	{
-		if ('' === \trim($sValue))
-		{
-			return true;
-		}
-
-		return !\preg_match('/[^\x09\x10\x13\x0A\x0D\x20-\x7E]/', $sValue);
+		return '' === \trim($sValue)
+			|| !\preg_match('/[^\x09\x10\x13\x0A\x0D\x20-\x7E]/', $sValue);
 	}
 
-	public static function StrToLowerIfAscii(string $sValue) : string
+	public static function StrMailDomainToLower(string $sValue) : string
 	{
-		return static::IsAscii($sValue) ? \strtolower($sValue) : $sValue;
-	}
-
-	public static function StrToUpperIfAscii(string $sValue) : string
-	{
-		return static::IsAscii($sValue) ? \strtoupper($sValue) : $sValue;
-	}
-
-	public static function StrMailDomainToLowerIfAscii(string $sValue) : string
-	{
-		$aParts = \explode('@', $sValue, 2);
-		if (!empty($aParts[1]))
-		{
-			$aParts[1] = static::IsAscii($aParts[1]) ? \strtolower($aParts[1]) : $aParts[1];
+		$aParts = \explode('@', $sValue);
+		$iLast = \count($aParts) - 1;
+		if ($iLast) {
+			$aParts[$iLast] = \mb_strtolower($aParts[$iLast]);
 		}
 
 		return \implode('@', $aParts);
@@ -683,6 +631,7 @@ END;
 			'bz'	=> 'application/x-bzip',
 			'bz2'	=> 'application/x-bzip2',
 			'deb'	=> 'application/x-debian-package',
+			'tar'	=> 'application/x-tar',
 
 			// fonts
 			'psf'	=> 'application/x-font-linux-psf',
@@ -783,10 +732,12 @@ END;
 			case 'application/x-rar-compressed':
 			case 'application/x-msdownload':
 			case 'application/vnd.ms-cab-compressed':
+			case 'application/gzip':
 			case 'application/x-gzip':
 			case 'application/x-bzip':
 			case 'application/x-bzip2':
 			case 'application/x-debian-package':
+			case 'application/x-tar':
 				return 'archive';
 
 			case 'application/msword':
@@ -811,6 +762,8 @@ END;
 			case 'zip':
 			case '7z':
 			case 'rar':
+			case 'tar':
+			case 'tgz':
 				return 'archive';
 
 			case 'pdf':
@@ -855,17 +808,6 @@ END;
 		}
 
 		return false;
-	}
-
-	public static function InlineRebuildStringToJsString(string $sText) : string
-	{
-		static $aJsonReplaces = array(
-			array('\\', "\n", "\t", "\r", '\b', "\f", '"'),
-			array('\\\\', '\\n', '\\t', '\\r', '\\b', '\\f', '\"')
-		);
-
-		return \str_replace('</script>', '<\/script>',
-			\str_replace($aJsonReplaces[0], $aJsonReplaces[1], $sText));
 	}
 
 	public static function ClearArrayUtf8Values(array &$aInput)
@@ -942,145 +884,47 @@ END;
 
 	public static function RecRmDir(string $sDir) : bool
 	{
-		if (\is_dir($sDir))
-		{
-			$aObjects = \scandir($sDir);
-			foreach ($aObjects as $sObject)
-			{
-				if ('.' !== $sObject && '..' !== $sObject)
-				{
-//					if ('dir' === \filetype($sDir.'/'.$sObject))
-					if (\is_dir($sDir.'/'.$sObject))
-					{
-						self::RecRmDir($sDir.'/'.$sObject);
-					}
-					else
-					{
-						\unlink($sDir.'/'.$sObject);
-					}
+		\clearstatcache();
+		if (\is_dir($sDir)) {
+			$iterator = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator($sDir, \FilesystemIterator::SKIP_DOTS),
+				\RecursiveIteratorIterator::CHILD_FIRST);
+			foreach ($iterator as $path) {
+				if ($path->isDir()) {
+					\rmdir($path);
+				} else {
+					\unlink($path);
 				}
 			}
-
+			\clearstatcache();
+//			\realpath_cache_size() && \clearstatcache(true);
 			return \rmdir($sDir);
 		}
 
 		return false;
 	}
 
-	public static function CopyDir(string $sSource, string $sDestination)
+	public static function RecTimeDirRemove(string $sDir, int $iTime2Kill) : bool
 	{
-		if (\is_dir($sSource))
-		{
-			if (!\is_dir($sDestination))
-			{
-				\mkdir($sDestination);
-			}
-
-			$oDirectory = \dir($sSource);
-			if ($oDirectory)
-			{
-				while (false !== ($sRead = $oDirectory->read()))
-				{
-					if ('.' === $sRead || '..' === $sRead)
-					{
-						continue;
-					}
-
-					$sPathDir = $sSource.'/'.$sRead;
-					if (\is_dir($sPathDir))
-					{
-						static::CopyDir($sPathDir, $sDestination.'/'.$sRead);
-						continue;
-					}
-
-					\copy($sPathDir, $sDestination.'/'.$sRead);
-				}
-
-				$oDirectory->close();
-			}
-		}
-	}
-
-	public static function RecTimeDirRemove(string $sTempPath, int $iTime2Kill, int $iNow) : bool
-	{
-		$iFileCount = 0;
-
-		$sTempPath = rtrim($sTempPath, '\\/');
-		if (\is_dir($sTempPath))
-		{
-			$rDirH = \opendir($sTempPath);
-			if ($rDirH)
-			{
-				$bRemoveAllDirs = true;
-				while (($sFile = \readdir($rDirH)) !== false)
-				{
-					if ('.' !== $sFile && '..' !== $sFile)
-					{
-						if (\is_dir($sTempPath.'/'.$sFile))
-						{
-							if (!static::RecTimeDirRemove($sTempPath.'/'.$sFile, $iTime2Kill, $iNow))
-							{
-								$bRemoveAllDirs = false;
-							}
-						}
-						else
-						{
-							$iFileCount++;
-						}
-					}
-				}
-
-				\closedir($rDirH);
-			}
-
-			if ($iFileCount > 0)
-			{
-				if (static::TimeFilesRemove($sTempPath, $iTime2Kill, $iNow))
-				{
-					return \rmdir($sTempPath);
+		\clearstatcache();
+		if (\is_dir($sDir)) {
+			$iTime = \time() - $iTime2Kill;
+			$iterator = new \RecursiveIteratorIterator(
+				new \RecursiveDirectoryIterator($sDir, \FilesystemIterator::SKIP_DOTS),
+				\RecursiveIteratorIterator::CHILD_FIRST);
+			foreach ($iterator as $path) {
+				if ($path->isFile() && $path->getMTime() < $iTime) {
+					\unlink($path);
+				} else if ($path->isDir() && !(new \FilesystemIterator($path))->valid()) {
+					\rmdir($path);
 				}
 			}
-			else
-			{
-				return $bRemoveAllDirs ? \rmdir($sTempPath) : false;
-			}
-
-			return false;
+			\clearstatcache();
+//			\realpath_cache_size() && \clearstatcache(true);
+			return !(new \FilesystemIterator($sDir))->valid() && \rmdir($sDir);
 		}
 
-		return true;
-	}
-
-	public static function TimeFilesRemove(string $sTempPath, int $iTime2Kill, int $iNow)
-	{
-		$bResult = true;
-
-		$sTempPath = rtrim($sTempPath, '\\/');
-		if (\is_dir($sTempPath))
-		{
-			$rDirH = \opendir($sTempPath);
-			if ($rDirH)
-			{
-				while (($sFile = \readdir($rDirH)) !== false)
-				{
-					if ($sFile !== '.' && $sFile !== '..')
-					{
-						if ($iNow - \filemtime($sTempPath.'/'.$sFile) > $iTime2Kill)
-						{
-							\unlink($sTempPath.'/'.$sFile);
-						}
-						else
-						{
-							$bResult = false;
-						}
-					}
-				}
-
-				\closedir($rDirH);
-			}
-		}
-
-		return $bResult;
+		return false;
 	}
 
 	public static function Utf8Truncate(string $sUtfString, int $iLength) : string
@@ -1103,30 +947,25 @@ END;
 		return '';
 	}
 
-	public static function Utf8Clear(?string $sUtfString, string $sReplaceOn = '') : string
+	public static function Utf8Clear(?string $sUtfString) : string
 	{
-		if (!strlen($sUtfString))
-		{
+		if (!\strlen($sUtfString)) {
 			return '';
 		}
 
-		$sUtfString = \preg_replace(static::$sValidUtf8Regexp, '$1', $sUtfString);
+		$sSubstitute = ''; // '�' 0xFFFD
+/*
+		$converter = new \UConverter('UTF-8', 'UTF-8');
+		$converter->setSubstChars($sSubstitute);
+		$sNewUtfString = $converter->->convert($sUtfString);
+//		$sNewUtfString = \UConverter::transcode($str, 'UTF-8', 'UTF-8', [????]);
+*/
+		\mb_substitute_character($sSubstitute ?: 'none');
+		$sNewUtfString = \mb_convert_encoding($sUtfString, 'UTF-8', 'UTF-8');
+		\mb_substitute_character(0xFFFD);
 
-		$sUtfString = \preg_replace(
-			'/\xE0[\x80-\x9F][\x80-\xBF]'.
-			'|\xEF\xBF\xBF'.
-			'|\xED[\xA0-\xBF][\x80-\xBF]/S', $sReplaceOn, $sUtfString);
-
-		$sUtfString = \preg_replace('/\xEF\xBF\xBD/', '?', $sUtfString);
-
-		$sNewUtfString = static::MbConvertEncoding($sUtfString, 'UTF-8', 'UTF-8');
-
-		if (false !== $sNewUtfString)
-		{
-			$sUtfString = $sNewUtfString;
-		}
-
-		return $sUtfString;
+		return (false !== $sNewUtfString) ? $sNewUtfString : $sUtfString;
+//		return (false !== $sNewUtfString) ? \preg_replace('/\\p{Cc}/u', '', $sNewUtfString) : $sUtfString;
 	}
 
 	public static function Base64Decode(string $sString) : string
@@ -1164,8 +1003,7 @@ END;
 
 	public static function UrlSafeBase64Decode(string $sValue) : string
 	{
-		$sValue = \rtrim(\strtr($sValue, '-_.', '+/='), '=');
-		return static::Base64Decode(\str_pad($sValue, \strlen($sValue) + (\strlen($sValue) % 4), '=', STR_PAD_RIGHT));
+		return \base64_decode(\strtr($sValue, '-_', '+/'), '=');
 	}
 
 	public static function ParseFetchSequence(string $sSequence) : array
@@ -1195,52 +1033,6 @@ END;
 		}
 
 		return $aResult;
-	}
-
-	public static function PrepareFetchSequence(array $aSequence) : string
-	{
-		$aResult = array();
-		if (0 < \count($aSequence))
-		{
-			$iStart = null;
-			$iPrev = null;
-
-			foreach ($aSequence as $sItem)
-			{
-				// simple protection
-				if (false !== \strpos($sItem, ':'))
-				{
-					$aResult[] = $sItem;
-					continue;
-				}
-
-				$iItem = (int) $sItem;
-				if (null === $iStart || null === $iPrev)
-				{
-					$iStart = $iItem;
-					$iPrev = $iItem;
-					continue;
-				}
-
-				if ($iPrev === $iItem - 1)
-				{
-					$iPrev = $iItem;
-				}
-				else
-				{
-					$aResult[] = $iStart === $iPrev ? $iStart : $iStart.':'.$iPrev;
-					$iStart = $iItem;
-					$iPrev = $iItem;
-				}
-			}
-
-			if (null !== $iStart && null !== $iPrev)
-			{
-				$aResult[] = $iStart === $iPrev ? $iStart : $iStart.':'.$iPrev;
-			}
-		}
-
-		return \implode(',', $aResult);
 	}
 
 	/**
@@ -1276,7 +1068,7 @@ END;
 	public static function MultipleStreamWriter($rRead, array $aWrite, int $iBufferLen = 8192, bool $bResetTimeLimit = true, bool $bFixCrLf = false, bool $bRewindOnComplete = false) : int
 	{
 		$mResult = false;
-		if ($rRead && 0 < \count($aWrite))
+		if (\is_resource($rRead) && \count($aWrite))
 		{
 			$mResult = 0;
 			while (!\feof($rRead))
@@ -1288,7 +1080,7 @@ END;
 					break;
 				}
 
-				if (0 === $iBufferLen || '' === $sBuffer)
+				if ('' === $sBuffer)
 				{
 					break;
 				}
@@ -1331,318 +1123,49 @@ END;
 		return $mResult;
 	}
 
-	public static function ModifiedToPlainUtf7(string $sUtfModifiedString) : string
-	{
-		$sUtf = '';
-		$bBase = false;
-
-		for ($iIndex = 0, $iLen = \strlen($sUtfModifiedString); $iIndex < $iLen; $iIndex++)
-		{
-			if ('&' === $sUtfModifiedString[$iIndex])
-			{
-				if (isset($sUtfModifiedString[$iIndex+1]) && '-' === $sUtfModifiedString[$iIndex + 1])
-				{
-					$sUtf .= '&';
-					$iIndex++;
-				}
-				else
-				{
-					$sUtf .= '+';
-					$bBase = true;
-				}
-			}
-			else if ($sUtfModifiedString[$iIndex] == '-' && $bBase)
-			{
-				$bBase = false;
-			}
-			else
-			{
-				if ($bBase && ',' === $sUtfModifiedString[$iIndex])
-				{
-					$sUtf .= '/';
-				}
-				else if (!$bBase && '+' === $sUtfModifiedString[$iIndex])
-				{
-					$sUtf .= '+-';
-				}
-				else
-				{
-					$sUtf .= $sUtfModifiedString[$iIndex];
-				}
-			}
-		}
-
-		return $sUtf;
-	}
-
 	public static function Utf7ModifiedToUtf8(string $sStr) : string
 	{
-		$aArray = array(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
-			-1,-1,-1,-1,-1,-1,-1,-1,-1,62, 63,-1,-1,-1,52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-1,-1,-1,-1,0,1,2,3,4,5,6,7,8,9,
-			10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,-1,-1,-1,-1,-1,-1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,
-			41,42,43,44,45,46,47,48,49,50,51,-1,-1,-1,-1,-1);
-
-		$sResult = '';
-		$bError = false;
-		$iLen = \strlen($sStr);
-
-		for ($iIndex = 0; $iLen > 0; $iIndex++, $iLen--)
-		{
-			$sChar = $sStr[$iIndex];
-			if ($sChar == '&')
-			{
-				$iIndex++;
-				$iLen--;
-
-				$sChar = isset($sStr[$iIndex]) ? $sStr[$iIndex] : null;
-				if ($sChar === null)
-				{
-					break;
-				}
-
-				if ($iLen && $sChar == '-')
-				{
-					$sResult .= '&';
-					continue;
-				}
-
-				$iCh = 0;
-				$iK = 10;
-				for (; $iLen > 0; $iIndex++, $iLen--)
-				{
-					$sChar = $sStr[$iIndex];
-
-					$iB = $aArray[\ord($sChar)];
-					if ((\ord($sChar) & 0x80) || $iB == -1)
-					{
-						break;
-					}
-
-					if ($iK > 0)
-					{
-						$iCh |= $iB << $iK;
-						$iK -= 6;
-					}
-					else
-					{
-						$iCh |= $iB >> (-$iK);
-						if ($iCh < 0x80)
-						{
-							if (0x20 <= $iCh && $iCh < 0x7f)
-							{
-								return $bError;
-							}
-
-							$sResult .= \chr($iCh);
-						}
-						else if ($iCh < 0x800)
-						{
-							$sResult .= \chr(0xc0 | ($iCh >> 6));
-							$sResult .= \chr(0x80 | ($iCh & 0x3f));
-						}
-						else
-						{
-							$sResult .= \chr(0xe0 | ($iCh >> 12));
-							$sResult .= \chr(0x80 | (($iCh >> 6) & 0x3f));
-							$sResult .= \chr(0x80 | ($iCh & 0x3f));
-						}
-
-						$iCh = ($iB << (16 + $iK)) & 0xffff;
-						$iK += 10;
-					}
-				}
-
-				if (($iCh || $iK < 6) ||
-					(!$iLen || $sChar != '-') ||
-					($iLen > 2 && '&' === $sStr[$iIndex+1] && '-' !==  $sStr[$iIndex+2]))
-				{
-					return $bError;
-				}
-			}
-			else if (\ord($sChar) < 0x20 || \ord($sChar) >= 0x7f)
-			{
-				return $bError;
-			}
-			else
-			{
-				$sResult .= $sChar;
-			}
-		}
-
-		return $sResult;
+		$sResult = \is_callable('imap_mutf7_to_utf8')
+			? \imap_mutf7_to_utf8($sStr)
+			: \mb_convert_encoding($sStr, 'UTF-8', 'UTF7-IMAP');
+//			static::MbConvertEncoding($sStr, 'UTF7-IMAP', 'UTF-8');
+//		$sResult = \UConverter::transcode($sStr, \UConverter::UTF8, \UConverter::IMAP_MAILBOX);
+		return (false === $sResult) ? $sStr : $sResult;
 	}
 
 	public static function Utf8ToUtf7Modified(string $sStr) : string
 	{
-		$sArray = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S',
-			'T','U','V','W','X','Y','Z', 'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o',
-			'p','q','r','s','t','u','v','w','x','y','z', '0','1','2','3','4','5','6','7','8','9','+',',');
-
-		$sLen = \strlen($sStr);
-		$bIsB = false;
-		$iIndex = $iN = 0;
-		$sReturn = '';
-		$bError = false;
-		$iCh = $iB = $iK = 0;
-
-		while ($sLen)
-		{
-			$iC = \ord($sStr[$iIndex]);
-			if ($iC < 0x80)
-			{
-				$iCh = $iC;
-				$iN = 0;
-			}
-			else if ($iC < 0xc2)
-			{
-				return $bError;
-			}
-			else if ($iC < 0xe0)
-			{
-				$iCh = $iC & 0x1f;
-				$iN = 1;
-			}
-			else if ($iC < 0xf0)
-			{
-				$iCh = $iC & 0x0f;
-				$iN = 2;
-			}
-			else if ($iC < 0xf8)
-			{
-				$iCh = $iC & 0x07;
-				$iN = 3;
-			}
-			else if ($iC < 0xfc)
-			{
-				$iCh = $iC & 0x03;
-				$iN = 4;
-			}
-			else if ($iC < 0xfe)
-			{
-				$iCh = $iC & 0x01;
-				$iN = 5;
-			}
-			else
-			{
-				return $bError;
-			}
-
-			$iIndex++;
-			$sLen--;
-
-			if ($iN > $sLen)
-			{
-				return $bError;
-			}
-
-			for ($iJ = 0; $iJ < $iN; $iJ++)
-			{
-				$iO = \ord($sStr[$iIndex+$iJ]);
-				if (($iO & 0xc0) != 0x80)
-				{
-					return $bError;
-				}
-
-				$iCh = ($iCh << 6) | ($iO & 0x3f);
-			}
-
-			if ($iN > 1 && !($iCh >> ($iN * 5 + 1)))
-			{
-				return $bError;
-			}
-
-			$iIndex += $iN;
-			$sLen -= $iN;
-
-			if ($iCh < 0x20 || $iCh >= 0x7f)
-			{
-				if (!$bIsB)
-				{
-					$sReturn .= '&';
-					$bIsB = true;
-					$iB = 0;
-					$iK = 10;
-				}
-
-				if ($iCh & ~0xffff)
-				{
-					$iCh = 0xfffe;
-				}
-
-				$sReturn .= $sArray[($iB | $iCh >> $iK)];
-				$iK -= 6;
-				for (; $iK >= 0; $iK -= 6)
-				{
-					$sReturn .= $sArray[(($iCh >> $iK) & 0x3f)];
-				}
-
-				$iB = ($iCh << (-$iK)) & 0x3f;
-				$iK += 16;
-			}
-			else
-			{
-				if ($bIsB)
-				{
-					if ($iK > 10)
-					{
-						$sReturn .= $sArray[$iB];
-					}
-					$sReturn .= '-';
-					$bIsB = false;
-				}
-
-				$sReturn .= \chr($iCh);
-				if ('&' === \chr($iCh))
-				{
-					$sReturn .= '-';
-				}
-			}
-		}
-
-		if ($bIsB)
-		{
-			if ($iK > 10)
-			{
-				$sReturn .= $sArray[$iB];
-			}
-
-			$sReturn .= '-';
-		}
-
-		return $sReturn;
+		$sResult = \is_callable('imap_utf8_to_mutf7')
+			? \imap_utf8_to_mutf7($sStr)
+			: \mb_convert_encoding($sStr, 'UTF7-IMAP', 'UTF-8');
+//			static::MbConvertEncoding($sStr, 'UTF-8', 'UTF7-IMAP');
+//		$sResult = \UConverter::transcode($sStr, \UConverter::IMAP_MAILBOX, \UConverter::UTF8);
+		return (false === $sResult) ? $sStr : $sResult;
 	}
 
-	public static function FunctionExistsAndEnabled($mFunctionNameOrNames) : bool
+	public static function FunctionsExistAndEnabled(array $aFunctionNames) : bool
 	{
-		static $aCache = null;
-
-		if (\is_array($mFunctionNameOrNames))
-		{
-			foreach ($mFunctionNameOrNames as $sFunctionName)
-			{
-				if (!static::FunctionExistsAndEnabled($sFunctionName))
-				{
-					return false;
-				}
+		foreach ($aFunctionNames as $sFunctionName) {
+			if (!static::FunctionExistsAndEnabled($sFunctionName)) {
+				return false;
 			}
-
-			return true;
 		}
+		return true;
+	}
 
-		if (empty($mFunctionNameOrNames) || !\function_exists($mFunctionNameOrNames) || !\is_callable($mFunctionNameOrNames))
-		{
-			return false;
+	private static $disabled_functions = null;
+	public static function FunctionExistsAndEnabled(string $sFunctionName) : bool
+	{
+		if (null === static::$disabled_functions) {
+			static::$disabled_functions = \array_map('trim', \explode(',', \ini_get('disable_functions')));
 		}
-
-		if (null === $aCache)
-		{
-			$sDisableFunctions = \ini_get('disable_functions');
-			$sDisableFunctions = \is_string($sDisableFunctions) ? $sDisableFunctions : '';
-
-			$aCache = \explode(',', $sDisableFunctions);
-		}
-
-		return !\in_array($mFunctionNameOrNames, $aCache);
+/*
+		$disabled_classes = \explode(',', \ini_get('disable_classes'));
+		\in_array($function, $disabled_classes);
+*/
+		return \function_exists($sFunctionName)
+			&& !\in_array($sFunctionName, static::$disabled_functions);
+//			&& \is_callable($mFunctionNameOrNames);
 	}
 
 	public static function ClearNullBite($mValue) : string
@@ -1659,11 +1182,6 @@ END;
 		}
 
 		return \is_string($mResult) && \strlen($mResult) ? $mResult : '';
-	}
-
-	public static function Md5Rand(string $sAdditionalSalt = '') : string
-	{
-		return \md5($sAdditionalSalt . \random_bytes(16));
 	}
 
 	public static function Sha1Rand(string $sAdditionalSalt = '') : string
@@ -1701,12 +1219,12 @@ END;
 			catch (\Throwable $oException) {}
 		}
 
-		return $bLowerIfAscii ? static::StrMailDomainToLowerIfAscii($sStr) : $sStr;
+		return $bLowerIfAscii ? static::StrMailDomainToLower($sStr) : $sStr;
 	}
 
 	public static function IdnToAscii(string $sStr, bool $bLowerIfAscii = false) : string
 	{
-		$sStr = $bLowerIfAscii ? static::StrMailDomainToLowerIfAscii($sStr) : $sStr;
+		$sStr = $bLowerIfAscii ? static::StrMailDomainToLower($sStr) : $sStr;
 
 		$sUser = '';
 		$sDomain = $sStr;
@@ -1726,23 +1244,5 @@ END;
 		}
 
 		return ('' === $sUser ? '' : $sUser.'@').$sDomain;
-	}
-
-	public static function HashToId(string $sHash, string $sSalt = '') : int
-	{
-		$sData = $sHash ? Crypt::Decrypt(\hex2bin($sHash), \md5($sSalt)) : null;
-
-		$aMatch = array();
-		if ($sData && \preg_match('/^id:(\d+)$/', $sData, $aMatch) && isset($aMatch[1]))
-		{
-			return \is_numeric($aMatch[1]) ? (int) $aMatch[1] : null;
-		}
-
-		return null;
-	}
-
-	public static function IdToHash(int $iID, string $sSalt = '') : string
-	{
-		return \bin2hex(Crypt::Encrypt('id:'.$iID, \md5($sSalt)));
 	}
 }

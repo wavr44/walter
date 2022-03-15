@@ -1,4 +1,4 @@
-import { pInt, pString } from 'Common/Utils';
+import { pInt, forEachObjectEntry } from 'Common/Utils';
 import { i18n, getNotification } from 'Common/Translator';
 
 import Remote from 'Remote/Admin/Fetch';
@@ -8,7 +8,26 @@ import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
 import { DomainAdminStore } from 'Stores/Admin/Domain';
 
-class DomainPopupView extends AbstractViewPopup {
+const domainToParams = oDomain => ({
+			Name: oDomain.name(),
+
+			IncHost: oDomain.imapHost(),
+			IncPort: oDomain.imapPort(),
+			IncSecure: oDomain.imapSecure(),
+
+			UseSieve: oDomain.useSieve() ? 1 : 0,
+			SieveHost: oDomain.sieveHost(),
+			SievePort: oDomain.sievePort(),
+			SieveSecure: oDomain.sieveSecure(),
+
+			OutHost: oDomain.smtpHost(),
+			OutPort: oDomain.smtpPort(),
+			OutSecure: oDomain.smtpSecure(),
+			OutAuth: oDomain.smtpAuth() ? 1 : 0,
+			OutUsePhpMail: oDomain.smtpPhpMail() ? 1 : 0
+		});
+
+export class DomainPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Domain');
 
@@ -27,9 +46,9 @@ class DomainPopupView extends AbstractViewPopup {
 			testingSieveErrorDesc: '',
 			testingSmtpErrorDesc: '',
 
-			imapServerFocus: false,
-			sieveServerFocus: false,
-			smtpServerFocus: false,
+			imapHostFocus: false,
+			sieveHostFocus: false,
+			smtpHostFocus: false,
 		});
 
 		this.addComputables({
@@ -42,7 +61,7 @@ class DomainPopupView extends AbstractViewPopup {
 				if (this.edit()) {
 					result = i18n('POPUPS_DOMAIN/TITLE_EDIT_DOMAIN', { NAME: name });
 					if (aliasName) {
-						result += ' ← ' + aliasName;
+						result += ' ⫘ ' + aliasName;
 					}
 				} else {
 					result = name
@@ -64,10 +83,10 @@ class DomainPopupView extends AbstractViewPopup {
 
 				return (
 					this.name() &&
-					this.imapServer() &&
+					this.imapHost() &&
 					this.imapPort() &&
-					(useSieve ? this.sieveServer() && this.sievePort() : true) &&
-					((this.smtpServer() && this.smtpPort()) || usePhpMail)
+					(useSieve ? this.sieveHost() && this.sievePort() : true) &&
+					((this.smtpHost() && this.smtpPort()) || usePhpMail)
 				);
 			},
 
@@ -81,28 +100,28 @@ class DomainPopupView extends AbstractViewPopup {
 			testingSmtpError: value => value || this.testingSmtpErrorDesc(''),
 
 			// smart form improvements
-			imapServerFocus: value =>
-				value && this.name() && !this.imapServer() && this.imapServer(this.name().replace(/[.]?[*][.]?/g, '')),
+			imapHostFocus: value =>
+				value && this.name() && !this.imapHost() && this.imapHost(this.name().replace(/[.]?[*][.]?/g, '')),
 
-			sieveServerFocus: value =>
-				value && this.imapServer() && !this.sieveServer() && this.sieveServer(this.imapServer()),
+			sieveHostFocus: value =>
+				value && this.imapHost() && !this.sieveHost() && this.sieveHost(this.imapHost()),
 
-			smtpServerFocus: value => value && this.imapServer() && !this.smtpServer()
-				&& this.smtpServer(this.imapServer().replace(/imap/gi, 'smtp')),
+			smtpHostFocus: value => value && this.imapHost() && !this.smtpHost()
+				&& this.smtpHost(this.imapHost().replace(/imap/gi, 'smtp')),
 
 			imapSecure: value => {
 				if (this.enableSmartPorts()) {
 					const port = pInt(this.imapPort());
-					switch (pString(value)) {
-						case '0':
-						case '2':
+					switch (pInt(value)) {
+						case 0:
+						case 2:
 							if (993 === port) {
-								this.imapPort('143');
+								this.imapPort(143);
 							}
 							break;
-						case '1':
+						case 1:
 							if (143 === port) {
-								this.imapPort('993');
+								this.imapPort(993);
 							}
 							break;
 						// no default
@@ -113,20 +132,20 @@ class DomainPopupView extends AbstractViewPopup {
 			smtpSecure: value => {
 				if (this.enableSmartPorts()) {
 					const port = pInt(this.smtpPort());
-					switch (pString(value)) {
-						case '0':
+					switch (pInt(value)) {
+						case 0:
 							if (465 === port || 587 === port) {
-								this.smtpPort('25');
+								this.smtpPort(25);
 							}
 							break;
-						case '1':
+						case 1:
 							if (25 === port || 587 === port) {
-								this.smtpPort('465');
+								this.smtpPort(465);
 							}
 							break;
-						case '2':
+						case 2:
 							if (25 === port || 465 === port) {
-								this.smtpPort('587');
+								this.smtpPort(587);
 							}
 							break;
 						// no default
@@ -143,20 +162,26 @@ class DomainPopupView extends AbstractViewPopup {
 
 	createOrAddCommand() {
 		this.saving(true);
-		Remote.createOrUpdateDomain(
+		Remote.request('AdminDomainSave',
 			this.onDomainCreateOrSaveResponse.bind(this),
-			this
+			Object.assign(domainToParams(this), {
+				Create: this.edit() ? 0 : 1,
+
+				IncShortLogin: this.imapShortLogin() ? 1 : 0,
+
+				OutShortLogin: this.smtpShortLogin() ? 1 : 0,
+				OutSetSender: this.smtpSetSender() ? 1 : 0,
+
+				WhiteList: this.whiteList()
+			})
 		);
 	}
 
 	testConnectionCommand() {
-		this.testingDone(false);
-		this.testingImapError(false);
-		this.testingSieveError(false);
-		this.testingSmtpError(false);
+		this.clearTesting(false);
 		this.testing(true);
 
-		Remote.testConnectionForDomain(
+		Remote.request('AdminDomainTest',
 			(iError, oData) => {
 				this.testing(false);
 				if (iError) {
@@ -185,7 +210,7 @@ class DomainPopupView extends AbstractViewPopup {
 					}
 				}
 			},
-			this
+			domainToParams(this)
 		);
 	}
 
@@ -195,7 +220,7 @@ class DomainPopupView extends AbstractViewPopup {
 			this.savingError(getNotification(iError));
 		} else {
 			DomainAdminStore.fetch();
-			this.closeCommand();
+			this.close();
 		}
 	}
 
@@ -209,56 +234,36 @@ class DomainPopupView extends AbstractViewPopup {
 
 	onShow(oDomain) {
 		this.saving(false);
-
 		this.clearTesting();
-
 		this.clearForm();
 		if (oDomain) {
 			this.enableSmartPorts(false);
-
 			this.edit(true);
-
-			this.name(oDomain.Name);
-			this.imapServer(oDomain.IncHost);
-			this.imapPort('' + pInt(oDomain.IncPort));
-			this.imapSecure(oDomain.IncSecure);
-			this.imapShortLogin(!!oDomain.IncShortLogin);
-			this.useSieve(!!oDomain.UseSieve);
-			this.sieveServer(oDomain.SieveHost);
-			this.sievePort('' + pInt(oDomain.SievePort));
-			this.sieveSecure(oDomain.SieveSecure);
-			this.smtpServer(oDomain.OutHost);
-			this.smtpPort('' + pInt(oDomain.OutPort));
-			this.smtpSecure(oDomain.OutSecure);
-			this.smtpShortLogin(!!oDomain.OutShortLogin);
-			this.smtpAuth(!!oDomain.OutAuth);
-			this.smtpSetSender(!!oDomain.OutSetSender);
-			this.smtpPhpMail(!!oDomain.OutUsePhpMail);
-			this.whiteList(oDomain.WhiteList);
-			this.aliasName(oDomain.AliasName);
-
+			forEachObjectEntry(oDomain, (key, value) => this[key] && this[key](value));
 			this.enableSmartPorts(true);
 		}
 	}
 
 	getDefaults() {
 		return {
+			enableSmartPorts: false,
+
 			savingError: '',
 
 			name: '',
 
-			imapServer: '',
-			imapPort: '143',
+			imapHost: '',
+			imapPort: 143,
 			imapSecure: 0,
 			imapShortLogin: false,
 
 			useSieve: false,
-			sieveServer: '',
-			sievePort: '4190',
+			sieveHost: '',
+			sievePort: 4190,
 			sieveSecure: 0,
 
-			smtpServer: '',
-			smtpPort: '25',
+			smtpHost: '',
+			smtpPort: 25,
 			smtpSecure: 0,
 			smtpShortLogin: false,
 			smtpAuth: true,
@@ -266,17 +271,13 @@ class DomainPopupView extends AbstractViewPopup {
 			smtpPhpMail: false,
 
 			whiteList: '',
-			aliasName: '',
-
-			enableSmartPorts: false
+			aliasName: ''
 		};
 	}
 
 	clearForm() {
 		this.edit(false);
-		Object.entries(this.getDefaults()).forEach(([key, value]) => this[key](value));
+		forEachObjectEntry(this.getDefaults(), (key, value) => this[key](value));
 		this.enableSmartPorts(true);
 	}
 }
-
-export { DomainPopupView, DomainPopupView as default };

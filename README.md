@@ -34,7 +34,7 @@ And don't forget to read the [RainLoop documentation](https://www.rainloop.net/d
 **GNU AFFERO GENERAL PUBLIC LICENSE Version 3 (AGPL)**.
 http://www.gnu.org/licenses/agpl-3.0.html
 
-Copyright (c) 2020 - 2021 SnappyMail
+Copyright (c) 2020 - 2022 SnappyMail
 Copyright (c) 2013 - 2021 RainLoop
 
 ## Modifications
@@ -45,24 +45,25 @@ This fork of RainLoop has the following changes:
 * Admin uses password_hash/password_verify
 * Auth failed attempts written to syslog
 * Added Fail2ban instructions
-* ES2015
+* ES2018
 * PHP 7.3+ required
 * PHP mbstring extension required
 * PHP replaced pclZip with PharData and ZipArchive
-* PHP yaml extension else use the old Spyc
+* Dark mode
 * Added option to remove background/font colors from messages for real "dark mode"
 * Removed BackwardCapability (class \RainLoop\Account)
 * Removed ChangePassword (re-implemented as plugin)
-* Removed OAuth support
 * Removed POP3 support
 * Removed background video support
 * Removed Sentry (Application Monitoring and Error Tracking Software)
+* Removed Spyc yaml
 * Replaced gulp-uglify with gulp-terser
 * CRLF => LF line endings
 * Embed boot.js and boot.css into index.html
 * Ongoing removal of old JavaScript code (things are native these days)
 * Added modified [Squire](https://github.com/neilj/Squire) HTML editor as replacement for CKEditor
 * Split Admin specific JavaScript code from User code
+* Split Sieve specific JavaScript code from User code
 * JSON reviver
 * Better memory garbage collection management
 * Added serviceworker for Notifications
@@ -76,6 +77,16 @@ This fork of RainLoop has the following changes:
 * Prevent Google FLoC
 * Added [Fetch Metadata Request Headers](https://www.w3.org/TR/fetch-metadata/) checks
 * Reduced excessive DOM size
+* Support [Kolab groupware](https://kolab.org/)
+* Support IMAP RFC 2971 ID extension
+* Support IMAP RFC 5258 LIST-EXTENDED
+* Support IMAP RFC 5464 METADATA
+* Support IMAP RFC 5819 LIST-STATUS
+* Support IMAP RFC 7628 SASL OAUTHBEARER aka XOAUTH2
+* Support IMAP4rev2 RFC 9051
+* Support Sodium and OpenSSL for encryption
+* Much better PGP support
+
 
 ### Supported browsers
 
@@ -96,10 +107,9 @@ The result is faster and smaller download code (good for mobile networks).
 * Added dev/prototype.js for some additional features
 * boot.js without webpack overhead
 * Modified Jua.js to be without jQuery
-* Replaced ProgressJS with simple native dropin
 * Replaced Autolinker with simple https/email detection
 * Replaced ifvisible.js with simple drop-in replacement
-* Replaced momentToNode with proper HTML5 <time>
+* Replaced momentToNode with proper HTML5 `<time>`
 * Replaced resize listeners with ResizeObserver
 * Replaced bootstrap.js with native drop-in replacement
 * Replaced dev/Common/ClientStorageDriver/* with Web Storage Objects polyfill
@@ -123,36 +133,35 @@ The result is faster and smaller download code (good for mobile networks).
 * Removed momentjs (use Intl)
 * Removed opentip (use CSS)
 * Removed non-community (aka Prem/Premium/License) code
+* Removed ProgressJS
 
 
 RainLoop 1.15 vs SnappyMail
 
 |js/*           	|RainLoop 	|Snappy   	|
 |---------------	|--------:	|--------:	|
-|admin.js        	|2.158.025	|   88.633	|
-|app.js          	|4.215.733	|  446.059	|
-|boot.js         	|  672.433	|    2.856	|
-|libs.js         	|  647.679	|  213.208	|
+|admin.js        	|2.158.025	|   79.018	|
+|app.js          	|4.215.733	|  407.697	|
+|boot.js         	|  672.433	|    2.025	|
+|libs.js         	|  647.679	|  200.131	|
+|sieve.js         	|        0	|   75.642	|
 |polyfills.js    	|  325.908	|        0	|
 |serviceworker.js	|        0	|      285	|
-|TOTAL           	|8.019.778	|  751.041	|
+|TOTAL           	|8.019.778	|  764.798	|
 
 |js/min/*       	|RainLoop 	|Snappy   	|RL gzip	|SM gzip	|RL brotli	|SM brotli	|
 |---------------	|--------:	|--------:	|------:	|------:	|--------:	|--------:	|
-|admin.min.js    	|  255.514	|   45.597	| 73.899	| 13.933	| 60.674  	| 12.463	|
-|app.min.js      	|  516.000	|  228.862	|140.430	| 67.769	|110.657  	| 57.420	|
-|boot.min.js     	|   66.456	|    1.648	| 22.553	|    986	| 20.043  	|    822	|
-|libs.min.js     	|  574.626	|  102.959	|177.280	| 37.514	|151.855  	| 33.617	|
+|admin.min.js    	|  255.514	|   39.256	| 73.899	| 13.076	| 60.674  	| 11.702	|
+|app.min.js      	|  516.000	|  194.148	|140.430	| 62.297	|110.657  	| 53.432	|
+|boot.min.js     	|   66.456	|    1.252	| 22.553	|    782	| 20.043  	|    631	|
+|libs.min.js     	|  574.626	|   96.201	|177.280	| 35.522	|151.855  	| 31.746	|
+|sieve.min.js     	|        0	|   36.632	|      0	|  9.689	|      0  	|  8.770	|
 |polyfills.min.js	|   32.608	|        0	| 11.315	|      0	| 10.072  	|      0	|
-|TOTAL           	|1.445.204	|  379.066	|425.477	|120.202	|353.301  	|104.322	|
-|TOTAL (no admin)	|1.189.690	|  333.469	|351.061	|106.269	|292.627  	| 91.859	|
+|TOTAL user      	|1.189.690	|  291.601	|351.061	| 98.601	|292.627  	| 85.809	|
+|TOTAL user sieve	|1.189.690	|  328.233	|351.061	|108.290	|292.627  	| 94.579	|
+|TOTAL admin     	|1.189.690	|  136.709	|351.061	| 49.380	|292.627  	| 44.079	|
 
-For a user its around 68% smaller and faster than traditional RainLoop.
-
-|OpenPGP        	|RainLoop 	|Snappy   	|RL gzip	|SM gzip	|RL brotli	|SM brotli	|
-|---------------	|--------:	|--------:	|------:	|------:	|--------:	|--------:	|
-|openpgp.min.js 	|  330.742	|  293.972	|102.388	| 93.030	| 84.241  	| 77.142	|
-|openpgp.worker 	|    1.499	|    1.125	|    824	|    567	|    695 	|    467	|
+For a user its around 70% smaller and faster than traditional RainLoop.
 
 ### CSS changes
 
@@ -169,13 +178,7 @@ For a user its around 68% smaller and faster than traditional RainLoop.
 * Removed Internet Explorer from normalize.css
 * Removed node_modules/opentip/css/opentip.css
 * Removed node_modules/pikaday/css/pikaday.css
-* Removed vendors/bootstrap/less/breadcrumbs.less
-* Removed vendors/bootstrap/less/navbar.less
-* Removed vendors/bootstrap/less/popovers.less
-* Removed vendors/bootstrap/less/progress-bars.less
-* Removed vendors/bootstrap/less/scaffolding.less
-* Removed vendors/bootstrap/less/sprites.less
-* Removed vendors/bootstrap/less/tooltip.less
+* Removed unused vendors/bootstrap/less/*
 * Removed vendors/jquery-nanoscroller/nanoscroller.css
 * Removed vendors/jquery-letterfx/jquery-letterfx.min.css
 * Removed vendors/Progress.js/minified/progressjs.min.css
@@ -184,12 +187,27 @@ For a user its around 68% smaller and faster than traditional RainLoop.
 
 |css/*       	|RainLoop	|Snappy   	|RL gzip	|SM gzip	|SM brotli	|
 |------------	|-------:	|------:	|------:	|------:	|--------:	|
-|app.css     	| 340.334	| 93.382	| 46.959	| 17.277	| 14.966	|
-|app.min.css 	| 274.791	| 75.885	| 39.618	| 15.430	| 13.632	|
+|app.css     	| 340.334	| 80.865	| 46.959	| 16.751	| 14.420	|
+|app.min.css 	| 274.791	| 65.086	| 39.618	| 14.855	| 13.088	|
 |boot.css    	|       	|  1.326	|       	|    664	|    545	|
 |boot.min.css	|       	|  1.071	|       	|    590	|    474	|
-|admin.css    	|       	| 40.355	|       	|  8.507	|  7.437	|
-|admin.min.css	|       	| 31.835	|       	|  7.465	|  6.628	|
+|admin.css    	|       	| 29.977	|       	|  6.795	|  5.900	|
+|admin.min.css	|       	| 24.101	|       	|  6.167	|  5.421	|
+
+### PGP
+RainLoop uses the old OpenPGP.js v2
+SnappyMail v2.12 uses OpenPGP.js v5, GnuPG and Mailvelope.
+SnappyMail is able to use and generate ECDSA and EDDSA keys, where RainLoop does not.
+
+Since SnappyMail tries to achieve the best mobile experience, it forked OpenPGP.js to strip it down.
+* remove all unused Node.js
+* remove all old browsers support
+See https://github.com/the-djmaze/openpgpjs for development
+
+|OpenPGP        	|RainLoop 	|Snappy   	|RL gzip	|SM gzip	|RL brotli	|SM brotli	|
+|---------------	|--------:	|--------:	|------:	|-------:	|--------:	|--------:	|
+|openpgp.min.js 	|  330.742	|  539.642	|102.388	| 167.112	| 84.241  	|  137.447	|
+|openpgp.worker 	|    1.499	|         	|    824	|        	|    695 	|        	|
 
 
 ### Squire vs CKEditor

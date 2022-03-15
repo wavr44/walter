@@ -1,4 +1,4 @@
-import ko from 'ko';
+import { koComputable } from 'External/ko';
 
 import { AbstractModel } from 'Knoin/AbstractModel';
 
@@ -21,10 +21,10 @@ export class IdentityModel extends AbstractModel {
 			signature: '',
 			signatureInsertBefore: false,
 
-			deleteAccess: false
+			askDelete: false
 		});
 
-		this.canBeDeleted = ko.computed(() => !!this.id());
+		this.canBeDeleted = koComputable(() => !!this.id());
 	}
 
 	/**
@@ -34,6 +34,6 @@ export class IdentityModel extends AbstractModel {
 		const name = this.name(),
 			email = this.email();
 
-		return name ? name + ' (' + email + ')' : email;
+		return name ? name + ' <' + email + '>' : email;
 	}
 }

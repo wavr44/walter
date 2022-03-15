@@ -9,7 +9,6 @@ class koSubscription
         this._node = null;
         this._domNodeDisposalCallback = null;
         ko.exportProperty(this, 'dispose', this.dispose);
-        ko.exportProperty(this, 'disposeWhenNodeIsRemoved', this.disposeWhenNodeIsRemoved);
     }
 
     dispose() {
@@ -68,7 +67,7 @@ var ko_subscribable_fn = {
         return subscription;
     },
 
-    "notifySubscribers": function (valueToNotify, event) {
+    notifySubscribers: function (valueToNotify, event) {
         event = event || defaultEvent;
         if (event === defaultEvent) {
             this.updateVersion();
@@ -106,9 +105,9 @@ var ko_subscribable_fn = {
             beforeChange = 'beforeChange';
 
         if (!self._origNotifySubscribers) {
-            self._origNotifySubscribers = self["notifySubscribers"];
+            self._origNotifySubscribers = self.notifySubscribers;
             // Moved out of "limit" to avoid the extra closure
-            self["notifySubscribers"] = function(value, event) {
+            self.notifySubscribers = function(value, event) {
                 if (!event || event === defaultEvent) {
                     this._limitChange(value);
                 } else if (event === 'beforeChange') {
@@ -166,7 +165,7 @@ var ko_subscribable_fn = {
     },
 
     isDifferent: function(oldValue, newValue) {
-        return !this['equalityComparer'] || !this['equalityComparer'](oldValue, newValue);
+        return !this.equalityComparer || !this.equalityComparer(oldValue, newValue);
     },
 
     toString: () => '[object Object]',
@@ -198,4 +197,4 @@ ko.subscribable['fn'] = ko_subscribable_fn;
 
 
 ko.isSubscribable = instance =>
-    instance != null && typeof instance.subscribe == "function" && typeof instance["notifySubscribers"] == "function";
+    instance != null && typeof instance.subscribe == "function" && typeof instance.notifySubscribers == "function";

@@ -11,13 +11,20 @@ export class AttachmentCollectionModel extends AbstractCollectionModel
 	 */
 	static reviveFromJson(items) {
 		return super.reviveFromJson(items, attachment => AttachmentModel.reviveFromJson(attachment));
+/*
+		const attachments = super.reviveFromJson(items, attachment => AttachmentModel.reviveFromJson(attachment));
+		if (attachments) {
+			attachments.InlineCount = attachments.reduce((accumulator, a) => accumulator + (a.isInline ? 1 : 0), 0);
+		}
+		return attachments;
+*/
 	}
 
 	/**
 	 * @returns {boolean}
 	 */
 	hasVisible() {
-		return !!this.find(item => !item.isLinked);
+		return !!this.filter(item => !item.isLinked()).length;
 	}
 
 	/**
@@ -25,7 +32,7 @@ export class AttachmentCollectionModel extends AbstractCollectionModel
 	 * @returns {*}
 	 */
 	findByCid(cid) {
-		cid = cid.replace(/^<+|>+$/, '');
-		return this.find(item => cid === item.cidWithoutTags);
+		cid = cid.replace(/^<+|>+$/g, '');
+		return this.find(item => cid === item.contentId());
 	}
 }

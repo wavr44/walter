@@ -1,5 +1,5 @@
 
-.b-settings-folders {
+#V-Settings-Folders {
 
 	.folders-list-error {
 		margin: 10px 0;
@@ -10,11 +10,8 @@
 	}
 
 	td + td {
+		white-space: nowrap;
 		width: 1em;
-	}
-
-	table:not(.displaySpecSetting) td:last-child {
-		display: none;
 	}
 
 	.folder-name {
@@ -31,6 +28,10 @@
 		cursor: pointer;
 	}
 
+	select {
+		width: auto;
+	}
+
 	tr {
 
 		&:not(.selectable) {
@@ -44,13 +45,6 @@
 		input {
 			border-width: 1px;
 			margin-bottom: 0;
-		}
-
-		.button-delete {
-			margin-right: 15px;
-			margin-top: 5px;
-			visibility: hidden;
-			opacity: 0;
 		}
 
 		.unsubscribed-folder, .unchecked-folder {

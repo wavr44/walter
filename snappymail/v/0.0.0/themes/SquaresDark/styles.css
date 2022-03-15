@@ -1,29 +1,29 @@
 
 :root {
-	// MAIN
+	/* MAIN */
 	--main-color: #fff;
 	--main-bg-color: #48525C;
 	--main-bg-image: url("images/background.jpg");
 
-	// LOADING
+	/* LOADING */
 	--loading-color: #ddd;
 	--loading-text-shadow: 0px 1px 0px rgba(0, 0, 0, 0.5);
 
-	// LOGIN
+	/* LOGIN */
 	--login-color: #eee;
 	--login-bg-color: rgba(0,0,0,0.5);
 	--login-box-shadow: 0px 2px 10px rgba(0,0,0,0.5);
 	--login-border: none;
 	--login-border-radius: 7px;
 
-	// MENU
+	/* MENU */
 	--dropdown-menu-color: #333;
 	--dropdown-menu-bg-color: #fff;
 	--dropdown-menu-hover-bg-color: #48525C;
 	--dropdown-menu-hover-color: #eee;
 	--dropdown-menu-disable-color: #999;
 
-	// FOLDERS
+	/* FOLDERS */
 	--folders-color: #fff;
 	--folders-disabled-color: #aaa;
 	--folders-selected-color: #fff;
@@ -35,15 +35,27 @@
 	--folders-drop-color: #fff;
 	--folders-drop-bg-color: rgba(0,0,0,0.5);
 
-	// SETTINGS
+	/* SETTINGS */
 	--settings-menu-color: #fff;
 	--settings-menu-selected-color: #fff;
 	--settings-menu-selected-bg-color: rgba(0,0,0,0.5);
 	--settings-menu-hover-color: #fff;
 	--settings-menu-hover-bg-color: rgba(0,0,0,0.5);
 
-	// MESSAGE LIST
+	/* MESSAGE LIST */
 	--message-list-toolbar-bg-color: #eee;
+}
+
+::-webkit-scrollbar {
+	width: 0.8em;
+}
+::-webkit-scrollbar-track {
+	background-color: #000;
+}
+::-webkit-scrollbar-thumb {
+	background: #666;
+	border-radius: 5px;
+	box-shadow: inset 0 0 3px #000;
 }
 
 .thm-message-list-top-toolbar, .thm-message-list-bottom-toolbar {
@@ -71,52 +83,46 @@
 	border-top-color: var(--main-color);
 }
 
-.messageList .b-message-list-wrapper {
-	border-color: #555;
-}
-
-.well,
-.modal,
-.b-settins-right .b-content,
-.messageList .b-content,
-.messageView .b-content,
-.b-admin-right .b-content,
-.b-compose .b-attachment-place {
+#rl-popups > dialog,
+#rl-settings-subscreen,
+.messageList,
+.messageView,
+.alert-info,
+#V-PopupsCompose .b-attachment-place {
 	background-color: #000;
 	border-color: #555;
 	color: var(--main-color);
 }
 
 .legend,
-.modal-header, .modal-footer,
+dialog header, dialog footer,
 .table td, .table th {
 	border-color: #555 !important;
 }
 
 .legend,
-.b-compose .b-header .e-identity,
-.messageView .messageItem {
+.messageView #messageItem {
 	color: var(--main-color);
 }
 
 .rl-mobile .squire-toolbar,
-.b-compose .b-attachment-place.dragAndDropOver {
+#V-PopupsCompose .b-attachment-place.dragAndDropOver {
 	background-color: #222;
 }
 
 .g-ui-link,
 .messageView .messageItemHeader .informationShort a,
-.messageView .messageItem .bodyText .b-text-part a {
+.messageView #messageItem .bodyText .b-text-part a {
 	color: #6AE;
 }
 
 .messageView .messageItemHeader,
-.messageView .messageItem .pgpEncrypted,
-.messageView .messageItem .pgpSigned,
-.messageView .messageItem .readReceipt,
-.messageView .messageItem .showImages,
-.messageView .messageItem .attachmentsPlace,
-.messageView .messageItem .attachmentsControls {
+.messageView #messageItem .pgpEncrypted,
+.messageView #messageItem .pgpSigned,
+.messageView #messageItem .readReceipt,
+.messageView #messageItem .showImages,
+.messageView #messageItem .attachmentsPlace,
+.messageView #messageItem .attachmentsControls {
 	background-color: #222;
 	border-bottom-color: #444;
 }
@@ -136,8 +142,8 @@
 	background-color: #111;
 }
 
-.b-admin-about .rl-logo {
-	filter: drop-shadow(0 0 1px #FFF);
+#V-Settings-About .rl-logo {
+	filter: invert(1);
 }
 
 .b-folders li a.focused {
@@ -145,5 +151,23 @@
 }
 
 .tabs [id^="tab"]:checked + label {
-	color: #000;
+	background: linear-gradient(#555 0%, #000 100%);
+}
+
+input, textarea, .select, select, .emailaddresses {
+    background-color: #000;
+    border-color: #aaa;
+    color: #fff;
+}
+.select, select {
+    background-image: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' height='10px' width='15px'><text x='0' y='10' fill='rgb(255,255,255)'>▾</text></svg>");
+}
+
+hr {
+	border-color: #666;
+}
+
+#messageItem .b-text-part blockquote,
+.b-settings-general .editMainIdentity {
+    border-color: #999;
 }

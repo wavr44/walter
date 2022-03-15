@@ -17,15 +17,13 @@ namespace MailSo\Imap;
  */
 class Folder
 {
-	/**
-	 * @var string
-	 */
-	private $sNameRaw;
+	// RFC5258 Response data STATUS items when using LIST-EXTENDED
+	use Traits\Status;
 
 	/**
 	 * @var string
 	 */
-	private $sFullNameRaw;
+	private $sFullName;
 
 	/**
 	 * @var string
@@ -35,78 +33,61 @@ class Folder
 	/**
 	 * @var array
 	 */
-	private $aFlags;
-
-	/**
-	 * @var array
-	 */
 	private $aFlagsLowerCase;
 
 	/**
-	 * @var array
+	 * RFC 5464
 	 */
-	private $aExtended = array();
+	private $aMetadata = array();
 
 	/**
 	 * @throws \MailSo\Base\Exceptions\InvalidArgumentException
 	 */
-	function __construct(string $sFullNameRaw, string $sDelimiter = '.', array $aFlags = array())
+	function __construct(string $sFullName, string $sDelimiter = null, array $aFlags = array())
 	{
-		$sDelimiter = 'NIL' === \strtoupper($sDelimiter) ? '' : $sDelimiter;
-		if (empty($sDelimiter))
-		{
-			$sDelimiter = '.'; // default delimiter
-		}
-
-		if (1 < \strlen($sDelimiter) || 0 === \strlen($sFullNameRaw))
-		{
+		if (!\strlen($sFullName)) {
 			throw new \MailSo\Base\Exceptions\InvalidArgumentException;
 		}
+		$this->sFullName = $sFullName;
+		$this->setDelimiter($sDelimiter);
+		$this->setFlags($aFlags);
+/*
+		// RFC 5738
+		if (\in_array('\\noutf8', $this->aFlagsLowerCase)) {
+		}
+		if (\in_array('\\utf8only', $this->aFlagsLowerCase)) {
+		}
+*/
+	}
 
-		$this->sFullNameRaw = $sFullNameRaw;
+	public function setFlags(array $aFlags) : void
+	{
+		$this->aFlagsLowerCase = \array_map('strtolower', $aFlags);
+	}
+
+	public function setDelimiter(?string $sDelimiter) : void
+	{
 		$this->sDelimiter = $sDelimiter;
-		$this->aFlags = $aFlags;
-		$this->aFlagsLowerCase = \array_map('strtolower', $this->aFlags);
-
-		$this->sFullNameRaw = 'INBOX'.$this->sDelimiter === \substr(\strtoupper($this->sFullNameRaw), 0, 5 + \strlen($this->sDelimiter)) ?
-			'INBOX'.\substr($this->sFullNameRaw, 5) : $this->sFullNameRaw;
-
-		if ($this->IsInbox())
-		{
-			$this->sFullNameRaw = 'INBOX';
-		}
-
-		$this->sNameRaw = $this->sFullNameRaw;
-		if (0 < \strlen($this->sDelimiter))
-		{
-			$aNames = \explode($this->sDelimiter, $this->sFullNameRaw);
-			if (false !== \array_search('', $aNames))
-			{
-				throw new \MailSo\Base\Exceptions\InvalidArgumentException;
-			}
-
-			$this->sNameRaw = \end($aNames);
-		}
 	}
 
-	public function NameRaw() : string
+	public function Name() : string
 	{
-		return $this->sNameRaw;
+		$sNameRaw = $this->sFullName;
+		if ($this->sDelimiter) {
+			$aNames = \explode($this->sDelimiter, $sNameRaw);
+			return \end($aNames);
+		}
+		return $sNameRaw;
 	}
 
-	public function FullNameRaw() : string
+	public function FullName() : string
 	{
-		return $this->sFullNameRaw;
+		return $this->sFullName;
 	}
 
-	public function Delimiter() : string
+	public function Delimiter() : ?string
 	{
 		return $this->sDelimiter;
-	}
-
-	public function Flags() : array
-	{
-		return $this->aFlags;
 	}
 
 	public function FlagsLowerCase() : array
@@ -116,27 +97,40 @@ class Folder
 
 	public function IsSelectable() : bool
 	{
-		return !\in_array('\\noselect', $this->aFlagsLowerCase);
+		return !\in_array('\\noselect', $this->aFlagsLowerCase) && !\in_array('\\nonexistent', $this->aFlagsLowerCase);
 	}
 
 	public function IsInbox() : bool
 	{
-		return 'INBOX' === \strtoupper($this->sFullNameRaw) || \in_array('\\inbox', $this->aFlagsLowerCase);
+		return 'INBOX' === \strtoupper($this->sFullName) || \in_array('\\inbox', $this->aFlagsLowerCase);
 	}
 
 	/**
 	 * @param mixed $mData
 	 */
-	public function SetExtended(string $sName, $mData) : void
+	public function SetMetadata(string $sName, string $sData) : void
 	{
-		$this->aExtended[$sName] = $mData;
+		$this->aMetadata[$sName] = $sData;
+	}
+
+	public function SetAllMetadata(array $aMetadata) : void
+	{
+		$this->aMetadata = $aMetadata;
 	}
 
 	/**
 	 * @return mixed
 	 */
-	public function GetExtended(string $sName)
+	public function GetMetadata(string $sName) : ?string
 	{
-		return isset($this->aExtended[$sName]) ? $this->aExtended[$sName] : null;
+		return isset($this->aMetadata[$sName]) ? $this->aMetadata[$sName] : null;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function Metadata() : array
+	{
+		return $this->aMetadata;
 	}
 }

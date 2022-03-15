@@ -15,7 +15,7 @@ namespace MailSo\Log;
  * @category MailSo
  * @package Log
  */
-class Logger extends \MailSo\Base\Collection
+class Logger extends \SplFixedArray
 {
 	private $bUsed = false;
 
@@ -23,7 +23,7 @@ class Logger extends \MailSo\Base\Collection
 
 	private $aSecretWords = [];
 
-	private $bShowSecter = false;
+	private $bShowSecrets = false;
 
 	function __construct(bool $bRegPhpErrorHandler = true)
 	{
@@ -31,10 +31,10 @@ class Logger extends \MailSo\Base\Collection
 
 		if ($bRegPhpErrorHandler)
 		{
-			\set_error_handler(array(&$this, '__phpErrorHandler'));
+			\set_error_handler(array($this, '__phpErrorHandler'));
 		}
 
-		\register_shutdown_function(array(&$this, '__loggerShutDown'));
+		\register_shutdown_function(array($this, '__loggerShutDown'));
 	}
 
 	/**
@@ -75,52 +75,49 @@ class Logger extends \MailSo\Base\Collection
 		static $sCache = null;
 		if (null === $sCache)
 		{
-			$sCache = \substr(\MailSo\Base\Utils::Md5Rand(), -8);
+			$sCache = \substr(\MailSo\Base\Utils::Sha1Rand(), -8);
 		}
 
 		return $sCache;
 	}
 
-	public function Ping() : bool
+	public function append($oDriver) : void
 	{
-		return true;
+		if ($oDriver) {
+			$this->setSize(1);
+			$this[0] = $oDriver;
+		}
 	}
 
 	public function IsEnabled() : bool
 	{
-		return 0 < $this->Count();
+		return 0 < $this->count();
 	}
 
 	public function AddSecret(string $sWord) : void
 	{
-		if (0 < \strlen(\trim($sWord)))
+		if (\strlen(\trim($sWord)))
 		{
 			$this->aSecretWords[] = $sWord;
 			$this->aSecretWords = \array_unique($this->aSecretWords);
 		}
 	}
 
-	public function SetShowSecter(bool $bShow) : self
+	public function SetShowSecrets(bool $bShow) : self
 	{
-		$this->bShowSecter = $bShow;
+		$this->bShowSecrets = $bShow;
 		return $this;
 	}
 
 	public function IsShowSecter() : bool
 	{
-		return $this->bShowSecter;
+		return $this->bShowSecrets;
 	}
 
 	public function AddForbiddenType(int $iType) : self
 	{
 		$this->aForbiddenTypes[$iType] = true;
 
-		return $this;
-	}
-
-	public function RemoveForbiddenType(int $iType) : self
-	{
-		$this->aForbiddenTypes[$iType] = false;
 		return $this;
 	}
 
@@ -137,7 +134,21 @@ class Logger extends \MailSo\Base\Collection
 					 $iType = Enumerations\Type::WARNING_PHP;
 					 break;
 			}
-
+/*
+				case E_ERROR:
+				case E_WARNING:
+				case E_PARSE:
+				case E_NOTICE:
+				case E_CORE_ERROR:
+				case E_CORE_WARNING:
+				case E_COMPILE_ERROR:
+				case E_COMPILE_WARNING:
+				case E_USER_NOTICE:
+				case E_STRICT:
+				case E_RECOVERABLE_ERROR:
+				case E_DEPRECATED:
+				case E_USER_DEPRECATED:
+*/
 			$this->Write($sErrFile.' [line:'.$iErrLine.', code:'.$iErrNo.']', $iType, 'PHP');
 			$this->Write('Error: '.$sErrStr, $iType, 'PHP');
 		}
@@ -170,21 +181,19 @@ class Logger extends \MailSo\Base\Collection
 	public function Write(string $sDesc, int $iType = Enumerations\Type::INFO,
 		string $sName = '', bool $bSearchSecretWords = true, bool $bDiplayCrLf = false) : bool
 	{
-		if (isset($this->aForbiddenTypes[$iType]) && true === $this->aForbiddenTypes[$iType])
+		if (!empty($this->aForbiddenTypes[$iType]))
 		{
 			return true;
 		}
 
 		$this->bUsed = true;
 
-		$oLogger = null;
-		$aLoggers = array();
-		$iResult = 1;
-
-		if ($bSearchSecretWords && !$this->bShowSecter && 0 < \count($this->aSecretWords))
+		if ($bSearchSecretWords && !$this->bShowSecrets && \count($this->aSecretWords))
 		{
 			$sDesc = \str_replace($this->aSecretWords, '*******', $sDesc);
 		}
+
+		$iResult = 1;
 
 		foreach ($this as /* @var $oLogger \MailSo\Log\Driver */ $oLogger)
 		{
@@ -253,16 +262,8 @@ class Logger extends \MailSo\Base\Collection
 				$iType = null === $iType ? Enumerations\Type::NOTICE : $iType;
 				return $this->WriteException($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 			}
-			else
-			{
-				return  $this->WriteDump($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
-			}
+			return  $this->WriteDump($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 		}
-		else
-		{
-			return $this->Write($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
-		}
-
-		return false;
+		return $this->Write($mData, $iType, $sName, $bSearchSecretWords, $bDiplayCrLf);
 	}
 }

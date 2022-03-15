@@ -1,5 +1,7 @@
 import ko from 'ko';
+import { addEventsListeners, addShortcut, registerShortcut } from 'Common/Globals';
 import { isArray } from 'Common/Utils';
+import { koComputable } from 'External/ko';
 
 /*
 	oCallbacks:
@@ -28,8 +30,8 @@ export class Selector {
 		sItemFocusedSelector
 	) {
 		this.list = koList;
-		this.listChecked = ko.computed(() => this.list.filter(item => item.checked())).extend({ rateLimit: 0 });
-		this.isListChecked = ko.computed(() => 0 < this.listChecked().length);
+		this.listChecked = koComputable(() => this.list.filter(item => item.checked())).extend({ rateLimit: 0 });
+		this.isListChecked = koComputable(() => 0 < this.listChecked().length);
 
 		this.focusedItem = koFocusedItem || ko.observable(null);
 		this.selectedItem = koSelectedItem || ko.observable(null);
@@ -238,32 +240,33 @@ export class Selector {
 				return el ? ko.dataFor(el) : null;
 			};
 
-			contentScrollable.addEventListener('click', event => {
-				let el = event.target.closestWithin(this.sItemSelector, contentScrollable);
-				el && this.actionClick(ko.dataFor(el), event);
+			addEventsListeners(contentScrollable, {
+				click: event => {
+					let el = event.target.closestWithin(this.sItemSelector, contentScrollable);
+					el && this.actionClick(ko.dataFor(el), event);
 
-				const item = getItem(this.sItemCheckedSelector);
-				if (item) {
-					if (event.shiftKey) {
-						this.actionClick(item, event);
-					} else {
-						this.focusedItem(item);
-						item.checked(!item.checked());
-					}
-				}
-			});
-
-			contentScrollable.addEventListener('auxclick', event => {
-				if (1 == event.button) {
-					const item = getItem(this.sItemSelector);
+					const item = getItem(this.sItemCheckedSelector);
 					if (item) {
-						this.focusedItem(item);
-						(this.oCallbacks.MiddleClick || (()=>0))(item);
+						if (event.shiftKey) {
+							this.actionClick(item, event);
+						} else {
+							this.focusedItem(item);
+							item.checked(!item.checked());
+						}
+					}
+				},
+				auxclick: event => {
+					if (1 == event.button) {
+						const item = getItem(this.sItemSelector);
+						if (item) {
+							this.focusedItem(item);
+							(this.oCallbacks.MiddleClick || (()=>0))(item);
+						}
 					}
 				}
 			});
 
-			shortcuts.add('enter,open', '', keyScope, () => {
+			registerShortcut('enter,open', '', keyScope, () => {
 				const focused = this.focusedItem();
 				if (focused && !focused.selected()) {
 					this.actionClick(focused);
@@ -271,13 +274,13 @@ export class Selector {
 				}
 			});
 
-			shortcuts.add('arrowup,arrowdown', 'meta', keyScope, () => false);
+			addShortcut('arrowup,arrowdown', 'meta', keyScope, () => false);
 
-			shortcuts.add('arrowup,arrowdown', 'shift', keyScope, event => {
+			addShortcut('arrowup,arrowdown', 'shift', keyScope, event => {
 				this.newSelectPosition(event.key, true);
 				return false;
 			});
-			shortcuts.add('arrowup,arrowdown,home,end,pageup,pagedown,space', '', keyScope, event => {
+			registerShortcut('arrowup,arrowdown,home,end,pageup,pagedown,space', '', keyScope, event => {
 				this.newSelectPosition(event.key, false);
 				return false;
 			});
@@ -288,7 +291,7 @@ export class Selector {
 	 * @returns {boolean}
 	 */
 	autoSelect() {
-		return !!(this.oCallbacks.AutoSelect || (()=>true))();
+		return !!(this.oCallbacks.AutoSelect || (()=>1))();
 	}
 
 	/**
@@ -329,7 +332,7 @@ export class Selector {
 					} else if (++i < listLen) {
 						result = list[i];
 					}
-					result || (this.oCallbacks.UpOrDown || (()=>true))('ArrowUp' === sEventKey);
+					result || (this.oCallbacks.UpOrDown || (()=>0))('ArrowUp' === sEventKey);
 				} else if ('Home' === sEventKey) {
 					result = list[0];
 				} else if ('End' === sEventKey) {

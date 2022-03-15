@@ -57,7 +57,11 @@
 		"LABEL_ADV_DATE_MONTH": "Hasta 1 mes de antigüedad",
 		"LABEL_ADV_DATE_3_MONTHS": "Hasta 3 meses de antigüedad",
 		"LABEL_ADV_DATE_6_MONTHS": "Hasta 6 meses de antigüedad",
-		"LABEL_ADV_DATE_YEAR": "Hasta 1 año de antigüedad"
+		"LABEL_ADV_DATE_YEAR": "Hasta 1 año de antigüedad",
+		"LABEL_ADV_SUBFOLDERS": "Subfolders",
+		"LABEL_ADV_SUBFOLDERS_NONE": "None",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE": "All",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE_ONE": "One level"
 	},
 	"PREVIEW_POPUP": {
 		"FULLSCREEN": "Cambiar a pantalla completa",
@@ -132,6 +136,8 @@
 		"BUTTON_THREAD_MORE": "Más mensajes",
 		"MENU_HEADERS": "Mostrar los encabezados del mensaje",
 		"MENU_VIEW_ORIGINAL": "Mostrar original",
+		"HTML_VIEW": "View HTML message",
+		"PLAIN_VIEW": "View plain text message",
 		"MENU_DOWNLOAD_ORIGINAL": "Descargar como archivo .eml",
 		"MENU_FILTER_SIMILAR": "Filtrar mensajes como este",
 		"MENU_PRINT": "Imprimir",
@@ -142,8 +148,6 @@
 		"PRINT_LABEL_ATTACHMENTS": "Adjuntos",
 		"MESSAGE_VIEW_DESC": "Seleccione un mensaje de la lista para verlo aquí.",
 		"MESSAGE_VIEW_MOVE_DESC": "Haga clic en el nombre de la carpeta del panel izquierdo para seleccionar el destino.",
-		"PGP_SIGNED_MESSAGE_DESC": "Mensaje firmado mediante OpenPGP  (click para verificar)",
-		"PGP_ENCRYPTED_MESSAGE_DESC": "Mensaje cifrado mediante OpenPGP (click para desencriptar)",
 		"LINK_DOWNLOAD_AS_ZIP": "Descargar todo (archivo ZIP)",
 		"SPAM_SCORE": "Puntuación de spam",
 		"HAS_VIRUS_WARNING": "ADVERTENCIA: virus detectado"
@@ -208,7 +212,6 @@
 		"ATTACHMENTS_UPLOAD_ERROR_DESC": "No se han subido todos los archivos adjuntos.",
 		"BUTTON_REQUEST_READ_RECEIPT": "Solicitar confirmación de lectura",
 		"BUTTON_MARK_AS_IMPORTANT": "Marcar como importante",
-		"BUTTON_OPEN_PGP": "OpenPGP (solo texto plano)",
 		"BUTTON_REQUEST_DSN": "Solicitar una confirmación de entrega"
 	},
 	"POPUPS_ASK": {
@@ -246,31 +249,24 @@
 		"DANGER_DESC_HTML_2": "Una vez comenzado el proceso no se puede abortar ni cancelar.",
 		"TITLE_CLEARING_PROCESS": "Purgando carpeta..."
 	},
-	"POPUPS_IMPORT_OPEN_PGP_KEY": {
-		"TITLE_IMPORT_OPEN_PGP_KEY": "Importar clave OpenPGP",
-		"BUTTON_IMPORT_OPEN_PGP_KEY": "Importar"
-	},
-	"POPUPS_VIEW_OPEN_PGP_KEY": {
-		"TITLE_VIEW_OPEN_PGP_KEY": "Ver clave OpenPGP",
-		"BUTTON_SELECT": "Seleccionar"
-	},
-	"POPUPS_GENERATE_OPEN_PGP_KEYS": {
-		"TITLE_GENERATE_OPEN_PGP_KEYS": "Generar clave OpenPGP",
-		"LABEL_KEY_BIT_LENGTH": "Longitud de la clave",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generar"
-	},
-	"POPUPS_COMPOSE_OPEN_PGP": {
-		"TITLE_COMPOSE_OPEN_PGP": "Firmar\/Cifrar con OpenPGP",
+	"OPENPGP": {
+		"POPUP_IMPORT_TITLE": "Importar clave OpenPGP",
+		"POPUP_IMPORT_BUTTON": "Importar",
+		"POPUP_VIEW_TITLE": "Ver clave OpenPGP",
+		"POPUP_VIEW_BUTTON": "Seleccionar",
+		"POPUP_GENERATE_TITLE": "Generar clave OpenPGP",
+		"POPUP_GENERATE_BUTTON": "Generar",
+		"LABEL_KEY_TYPE": "Type",
 		"LABEL_SIGN": "Firmar",
 		"LABEL_ENCRYPT": "Encriptar",
-		"BUTTON_SIGN": "Firmar",
-		"BUTTON_ENCRYPT": "Encriptar",
-		"BUTTON_SIGN_AND_ENCRYPT": "Firmar y encriptar"
-	},
-	"POPUPS_MESSAGE_OPEN_PGP": {
-		"TITLE_MESSAGE_OPEN_PGP": "Descifrar OpenPGP",
-		"LABEL_KEY": "Clave privada",
-		"BUTTON_DECRYPT": "Descifrar"
+		"BUTTON_DECRYPT": "Descifrar",
+		"BUTTON_VERIFY": "Verify",
+		"SIGNED_MESSAGE": "Mensaje firmado mediante OpenPGP",
+		"ENCRYPTED_MESSAGE": "Mensaje cifrado mediante OpenPGP",
+		"STORE_IN_GNUPG": "Store on server in GnuPG",
+		"BACKUP_ON_SERVER": "Store (encrypted) on server",
+		"GOOD_SIGNATURE": "Buena firma de %USER%",
+		"ERROR": "Error OpenPGP: %ERROR%"
 	},
 	"POPUPS_FILTER": {
 		"TITLE_CREATE_FILTER": "¿Crear un filtro?",
@@ -330,10 +326,8 @@
 		"NOTIFICATION_ARCHIVE": "Usted no ha seleccionado la carpeta del sistema para alojar los mensajes enviados al \"Archivo\"."
 	},
 	"TITLES": {
-		"LOGIN": "Ingresar",
 		"MAILBOX": "Buzón",
-		"SETTINGS": "Configuraciones",
-		"COMPOSE": "Redactar"
+		"SETTINGS": "Configuraciones"
 	},
 	"UPLOAD": {
 		"ERROR_FILE_IS_TOO_BIG": "El archivo es muy grande",
@@ -353,7 +347,6 @@
 		"LABEL_CONTACTS_NAME": "Contactos",
 		"LABEL_FOLDERS_NAME": "Carpetas",
 		"LABEL_ACCOUNTS_NAME": "Cuentas",
-		"LABEL_IDENTITIES_NAME": "Identidades",
 		"LABEL_FILTERS_NAME": "Filtros",
 		"LABEL_TEMPLATES_NAME": "Plantillas",
 		"LABEL_SECURITY_NAME": "Seguridad",
@@ -395,6 +388,8 @@
 		"LABEL_USE_THREADS": "Usar hilos de conversación",
 		"LABEL_REPLY_SAME_FOLDER": "Coloque las respuestas en la carpeta del mensaje que esta respondiendo.",
 		"LABEL_SHOW_IMAGES": "Mostrar siempre las imágenes en el cuerpo del mensaje",
+		"LABEL_PREFER_HTML": "Prefer HTML to plain text",
+		"LABEL_PREFER_HTML_INFO": "Messages sometimes come in both formats. This option controls whether you want the HTML part or the plain text part to be displayed.",
 		"LABEL_REMOVE_COLORS": "Eliminar el fondo y los colores del texto del mensaje",
 		"LABEL_MESSAGE_PER_PAGE": "Mensajes en página",
 		"LABEL_MARK_MESSAGE_READ_AFTER": "Marcar el mensaje como leído después de",
@@ -439,7 +434,14 @@
 		"HELP_DELETE_FOLDER": "Eliminar carpeta",
 		"HELP_SHOW_HIDE_FOLDER": "Mostrar\/ocultar carpeta",
 		"HELP_CHECK_FOR_NEW_MESSAGES": "Chequear\/no chequear nuevos mensajes",
-		"HIDE_UNSUBSCRIBED": "Ocultar carpetas dadas de baja"
+		"HIDE_UNSUBSCRIBED": "Ocultar carpetas dadas de baja",
+		"TYPE_CALENDAR": "Calendario",
+		"TYPE_CONFIGURATION": "Configuración",
+		"TYPE_CONTACTS": "Contactos",
+		"TYPE_FILES": "Archivos",
+		"TYPE_JOURNAL": "Diario",
+		"TYPE_NOTES": "Notas",
+		"TYPE_TASKS": "Tareas"
 	},
 	"SETTINGS_ACCOUNTS": {
 		"LEGEND_ACCOUNTS": "Lista de cuentas",
@@ -450,13 +452,13 @@
 		"LOADING_PROCESS": "Actualizando lista de cuentas",
 		"DEFAULT_IDENTITY_LABEL": "predeterminado"
 	},
-	"SETTINGS_OPEN_PGP": {
-		"BUTTON_ADD_OPEN_PGP_KEY": "Importar llave OpenPGP",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generar llaves OpenPGP",
+	"SETTINGS_OPENPGP": {
+		"BUTTON_IMPORT_KEY": "Importar llave",
+		"BUTTON_GENERATE_KEY_PAIR": "Generar llaves",
 		"TITLE_PRIVATE": "Privado",
 		"TITLE_PUBLIC": "Público",
-		"GENERATE_ONLY_HTTPS": "Solo HTTPS",
-		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft"
+		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft",
+		"GET_MAILVELOPE": "Get Mailvelope browser add-on."
 	},
 	"SHORTCUTS_HELP": {
 		"LEGEND_SHORTCUTS_HELP": "Ayuda de atajos de teclado",
@@ -497,25 +499,11 @@
 		"LABEL_SEND_MESSAGE": "Enviar mensaje",
 		"LABEL_CLOSE_COMPOSE": "Cerrar componer"
 	},
-	"PGP_NOTIFICATIONS": {
-		"NO_PUBLIC_KEYS_FOUND": "No se encontraron claves públicas",
-		"NO_PUBLIC_KEYS_FOUND_FOR": "No hay claves públicas encontrados para el email %MAIL%",
-		"NO_PRIVATE_KEY_FOUND": "No se encontró la clave privada",
-		"NO_PRIVATE_KEY_FOUND_FOR": "No hay una clave privada para el email %EMAIL%",
-		"ADD_A_PUBLICK_KEY": "Añadir llave pública",
-		"SELECT_A_PRIVATE_KEY": "Seleccionar una clave privada",
-		"UNVERIFIRED_SIGNATURE": "Firma no verificada",
-		"DECRYPTION_ERROR": "Error de descifrado OpenPGP",
-		"GOOD_SIGNATURE": "Buena firma de %USER%",
-		"PGP_ERROR": "Error OpenPGP: %ERROR%",
-		"SPECIFY_FROM_EMAIL": "Por favor, especifique dirección de correo electrónico PARA",
-		"SPECIFY_AT_LEAST_ONE_RECIPIENT": "Por favor, especifique al menos un destinatario"
-	},
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Elemento no válido",
 		"AUTH_ERROR": "Autentificación fallida",
-		"ACCESS_ERROR": "Error de acceso",
 		"CONNECTION_ERROR": "No se puede conectar al servidor",
+		"DOMAIN_ALREADY_EXISTS": "El Dominio ya existe",
 		"DOMAIN_NOT_ALLOWED": "Dominio no permitido",
 		"ACCOUNT_NOT_ALLOWED": "La cuenta no está permitida",
 		"CONTACTS_SYNC_ERROR": "Error de sincronización de Contactos",
@@ -538,17 +526,11 @@
 		"CANT_DELETE_NON_EMPTY_FOLDER": "No se puede eliminar un directorio que no está vacío",
 		"CANT_SUBSCRIBE_FOLDER": "No se puede suscribir carpeta",
 		"CANT_UNSUBSCRIBE_FOLDER": "No puede darse de baja de la carpeta",
-		"CANT_SAVE_SETTINGS": "No puede guardar la configuración",
-		"CANT_SAVE_PLUGIN_SETTINGS": "No puede guardar la configuración",
-		"DOMAIN_ALREADY_EXISTS": "El Dominio ya existe",
-		"CANT_INSTALL_PACKAGE": "No se pudo instalar el paquete",
-		"CANT_DELETE_PACKAGE": "No se pudo eliminar el paquete",
-		"INVALID_PLUGIN_PACKAGE": "Paquete de plugins no válido",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Paquete de plugins incompatible",
 		"DEMO_SEND_MESSAGE_ERROR": "Por razones de seguridad, esta cuenta demo no permite enviar mensajes a direcciones de correo electrónico externas!",
 		"DEMO_ACCOUNT_ERROR": "For security purposes, this account is not allowed for this action!",
 		"ACCOUNT_ALREADY_EXISTS": "La cuenta ya existe",
 		"ACCOUNT_DOES_NOT_EXIST": "La cuenta no existe",
+		"ACCOUNT_SWITCH_FAILED": "Switch to account \"%EMAIL%\" failed",
 		"MAIL_SERVER_ERROR": "Ocurrió un error mientras se accedía al servidor",
 		"INVALID_INPUT_ARGUMENT": "Argumento no válido",
 		"UNKNOWN_ERROR": "Error desconocido"

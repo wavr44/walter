@@ -10,16 +10,14 @@
 	top: 40px;
 }
 
-.b-system-drop-down {
+#V-SystemDropDown {
 
-	.b-toolbar {
-		position: absolute;
-		top: 0;
-		right: 0;
-		height: 30px;
-		padding: 10px @rlLowMargin;
-		z-index: 103;
-	}
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 30px;
+	padding: 10px @rlLowMargin;
+	z-index: 103;
 
 	.email-title {
 		display: inline-block;
@@ -73,18 +71,11 @@
 		white-space: nowrap;
 	}
 
-	.account-item {
-		&:not(.current) i:first-child,
-		&.current i + i {
-			display: none;
-		}
-	}
-
 	.counter {
 		display: inline-block;
 	}
 
-	.g-ui-menu .e-link.account-item {
+	.dropdown-menu a.account-item {
 		padding-right: 5px;
 	}
 }

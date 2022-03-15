@@ -1,14 +1,15 @@
 
+#rl-settings-subscreen,
 .g-ui-user-select-none {
 	user-select: none;
 	-webkit-touch-callout: none;
 }
 
 .g-ui-link {
-	color: #369;
-	text-decoration: underline;
+	color: var(--link-color, #369);
 	cursor: pointer;
 	padding: 2px;
+	text-decoration: underline;
 
 	&:focus {
 		outline: 1px;
@@ -21,12 +22,12 @@
 	display: inline-block;
 	height: 1em;
 	line-height: 1em;
+	margin-left: 0.5em;
 
 	&::after {
 		font-family: "snappymail";
 		content: " ";
 		display: block;
-		margin-left: 1em;
 		opacity: 0;
 		transition: opacity 1s linear;
 	}
@@ -73,6 +74,24 @@ textarea + .settings-save-trigger {
 
 .list-table {
 	max-width: 800px;
+}
+
+.button-confirm-delete {
+	transition: all 0.2s linear;
+	white-space: nowrap;
+}
+.button-confirm-delete:not(.delete-access) {
+	opacity: 0;
+	transform: translateX(-15px);
+	visibility: hidden;
+}
+
+.drag-handle {
+	color: #eee;
+	cursor: grab;
+}
+tr:hover .drag-handle {
+	color: #aaa;
 }
 
 // TABS

@@ -1,11 +1,9 @@
-import { doc, dropdownVisibility, Settings } from 'Common/Globals';
+import { Settings } from 'Common/Globals';
 import { i18n } from 'Common/Translator';
 
 import { root } from 'Common/Links';
 
 export default App => {
-
-	addEventListener('click', ()=>rl.Dropdowns.detectVisibility());
 
 	rl.app = App;
 	rl.logoutReload = App.logoutReload;
@@ -20,42 +18,20 @@ export default App => {
 		}
 	};
 
-	rl.Dropdowns = [];
-	rl.Dropdowns.register = function(element) { this.push(element); };
-	rl.Dropdowns.detectVisibility = (() =>
-		dropdownVisibility(!!rl.Dropdowns.find(item => item.classList.contains('show')))
-	).debounce(50);
-
 	rl.route = {
 		root: () => {
-			rl.route.setHash(root(), true);
 			rl.route.off();
+			hasher.setHash(root());
 		},
 		reload: () => {
 			rl.route.root();
 			setTimeout(() => (Settings.app('inIframe') ? parent : window).location.reload(), 100);
 		},
 		off: () => hasher.active = false,
-		on: () => hasher.active = true,
-		/**
-		 * @param {string} sHash
-		 * @param {boolean=} silence = false
-		 * @param {boolean=} replace = false
-		 * @returns {void}
-		 */
-		setHash: (hash, silence = false, replace = false) => {
-			hash = hash.replace(/^[#/]+/, '');
-			hasher.active = !silence;
-			hasher[replace ? 'replaceHash' : 'setHash'](hash);
-			if (silence) {
-				hasher.active = true;
-			} else {
-				hasher.setHash(hash);
-			}
-		}
+		on: () => hasher.active = true
 	};
 
-	rl.fetchJSON = (resource, init, postData) => {
+	rl.fetch = (resource, init, postData) => {
 		init = Object.assign({
 			mode: 'same-origin',
 			cache: 'no-cache',
@@ -64,7 +40,6 @@ export default App => {
 			credentials: 'same-origin',
 			headers: {}
 		}, init);
-		init.headers.Accept = 'application/json';
 		if (postData) {
 			init.method = 'POST';
 			init.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
@@ -86,7 +61,13 @@ export default App => {
 			init.body = new URLSearchParams(postData);
 		}
 
-		return fetch(resource, init).then(response => {
+		return fetch(resource, init);
+	};
+
+	rl.fetchJSON = (resource, init, postData) => {
+		init = Object.assign({ headers: {} }, init);
+		init.headers.Accept = 'application/json';
+		return rl.fetch(resource, init, postData).then(response => {
 			if (!response.ok) {
 				return Promise.reject('Network response error: ' + response.status);
 			}
@@ -111,11 +92,4 @@ export default App => {
 		});
 	};
 
-	window.__APP_BOOT = () => {
-		const cb = () => {
-			window.__APP_BOOT = null;
-			App.bootstart();
-		};
-		('loading' !== doc.readyState) ? cb() : doc.addEventListener('DOMContentLoaded', cb);
-	};
 };

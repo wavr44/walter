@@ -58,12 +58,7 @@ class SubStreams
 	 */
 	public static function CreateStream(array $aSubStreams)
 	{
-		if (!\in_array(self::STREAM_NAME, \stream_get_wrappers()))
-		{
-			\stream_wrapper_register(self::STREAM_NAME, '\MailSo\Base\StreamWrappers\SubStreams');
-		}
-
-		$sHashName = \MailSo\Base\Utils::Md5Rand();
+		$sHashName = \MailSo\Base\Utils::Sha1Rand();
 
 		self::$aStreams[$sHashName] = \array_map(function ($mItem) {
 			return \is_resource($mItem) ? $mItem :
@@ -95,13 +90,13 @@ class SubStreams
 		$aPath = \parse_url($sPath);
 
 		if (isset($aPath['host'], $aPath['scheme']) &&
-			0 < \strlen($aPath['host']) && 0 < \strlen($aPath['scheme']) &&
+			\strlen($aPath['host']) && \strlen($aPath['scheme']) &&
 			self::STREAM_NAME === $aPath['scheme'])
 		{
 			$sHashName = $aPath['host'];
 			if (isset(self::$aStreams[$sHashName]) &&
 				\is_array(self::$aStreams[$sHashName]) &&
-				0 < \count(self::$aStreams[$sHashName]))
+				\count(self::$aStreams[$sHashName]))
 			{
 				$this->iIndex = 0;
 				$this->iPos = 0;
@@ -110,7 +105,7 @@ class SubStreams
 				$this->aSubStreams = self::$aStreams[$sHashName];
 			}
 
-			$bResult = 0 < \count($this->aSubStreams);
+			$bResult = \count($this->aSubStreams);
 		}
 
 		return $bResult;
@@ -219,3 +214,5 @@ class SubStreams
 		return false;
 	}
 }
+
+\stream_wrapper_register(SubStreams::STREAM_NAME, '\\MailSo\\Base\\StreamWrappers\\SubStreams');

@@ -17,6 +17,20 @@ export const FolderType = {
 /**
  * @enum {string}
  */
+export const FolderMetadataKeys = {
+	// RFC 5464
+	Comment: '/private/comment',
+	CommentShared: '/shared/comment',
+	// RFC 6154
+	SpecialUse: '/private/specialuse',
+	// Kolab
+	KolabFolderType: '/private/vendor/kolab/folder-type',
+	KolabFolderTypeShared: '/shared/vendor/kolab/folder-type'
+};
+
+/**
+ * @enum {string}
+ */
 export const FolderSortMode = {
 	DateDesc: '', // default 'REVERSE DATE'
 	DateAsc: 'DATE',
@@ -34,13 +48,13 @@ export const FolderSortMode = {
  * @enum {string}
  */
 export const ComposeType = {
-	Empty: 'empty',
-	Reply: 'reply',
-	ReplyAll: 'replyall',
-	Forward: 'forward',
-	ForwardAsAttachment: 'forward-as-attachment',
-	Draft: 'draft',
-	EditAsNew: 'editasnew'
+	Empty: 0,
+	Reply: 1,
+	ReplyAll: 2,
+	Forward: 3,
+	ForwardAsAttachment: 4,
+	Draft: 5,
+	EditAsNew: 6
 };
 
 /**
@@ -58,19 +72,14 @@ export const SetSystemFoldersNotification = {
 /**
  * @enum {number}
  */
-export const ClientSideKeyName = {
-	FoldersLashHash: 0,
-	MessagesInboxLastHash: 1,
-	MailBoxListSize: 2,
-	ExpandedFolders: 3,
-	FolderListSize: 4,
-	MessageListSize: 5,
-	LastReplyAction: 6,
-	LastSignMe: 7,
-	ComposeLastIdentityID: 8,
-	MessageHeaderFullInfo: 9,
-	MessageAttachmentControls: 10
-};
+export const
+	ClientSideKeyNameExpandedFolders = 3,
+	ClientSideKeyNameFolderListSize = 4,
+	ClientSideKeyNameMessageListSize = 5,
+	ClientSideKeyNameLastReplyAction = 6,
+	ClientSideKeyNameLastSignMe = 7,
+	ClientSideKeyNameMessageHeaderFullInfo = 9,
+	ClientSideKeyNameMessageAttachmentControls = 10;
 
 /**
  * @enum {number}

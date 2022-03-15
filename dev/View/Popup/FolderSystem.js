@@ -1,41 +1,34 @@
 import ko from 'ko';
+import { koComputable, addSubscribablesTo } from 'External/ko';
 
 import { SetSystemFoldersNotification } from 'Common/EnumsUser';
 import { UNUSED_OPTION_VALUE } from 'Common/Consts';
-import { defaultOptionsAfterRender, addSubscribablesTo } from 'Common/Utils';
-import { folderListOptionsBuilder } from 'Common/UtilsUser';
-import { initOnStartOrLangChange, i18n } from 'Common/Translator';
+import { defaultOptionsAfterRender } from 'Common/Utils';
+import { folderListOptionsBuilder } from 'Common/Folders';
+import { i18n } from 'Common/Translator';
 
 import { FolderUserStore } from 'Stores/User/Folder';
 
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-class FolderSystemPopupView extends AbstractViewPopup {
+export class FolderSystemPopupView extends AbstractViewPopup {
 	constructor() {
 		super('FolderSystem');
 
-		this.sChooseOnText = '';
-		this.sUnuseText = '';
-
-		initOnStartOrLangChange(() => {
-			this.sChooseOnText = i18n('POPUPS_SYSTEM_FOLDERS/SELECT_CHOOSE_ONE');
-			this.sUnuseText = i18n('POPUPS_SYSTEM_FOLDERS/SELECT_UNUSE_NAME');
-		});
-
 		this.notification = ko.observable('');
 
-		this.folderSelectList = ko.computed(() =>
+		this.folderSelectList = koComputable(() =>
 			folderListOptionsBuilder(
 				FolderUserStore.folderListSystemNames(),
 				[
-					['', this.sChooseOnText],
-					[UNUSED_OPTION_VALUE, this.sUnuseText]
+					['', i18n('POPUPS_SYSTEM_FOLDERS/SELECT_CHOOSE_ONE')],
+					[UNUSED_OPTION_VALUE, i18n('POPUPS_SYSTEM_FOLDERS/SELECT_UNUSE_NAME')]
 				]
 			)
 		);
 
 		this.sentFolder = FolderUserStore.sentFolder;
-		this.draftFolder = FolderUserStore.draftFolder;
+		this.draftsFolder = FolderUserStore.draftsFolder;
 		this.spamFolder = FolderUserStore.spamFolder;
 		this.trashFolder = FolderUserStore.trashFolder;
 		this.archiveFolder = FolderUserStore.archiveFolder;
@@ -44,7 +37,7 @@ class FolderSystemPopupView extends AbstractViewPopup {
 
 		addSubscribablesTo(FolderUserStore, {
 			sentFolder: fSaveSystemFolders,
-			draftFolder: fSaveSystemFolders,
+			draftsFolder: fSaveSystemFolders,
 			spamFolder: fSaveSystemFolders,
 			trashFolder: fSaveSystemFolders,
 			archiveFolder: fSaveSystemFolders
@@ -80,5 +73,3 @@ class FolderSystemPopupView extends AbstractViewPopup {
 		this.notification(notification);
 	}
 }
-
-export { FolderSystemPopupView, FolderSystemPopupView as default };

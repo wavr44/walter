@@ -1,57 +1,44 @@
-<div class="modal fade b-filter-content g-ui-user-select-none" data-bind="modal: modalVisibility">
-	<div class="modal-header">
-		<button type="button" class="close" data-bind="command: cancelCommand">×</button>
-		<h3>
-			<span data-i18n="POPUPS_FILTER/TITLE_CREATE_FILTER" data-bind="visible: isNew"></span>
-			<span data-i18n="POPUPS_FILTER/TITLE_EDIT_FILTER" data-bind="visible: !isNew()"></span>
-		</h3>
+<header>
+	<a href="#" class="close" data-bind="click: close">×</a>
+	<h3>
+		<span data-i18n="POPUPS_FILTER/TITLE_CREATE_FILTER" data-bind="visible: isNew"></span>
+		<span data-i18n="POPUPS_FILTER/TITLE_EDIT_FILTER" data-bind="visible: !isNew()"></span>
+	</h3>
+</header>
+<div class="modal-body" data-bind="with: filter, i18nInit: filter">
+	<div class="control-group" data-bind="css: {'error': nameError}">
+		<input type="text" class="span5"
+			data-bind="value: name, hasfocus: nameFocused"
+			autocorrect="off" autocapitalize="off" spellcheck="false"
+			data-i18n="[placeholder]GLOBAL/NAME">
 	</div>
-	<div class="modal-body">
-		<div class="filter" data-bind="with: filter, i18nInit: filter">
-			<div data-bind="i18nInit: true">
 
-				<div class="control-group" data-bind="css: {'error': nameError}">
-					<div class="controls">
-						<input type="text" class="span5"
-							data-bind="value: name, hasfocus: nameFocused"
-							autocorrect="off" autocapitalize="off" spellcheck="false"
-							data-i18n="[placeholder]GLOBAL/NAME"
-						/>
-					</div>
-				</div>
-
-				<div class="legend" data-i18n="POPUPS_FILTER/LEGEND_CONDITIONS"></div>
-				<div>
-					<div data-bind="visible: 1 < conditions().length">
-						<select class="span4" data-bind="value: conditionsType">
-							<option value="Any"
-								data-i18n="POPUPS_FILTER/SELECT_MATCH_ANY"></option>
-							<option value="All"
-								data-i18n="POPUPS_FILTER/SELECT_MATCH_ALL"></option>
-						</select>
-					</div>
-					<div data-bind="visible: 0 < conditions().length, foreach: conditions">
-						<div data-bind="template: {'name': template(), 'data': $data}"></div>
-					</div>
-					<div data-bind="visible: 0 === conditions().length"
-						data-i18n="POPUPS_FILTER/ALL_INCOMING_MESSAGES_DESC"></div>
-					<br />
-					<a class="btn" data-bind="click: addCondition, i18nInit: true">
-						<i class="fontastic">✚</i>
-						<span data-i18n="POPUPS_FILTER/BUTTON_ADD_CONDITION"></span>
-					</a>
-				</div>
-				<br />
-				<div class="legend" data-i18n="POPUPS_FILTER/LEGEND_ACTIONS"></div>
-				<select class="span3" data-bind="options: $root.actionTypeOptions, value: actionType, optionsText: 'name', optionsValue: 'id'"></select>
-				<div data-bind="template: {'name': actionTemplate()}, i18nUpdate: actionTemplate"></div>
-			</div>
+	<div class="legend" data-i18n="POPUPS_FILTER/LEGEND_CONDITIONS"></div>
+	<div class="control-group" data-bind="visible: 1 < conditions().length">
+		<select class="span4" data-bind="value: conditionsType">
+			<option value="Any"
+				data-i18n="POPUPS_FILTER/SELECT_MATCH_ANY"></option>
+			<option value="All"
+				data-i18n="POPUPS_FILTER/SELECT_MATCH_ALL"></option>
+		</select>
+	</div>
+	<div data-bind="visible: conditions().length, foreach: conditions">
+		<div class="control-group" data-bind="css: {'error': valueError}" style="display:flex">
+			<div style="flex-grow:1" data-bind="css: {'error': valueError}, template: {'name': template(), 'data': $data}"></div>
+			<span class="delete-action button-delete fontastic" style="margin-top: 5px;"
+				data-bind="click: function (oCondition) { $root.removeCondition(oCondition); }">🗑</span>
 		</div>
 	</div>
-	<div class="modal-footer">
-		<a class="btn buttonSave" data-bind="command: saveFilterCommand">
-			<i class="fontastic">✔</i>
-			<span data-i18n="GLOBAL/DONE"></span>
-		</a>
+	<div class="control-group" data-bind="visible: 0 === conditions().length"
+		data-i18n="POPUPS_FILTER/ALL_INCOMING_MESSAGES_DESC"></div>
+	<div class="control-group">
+		<a class="btn" data-bind="click: addCondition, i18nInit: true" data-icon="✚" data-i18n="POPUPS_FILTER/BUTTON_ADD_CONDITION"></a>
 	</div>
+
+	<div class="legend" data-i18n="POPUPS_FILTER/LEGEND_ACTIONS"></div>
+	<select class="span3" data-bind="options: $root.actionTypeOptions, value: actionType, optionsText: 'name', optionsValue: 'id'"></select>
+	<div data-bind="template: {'name': actionTemplate()}, i18nUpdate: actionTemplate"></div>
 </div>
+<footer>
+	<a class="btn buttonSave" data-bind="click: saveFilter" data-icon="✔" data-i18n="GLOBAL/DONE"></a>
+</footer>

@@ -57,7 +57,11 @@
 		"LABEL_ADV_DATE_MONTH": "Legfeljebb 1 hónapos",
 		"LABEL_ADV_DATE_3_MONTHS": "Legfeljebb 3 hónapos",
 		"LABEL_ADV_DATE_6_MONTHS": "Legfeljebb 6 hónapos",
-		"LABEL_ADV_DATE_YEAR": "Legfeljebb 1 éves"
+		"LABEL_ADV_DATE_YEAR": "Legfeljebb 1 éves",
+		"LABEL_ADV_SUBFOLDERS": "Subfolders",
+		"LABEL_ADV_SUBFOLDERS_NONE": "None",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE": "All",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE_ONE": "One level"
 	},
 	"PREVIEW_POPUP": {
 		"FULLSCREEN": "Teljes képernyő váltása",
@@ -132,6 +136,8 @@
 		"BUTTON_THREAD_MORE": "További üzenetek",
 		"MENU_HEADERS": "Üzenet fejléc megjelenítése",
 		"MENU_VIEW_ORIGINAL": "Eredeti megjelenítése",
+		"HTML_VIEW": "View HTML message",
+		"PLAIN_VIEW": "View plain text message",
 		"MENU_DOWNLOAD_ORIGINAL": ".eml fájl letöltés",
 		"MENU_FILTER_SIMILAR": "Hasonló üzenetek szűrése",
 		"MENU_PRINT": "Nyomtatás",
@@ -142,8 +148,6 @@
 		"PRINT_LABEL_ATTACHMENTS": "Mellékletek",
 		"MESSAGE_VIEW_DESC": "Válassz egy üzenetet a listából, hogy megjelenjen itt.",
 		"MESSAGE_VIEW_MOVE_DESC": "A cél kiválasztásához a bal oldali panelen kattints a mappa nevére.",
-		"PGP_SIGNED_MESSAGE_DESC": "OpenPGP aláírt üzenet (kattints az ellenőrzéshez)",
-		"PGP_ENCRYPTED_MESSAGE_DESC": "OpenPGP kódolt üzenet (kattints a visszafejtéshez)",
 		"LINK_DOWNLOAD_AS_ZIP": "Letöltés zip fájlként",
 		"SPAM_SCORE": "Spam Score",
 		"HAS_VIRUS_WARNING": "FIGYELEM: vírust észleltünk"
@@ -208,7 +212,6 @@
 		"ATTACHMENTS_UPLOAD_ERROR_DESC": "Még nem lett feltöltve minden melléklet.",
 		"BUTTON_REQUEST_READ_RECEIPT": "Olvasási visszaigazolás kérése",
 		"BUTTON_MARK_AS_IMPORTANT": "Megjelölés fontosként",
-		"BUTTON_OPEN_PGP": "OpenPGP (csak egyszerű szöveg)",
 		"BUTTON_REQUEST_DSN": "Továbbítási visszaigazolás kérés"
 	},
 	"POPUPS_ASK": {
@@ -246,31 +249,24 @@
 		"DANGER_DESC_HTML_2": "Ha egyszer elindult, a folyamatot nem lehet megszakítani.",
 		"TITLE_CLEARING_PROCESS": "Mappa ürítés..."
 	},
-	"POPUPS_IMPORT_OPEN_PGP_KEY": {
-		"TITLE_IMPORT_OPEN_PGP_KEY": "OpenPGP kulcs importálás",
-		"BUTTON_IMPORT_OPEN_PGP_KEY": "Importálás"
-	},
-	"POPUPS_VIEW_OPEN_PGP_KEY": {
-		"TITLE_VIEW_OPEN_PGP_KEY": "OpenPGP kulcs megtekintés",
-		"BUTTON_SELECT": "Kiválasztás"
-	},
-	"POPUPS_GENERATE_OPEN_PGP_KEYS": {
-		"TITLE_GENERATE_OPEN_PGP_KEYS": "OpenPGP kulcs generálás",
-		"LABEL_KEY_BIT_LENGTH": "Kulcs hossz",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generálás"
-	},
-	"POPUPS_COMPOSE_OPEN_PGP": {
-		"TITLE_COMPOSE_OPEN_PGP": "OpenPGP aláírás\/titkosítás",
+	"OPENPGP": {
+		"POPUP_IMPORT_TITLE": "OpenPGP kulcs importálás",
+		"POPUP_IMPORT_BUTTON": "Importálás",
+		"POPUP_VIEW_TITLE": "OpenPGP kulcs megtekintés",
+		"POPUP_VIEW_BUTTON": "Kiválasztás",
+		"POPUP_GENERATE_TITLE": "OpenPGP kulcs generálás",
+		"POPUP_GENERATE_BUTTON": "Generálás",
+		"LABEL_KEY_TYPE": "Type",
 		"LABEL_SIGN": "Aláírás",
 		"LABEL_ENCRYPT": "Titkosítás",
-		"BUTTON_SIGN": "Aláírás",
-		"BUTTON_ENCRYPT": "Titkosítás",
-		"BUTTON_SIGN_AND_ENCRYPT": "Aláírás és titkosítás"
-	},
-	"POPUPS_MESSAGE_OPEN_PGP": {
-		"TITLE_MESSAGE_OPEN_PGP": "OpenPGP visszafejtés",
-		"LABEL_KEY": "Privát kulcs",
-		"BUTTON_DECRYPT": "Visszafejtés"
+		"BUTTON_DECRYPT": "Visszafejtés",
+		"BUTTON_VERIFY": "Verify",
+		"SIGNED_MESSAGE": "OpenPGP aláírt üzenet",
+		"ENCRYPTED_MESSAGE": "OpenPGP kódolt üzenet",
+		"STORE_IN_GNUPG": "Store on server in GnuPG",
+		"BACKUP_ON_SERVER": "Store (encrypted) on server",
+		"GOOD_SIGNATURE": "Jó aláírás tőle: %USER%",
+		"ERROR": "OpenPGP hiba: %ERROR%"
 	},
 	"POPUPS_FILTER": {
 		"TITLE_CREATE_FILTER": "Szűrő létrehozás?",
@@ -330,10 +326,8 @@
 		"NOTIFICATION_ARCHIVE": "Nem választottál \"Archívum\" rendszermappát az archivált üzenetek tárolásához."
 	},
 	"TITLES": {
-		"LOGIN": "Bejelentkezés",
 		"MAILBOX": "Postaláda",
-		"SETTINGS": "Beállítások",
-		"COMPOSE": "Levélírás"
+		"SETTINGS": "Beállítások"
 	},
 	"UPLOAD": {
 		"ERROR_FILE_IS_TOO_BIG": "A fájl túl nagy",
@@ -353,7 +347,6 @@
 		"LABEL_CONTACTS_NAME": "Névjegyek",
 		"LABEL_FOLDERS_NAME": "Mappák",
 		"LABEL_ACCOUNTS_NAME": "Fiókok",
-		"LABEL_IDENTITIES_NAME": "Identitások",
 		"LABEL_FILTERS_NAME": "Szűrők",
 		"LABEL_TEMPLATES_NAME": "Sablonok",
 		"LABEL_SECURITY_NAME": "Biztonság",
@@ -395,6 +388,8 @@
 		"LABEL_USE_THREADS": "Szálak használata",
 		"LABEL_REPLY_SAME_FOLDER": "Válaszüzenetek elhelyezése az eredeti üzenet mappájában",
 		"LABEL_SHOW_IMAGES": "Mindig jelenítse meg a külső képeket az üzenet törzsében",
+		"LABEL_PREFER_HTML": "Prefer HTML to plain text",
+		"LABEL_PREFER_HTML_INFO": "Messages sometimes come in both formats. This option controls whether you want the HTML part or the plain text part to be displayed.",
 		"LABEL_REMOVE_COLORS": "Remove background and text colors from message body",
 		"LABEL_MESSAGE_PER_PAGE": "Üzenetek egy oldalon",
 		"LABEL_MARK_MESSAGE_READ_AFTER": "Jelölje meg az üzenetet olvasottként",
@@ -439,7 +434,14 @@
 		"HELP_DELETE_FOLDER": "Mappa törlés",
 		"HELP_SHOW_HIDE_FOLDER": "Mappa mutatás\/elrejtés",
 		"HELP_CHECK_FOR_NEW_MESSAGES": "Ellenőrizze\/ne ellenőrizze az új üzeneteket",
-		"HIDE_UNSUBSCRIBED": "Hide unsubscribed folders"
+		"HIDE_UNSUBSCRIBED": "Hide unsubscribed folders",
+		"TYPE_CALENDAR": "Naptár",
+		"TYPE_CONFIGURATION": "Konfiguráció",
+		"TYPE_CONTACTS": "Kapcsolatok",
+		"TYPE_FILES": "Fájlok",
+		"TYPE_JOURNAL": "Folyóirat",
+		"TYPE_NOTES": "Jegyzetek",
+		"TYPE_TASKS": "Feladatok"
 	},
 	"SETTINGS_ACCOUNTS": {
 		"LEGEND_ACCOUNTS": "Fiók lista",
@@ -450,13 +452,13 @@
 		"LOADING_PROCESS": "Fiók lista frissítés",
 		"DEFAULT_IDENTITY_LABEL": "default"
 	},
-	"SETTINGS_OPEN_PGP": {
-		"BUTTON_ADD_OPEN_PGP_KEY": "OpenPGP kulcs importálás",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "OpenPGP kulcs generálás",
+	"SETTINGS_OPENPGP": {
+		"BUTTON_IMPORT_KEY": "Kulcs importálás",
+		"BUTTON_GENERATE_KEY_PAIR": "Kulcs generálás",
 		"TITLE_PRIVATE": "Privát",
 		"TITLE_PUBLIC": "Publikus",
-		"GENERATE_ONLY_HTTPS": "csak HTTPS",
-		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Piszkozat automatikus mentése"
+		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Piszkozat automatikus mentése",
+		"GET_MAILVELOPE": "Get Mailvelope browser add-on."
 	},
 	"SHORTCUTS_HELP": {
 		"LEGEND_SHORTCUTS_HELP": "Billentyű kombináció súgó",
@@ -497,25 +499,11 @@
 		"LABEL_SEND_MESSAGE": "Üzenet küldés",
 		"LABEL_CLOSE_COMPOSE": "Levélírás bezárása"
 	},
-	"PGP_NOTIFICATIONS": {
-		"NO_PUBLIC_KEYS_FOUND": "Nem találtam publikus kulcsokat",
-		"NO_PUBLIC_KEYS_FOUND_FOR": "Nem találtam publikus kulcsokat ehhez az e-mailhez: \"%EMAIL%\"",
-		"NO_PRIVATE_KEY_FOUND": "Nem találtam privát kulcsot",
-		"NO_PRIVATE_KEY_FOUND_FOR": "Nem találtam privát kulcsot ehhez az e-mailhez: \"%EMAIL%\"",
-		"ADD_A_PUBLICK_KEY": "Publikus kulcs hozzáadás",
-		"SELECT_A_PRIVATE_KEY": "Privát kulcs választás",
-		"UNVERIFIRED_SIGNATURE": "Nem ellenőrzött aláírás",
-		"DECRYPTION_ERROR": "OpenPGP visszafejtési hiba",
-		"GOOD_SIGNATURE": "Jó aláírás tőle: %USER%",
-		"PGP_ERROR": "OpenPGP hiba: %ERROR%",
-		"SPECIFY_FROM_EMAIL": "Kérlek add meg a Feladó e-mail címét",
-		"SPECIFY_AT_LEAST_ONE_RECIPIENT": "Legalább egy címzettet meg kell adni"
-	},
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Érvénytelen kulcs",
 		"AUTH_ERROR": "Érvénytelen hitelesítés",
-		"ACCESS_ERROR": "Érvénytelen hozzáférés",
 		"CONNECTION_ERROR": "Nem lehet kapcsolódni a szerverhez",
+		"DOMAIN_ALREADY_EXISTS": "A domain már létezik",
 		"DOMAIN_NOT_ALLOWED": "A domain nem engedélyezett",
 		"ACCOUNT_NOT_ALLOWED": "A fiók nem engedélyezett",
 		"CONTACTS_SYNC_ERROR": "Hiba lépett fel a névjegyek szinkronizálása közben",
@@ -538,17 +526,11 @@
 		"CANT_DELETE_NON_EMPTY_FOLDER": "Nem üres mappát nem lehet törölni",
 		"CANT_SUBSCRIBE_FOLDER": "Nem lehet feliratkozni mappára",
 		"CANT_UNSUBSCRIBE_FOLDER": "Nem lehet leiratkozni mappáról",
-		"CANT_SAVE_SETTINGS": "Nem lehet menteni a beállításokat",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Nem lehet menteni a beállításokat",
-		"DOMAIN_ALREADY_EXISTS": "A domain már létezik",
-		"CANT_INSTALL_PACKAGE": "Nem sikerült telepíteni a csomagot",
-		"CANT_DELETE_PACKAGE": "Nem sikerült eltávolítani a csomagot",
-		"INVALID_PLUGIN_PACKAGE": "Érvénytelen beépülő csomag",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Nem támogatott beépülő csomag",
 		"DEMO_SEND_MESSAGE_ERROR": "Biztonsági okokból, ebből a demó fiókból nem lehet külső e-mail címekre üzenetet küldeni.",
 		"DEMO_ACCOUNT_ERROR": "Biztonsági okokból, ebből a fiókból nem lehet elvégezni ezt a műveletet!",
 		"ACCOUNT_ALREADY_EXISTS": "A fiók már létezik",
 		"ACCOUNT_DOES_NOT_EXIST": "A fiók nem létezik",
+		"ACCOUNT_SWITCH_FAILED": "Switch to account \"%EMAIL%\" failed",
 		"MAIL_SERVER_ERROR": "Hiba történt a levelező szerverhez történő hozzáférés közben",
 		"INVALID_INPUT_ARGUMENT": "Érvénytelen input argumentum",
 		"UNKNOWN_ERROR": "Ismeretlen hiba"

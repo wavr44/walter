@@ -4,7 +4,7 @@ namespace SnappyMail;
 
 abstract class TOTP
 {
-	public function Verify(string $sSecret, string $sCode) : bool
+	public static function Verify(string $sSecret, string $sCode) : bool
 	{
 		$key = static::Base32Decode($sSecret);
 		$algo = 'SHA1'; // Google Authenticator doesn't support SHA256
@@ -29,7 +29,7 @@ abstract class TOTP
 		return false;
 	}
 
-	public function CreateSecret() : string
+	public static function CreateSecret() : string
 	{
 		$CHARS = \array_keys(static::$map);
 		$length = 16;

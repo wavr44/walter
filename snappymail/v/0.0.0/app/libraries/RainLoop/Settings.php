@@ -7,33 +7,16 @@ class Settings
 	/**
 	 * @var array
 	 */
-	protected $aData;
+	protected $aData = array();
 
-	/**
-	 * @var bool
-	 */
-	protected $bLocal;
-
-	public function __construct(bool $bLocal = false)
-	{
-		$this->aData = array();
-		$this->bLocal = $bLocal;
-	}
-
-	public function InitData(array $aData) : self
+	public function __construct(array $aData)
 	{
 		$this->aData = $aData;
-		return $this;
 	}
 
 	public function DataAsArray() : array
 	{
 		return $this->aData;
-	}
-
-	public function IsLocal() : bool
-	{
-		return $this->bLocal;
 	}
 
 	/**

@@ -1,15 +1,14 @@
 import ko from 'ko';
 import { pInt } from 'Common/Utils';
 import { SaveSettingsStep } from 'Common/Enums';
-import { AbstractComponent } from 'Component/Abstract';
+import { koComputable } from 'External/ko';
+import { dispose } from 'External/ko';
 
-class AbstractInput extends AbstractComponent {
+export class AbstractInput {
 	/**
 	 * @param {Object} params
 	 */
 	constructor(params) {
-		super();
-
 		this.value = params.value || '';
 		this.label = params.label || '';
 		this.enable = null == params.enable ? true : params.enable;
@@ -18,7 +17,7 @@ class AbstractInput extends AbstractComponent {
 
 		this.labeled = null != params.label;
 
-		let size = params.size || 0;
+		let size = 0 < params.size ? 'span' + params.size : '';
 		if (this.trigger) {
 			const
 				classForTrigger = ko.observable(''),
@@ -38,17 +37,21 @@ class AbstractInput extends AbstractComponent {
 
 			setTriggerState(this.trigger());
 
-			this.className = ko.computed(() =>
-				((0 < size ? 'span' + size : '') + ' settings-saved-trigger-input ' + classForTrigger()).trim()
+			this.className = koComputable(() =>
+				(size + ' settings-saved-trigger-input ' + classForTrigger()).trim()
 			);
 
-			this.disposable.push(this.trigger.subscribe(setTriggerState, this));
+			this.disposables = [
+				this.trigger.subscribe(setTriggerState, this),
+				this.className
+			];
 		} else {
-			this.className = ko.computed(() => 0 < size ? 'span' + size : '');
+			this.className = size;
+			this.disposables = [];
 		}
+	}
 
-		this.disposable.push(this.className);
+	dispose() {
+		this.disposables.forEach(dispose);
 	}
 }
-
-export { AbstractInput };

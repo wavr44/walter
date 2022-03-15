@@ -1,10 +1,49 @@
 PHP
-
+```php
 class Plugin extends \RainLoop\Plugins\AbstractPlugin
+{
+	public function __construct();
+	public function Name() : string;
+	public function Description() : string;
+	public function UseLangs(?bool $bLangs = null) : bool;
+	public function Supported() : string;
+	public function Init() : void;
+	public function FilterAppDataPluginSection(bool $bAdmin, bool $bAuth, array &$aConfig) : void;
+	protected function configMapping() : array;
+}
+```
+
+JavaScript
+```javascript
+class PluginPopupView extends rl.pluginPopupView
+{
+	// Happens when DOM is created
+	onBuild(dom) {}
+
+	// Happens before showModal()
+	beforeShow(...params) {}
+	// Happens after showModal()
+	onShow(...params) {}
+	// Happens after showModal() animation transitionend
+	afterShow() {}
+
+	// Happens when user hits Escape or Close key
+	// return false to prevent closing, use close() manually
+	onClose() {}
+	// Happens before animation transitionend
+	onHide() {}
+	// Happens after animation transitionend
+	afterHide() {}
+}
+
+PluginPopupView.showModal();
+```
 
 # Hooks
 
+```php
 $Plugin->addHook('hook.name', 'functionName');
+```
 
 ## Login
 
@@ -29,48 +68,38 @@ $Plugin->addHook('hook.name', 'functionName');
 
 ## IMAP
 
-### imap.credentials
-	params:
-		\RainLoop\Model\Account $oAccount
-		array &$aCredentials
-
 ### imap.before-connect
 	params:
 		\RainLoop\Model\Account $oAccount
-		\MailSo\Mail\MailClient $oMailClient
-		array $aCredentials
+		\MailSo\Imap\ImapClient $oImapClient
+		array &$aCredentials
 
 ### imap.after-connect
 	params:
 		\RainLoop\Model\Account $oAccount
-		\MailSo\Mail\MailClient $oMailClient
+		\MailSo\Imap\ImapClient $oImapClient
 		array $aCredentials
 
 ### imap.before-login
 	params:
 		\RainLoop\Model\Account $oAccount
-		\MailSo\Mail\MailClient $oMailClient
-		array $aCredentials
+		\MailSo\Imap\ImapClient $oImapClient
+		array &$aCredentials
 
 ### imap.after-login
 	params:
 		\RainLoop\Model\Account $oAccount
-		\MailSo\Mail\MailClient $oMailClient
+		\MailSo\Imap\ImapClient $oImapClient
 		bool $bSuccess
 		array $aCredentials
 
 ## Sieve
 
-### sieve.credentials
-	params:
-		\RainLoop\Model\Account $oAccount
-		array &$aCredentials
-
 ### sieve.before-connect
 	params:
 		\RainLoop\Model\Account $oAccount
 		\MailSo\Sieve\ManageSieveClient $oSieveClient
-		array $aCredentials
+		array &$aCredentials
 
 ### sieve.after-connect
 	params:
@@ -82,27 +111,22 @@ $Plugin->addHook('hook.name', 'functionName');
 	params:
 		\RainLoop\Model\Account $oAccount
 		\MailSo\Sieve\ManageSieveClient $oSieveClient
-		bool $bSuccess
-		array $aCredentials
+		array &$aCredentials
 
 ### sieve.after-login
 	params:
 		\RainLoop\Model\Account $oAccount
 		\MailSo\Sieve\ManageSieveClient $oSieveClient
+		bool $bSuccess
 		array $aCredentials
 
 ## SMTP
-
-### smtp.credentials
-	params:
-		\RainLoop\Model\Account $oAccount
-		array &$aCredentials
 
 ### smtp.before-connect
 	params:
 		\RainLoop\Model\Account $oAccount
 		\MailSo\Smtp\SmtpClient $oSmtpClient
-		array $aCredentials
+		array &$aCredentials
 
 ### smtp.after-connect
 	params:
@@ -114,7 +138,7 @@ $Plugin->addHook('hook.name', 'functionName');
 	params:
 		\RainLoop\Model\Account $oAccount
 		\MailSo\Smtp\SmtpClient $oSmtpClient
-		array $aCredentials
+		array &$aCredentials
 
 ### smtp.after-login
 	params:
@@ -188,16 +212,17 @@ $Plugin->addHook('hook.name', 'functionName');
 	params:
 		array &$aPaths
 
-### filter.http-query
-	params:
-		string &$sQuery
-
 ### filter.json-response
 	params:
 		string $sAction
 		array &$aResponseItem
 
 ### filter.message-html
+	params:
+		\RainLoop\Model\Account $oAccount
+		\MailSo\Mime\Message $oMessage
+		string &$sTextConverted
+
 ### filter.message-plain
 	params:
 		\RainLoop\Model\Account $oAccount
@@ -265,15 +290,6 @@ $Plugin->addHook('hook.name', 'functionName');
 		string $sAction
 		array &$aResponseItem
 
-### json.action-post-call
-	params:
-		string $sAction
-		array &$aResponseItem
-
-### json.action-pre-call
-	params:
-		string $sAction
-
 ### json.action-pre-call
 	params:
 		string $sAction
@@ -302,30 +318,14 @@ $Plugin->addHook('hook.name', 'functionName');
 		\RainLoop\Model\Account $oAccount
 		int $iLimit
 
-### main.default-response
+### main.content-security-policy
 	params:
-		string $sActionName
-		array &$aResponseItem
+		\SnappyMail\HTTP\CSP $oCSP
 
 ### main.default-response
 	params:
 		string $sActionName
 		array &$aResponseItem
-
-### main.default-response
-	params:
-		string $sActionName
-		array &$aResponseItem
-
-### main.default-response-data
-	params:
-		string $sActionName
-		mixed &$mResult
-
-### main.default-response-data
-	params:
-		string $sActionName
-		mixed &$mResult
 
 ### main.default-response-data
 	params:

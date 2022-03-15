@@ -46,8 +46,6 @@ abstract class Header
 		CONTENT_ID = 'Content-ID',
 		CONTENT_LOCATION = 'Content-Location',
 
-		SENSITIVITY = 'Sensitivity',
-
 		RECEIVED_SPF = 'Received-SPF',
 		AUTHENTICATION_RESULTS = 'Authentication-Results',
 		X_DKIM_AUTHENTICATION_RESULTS = 'X-DKIM-Authentication-Results',
@@ -59,6 +57,8 @@ abstract class Header
 		X_SPAM_FLAG     = 'X-Spam-Flag',     // YES/NO
 		X_SPAM_LEVEL    = 'X-Spam-Level',    // *******
 		X_SPAM_STATUS   = 'X-Spam-Status',   // Yes|No
+		X_SPAM_BAR      = 'X-Spam-Bar',      // ++ | --
+		X_SPAM_REPORT   = 'X-Spam-Report',
 	// Rspamd
 		X_SPAMD_RESULT  = 'X-Spamd-Result',  // default: False [7.13 / 9.00],
 		X_SPAMD_BAR     = 'X-Spamd-Bar',     // +++++++

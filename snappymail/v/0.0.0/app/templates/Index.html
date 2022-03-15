@@ -12,30 +12,24 @@
 	<meta name="robots" content="noindex,nofollow,noodp">
 	<title></title>
 	<style id="app-boot-css">{{BaseAppBootCss}}</style>
-	<link type="text/css" rel="stylesheet" data-href="{{BaseAppMainCssLink}}" id="rl-css" rel="preload">
+	<link type="text/css" rel="stylesheet" href="{{BaseAppMainCssLink}}">
 	<link rel="manifest" href="{{BaseAppManifestLink}}">
 	<style id="app-theme-style" data-href="{{BaseAppThemeCssLink}}">{{BaseAppThemeCss}}</style>
 	{{BaseAppFaviconPngLinkTag}}
 	{{BaseAppFaviconTouchLinkTag}}
 </head>
 
-<body>
-	<div id="rl-app" data-admin='{{BaseAppAdmin}}'>
-		<div id="rl-loading">
-			<div id="rl-loading-desc">{{LoadingDescriptionEsc}}</div>
-			<div class="e-spinner">
-				<div></div>
-				<div></div>
-				<div></div>
-			</div>
-		</div>
-		<div id="rl-loading-error" hidden="">An error occurred.<br>Please refresh the page and try again.</div>
-		<div id="rl-content" hidden="">
-			<div id="rl-popups"></div>
-			<div id="rl-left"></div>
-			<div id="rl-right"></div>
-		</div>
+<body id="rl-app" data-admin='{{BaseAppAdmin}}'>
+	<div id="rl-loading">
+		<div id="rl-loading-desc">{{LoadingDescriptionEsc}}</div>
+		<i class="icon-spinner"></i>
 	</div>
+	<div id="rl-loading-error" hidden="">An error occurred.<br>Please refresh the page and try again.</div>
+	<div id="rl-content" hidden="">
+		<div id="rl-left"></div>
+		<div id="rl-right"></div>
+	</div>
+	<div id="rl-popups"></div>
 	{{BaseTemplates}}
 	<script nonce="" type="text/javascript">{{BaseAppBootScript}}{{BaseLanguage}}</script>
 </body>

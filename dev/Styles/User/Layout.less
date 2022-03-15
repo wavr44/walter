@@ -17,6 +17,15 @@
 	z-index: 0;
 }
 
+#rl-left {
+	width: @rlLeftWidth;
+}
+
+#rl-right {
+	z-index: 1;
+	left: @rlLeftWidth;
+}
+
 html.rl-mobile {
 
 	&:not(.rl-left-panel-disabled) #rl-right {
@@ -26,10 +35,6 @@ html.rl-mobile {
 	&.rl-left-panel-disabled #rl-right {
 		left: 5px !important;
 	}
-}
-
-#rl-left {
-	width: @rlLeftWidth;
 }
 
 /*
@@ -50,7 +55,7 @@ html.rl-mobile {
 }
 */
 
-.resizable > .resizer {
+.resizer {
 	background: #aaa;
 	background: rgba(255,255,255,0.5);
 	display: none;
@@ -58,17 +63,19 @@ html.rl-mobile {
 	position: absolute;
 	z-index: 102;
 }
-.resizable > .resizer:hover {
+.resizer:hover {
 	opacity: 1;
 }
 
-html:not(.rl-left-panel-disabled) #rl-left.resizable {
+html:not(.rl-left-panel-disabled) #rl-left {
 	resize: horizontal;
 	overflow: hidden;
 	min-width: 155px;
 	max-width: 350px;
 }
-#rl-left > .resizer {
+
+#rl-left > .resizer,
+.rl-side-preview-pane #V-MailMessageList > .resizer {
 	cursor: ew-resize;
 	height: 100%;
 	right: 0;
@@ -76,58 +83,17 @@ html:not(.rl-left-panel-disabled) #rl-left.resizable {
 	width: 5px;
 }
 
-.g-ui-menu {
-	max-height: 60vh;
-	max-width: 90vw;
-	overflow: auto;
-
-	.e-link {
-		text-decoration: none;
-		cursor: pointer;
-		color: var(--dropdown-menu-color, #333);
-		background-color: var(--dropdown-menu-bg-color, #fff);
-	}
-
-	.e-item.selected > .e-link {
-		background-color: var(--dropdown-menu-selected-bg-color, #eee);
-	}
-
-	.e-item:not(.disabled) > .e-link:focus,
-	.e-item:not(.disabled) > .e-link:hover {
-		background-color: var(--dropdown-menu-hover-bg-color, #444);
-		background-image: none;
-		color: var(--dropdown-menu-hover-color, #eee);
-	}
-
-	.e-item.disabled > .e-link {
-		cursor: not-allowed;
-		opacity: 0.5;
-	}
+.rl-side-preview-pane #V-MailMessageList {
+	resize: horizontal;
+	min-width: 320px;
+	max-width: 60%;
 }
-
-.g-ui-table {
-
-	display: table;
-	width: 100%;
-
-	.e-row {
-		display: table-row;
-	}
-
-	.e-cell {
-		display: table-cell;
-		vertical-align: top;
-		text-align: left;
-	}
-}
-
-.b-message-list-wrapper.resizable {
+.rl-bottom-preview-pane #V-MailMessageList {
 	resize: vertical;
-	overflow: hidden;
 	min-height: 200px;
-	max-height: 500px;
+	max-height: 60%;
 }
-.b-message-list-wrapper > .resizer {
+.rl-bottom-preview-pane #V-MailMessageList > .resizer {
 	cursor: ns-resize;
 	height: 5px;
 	left: 0;
@@ -135,30 +101,25 @@ html:not(.rl-left-panel-disabled) #rl-left.resizable {
 	width: 100%;
 }
 
-html:not(.rl-left-panel-disabled) #rl-left.resizable > .resizer,
-.b-message-list-wrapper > .resizer {
+html:not(.rl-left-panel-disabled) #rl-left > .resizer,
+#V-MailMessageList > .resizer {
 	display: block;
 }
 
-#rl-right {
-	z-index: 1;
-	left: @rlLeftWidth;
-}
-
-#rl-sub-left {
+#V-MailMessageList {
 	position: absolute;
 	top: 0;
-	bottom: 0;
+	bottom: @rlBottomMargin;
 	left: 0;
 	width: 50%;
 }
 
-#rl-sub-right {
+#V-MailMessageView {
 	position: absolute;
-	top: 0;
-	bottom: 0;
+	top: 50px + @rlLowMargin;
+	bottom: 13px;
 	right: 0;
-	left: 50%;
+	left: 0;
 
 	.b-message-view-backdrop {
 		position: absolute;
@@ -186,27 +147,10 @@ html:not(.rl-left-panel-disabled) #rl-left.resizable > .resizer,
 	}
 }
 
-/*
-	#rl-popups > dialog {
-		top: 0;
-		margin: 10px auto;
-		padding: 0;
-		border: 0;
+html.rl-side-preview-pane {
+	#V-MailMessageView {
+		left: 50%;
 	}
-*/
-#rl-popups > .rl-view-model {
-	position: fixed;
-	top: 0;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	z-index: 1100;
-	overflow: auto;
-	background-color: rgba(0,0,0,0.3);
-}
-
-#rl-settings-subscreen {
-	padding:20px;
 }
 
 .dropdown-menu * + .dividerbar {
@@ -215,12 +159,8 @@ html:not(.rl-left-panel-disabled) #rl-left.resizable > .resizer,
 	border-top: 1px solid #e5e5e5;
 }
 
-.dropdown.colored-toggle.open .btn.dropdown-toggle {
-	color: #BD362F;
-
-	.caret {
-		border-top-color: #BD362F;
-	}
+.dropdown.show {
+	box-shadow: 0 0 1px var(--main-color, @dropdownLinkColor);
 }
 
 .btn.btn-transparent {
@@ -260,12 +200,14 @@ html:not(.rl-left-panel-disabled) #rl-left.resizable > .resizer,
 		left: @rlLeftWidth + 20;
 	}
 
-	#rl-sub-left {
+	#V-MailMessageList {
 		width: 40%;
 	}
 
-	#rl-sub-right {
-		left: 40%;
+	html.rl-side-preview-pane {
+		#V-MailMessageView {
+			left: 40%;
+		}
 	}
 }
 
@@ -317,49 +259,32 @@ html.rl-left-panel-disabled {
 	}
 }
 
-html.rl-mobile,
 html.rl-no-preview-pane {
 
-	#rl-sub-left {
+	#V-MailMessageList {
 		right: @rlBottomMargin !important;
 		width: inherit;
 	}
 
-	#rl-sub-right {
-		left: 0 !important;
-	}
 }
 
 html.rl-mobile #rl-left > .resizer,
-html.rl-side-preview-pane:not(.rl-mobile) #rl-right .resizer {
+html.rl-no-preview-pane #rl-right .resizer {
 	display: none !important;
 }
 
-html.rl-bottom-preview-pane:not(.rl-mobile) {
+html.rl-bottom-preview-pane {
 
-	#rl-sub-left {
-		right: @rlBottomMargin !important;
+	#V-MailMessageList {
+		bottom: inherit;
 		width: inherit;
-
-		.b-message-list-wrapper {
-			bottom: inherit;
-			height: 300px;
-
-			box-shadow: none;
-		}
+		height: 300px;
+		right: 0;
 	}
 
-	#rl-sub-right {
-
-		left: 0 !important;
-
-		.b-message-view-wrapper {
-			top: 356px;
-			left: 0;
-			right: 5px;
-			box-shadow: none;
-			background-color: var(--message-bg-color, #fff);
-		}
+	#V-MailMessageView {
+		left: 0;
+		top: 356px;
 	}
 }
 
@@ -368,13 +293,9 @@ html:not(.rl-mobile) .show-mobile {
 	display: none !important;
 }
 
-html.rl-mobile .width100-on-mobile {
-	width: 100% !important;
-}
-
 .e-paginator {
 
-	.e-page {
+	a {
 		opacity: 0.5;
 		text-decoration: none;
 		font-size: 22px;

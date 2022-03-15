@@ -12,6 +12,8 @@ ko.bindingHandlers['value'] = {
         var eventsToCatch = new Set;
         var requestedEventsToCatch = allBindings.get("valueUpdate");
         var elementValueBeforeEvent = null;
+        var registerEventHandler = (event, handler) =>
+            element.addEventListener(event, handler);
 
         if (requestedEventsToCatch) {
             // Allow both individual event names, and arrays of event names
@@ -35,7 +37,7 @@ ko.bindingHandlers['value'] = {
             // This is useful, for example, to catch "keydown" events after the browser has updated the control
             // (otherwise, ko.selectExtensions.readValue(this) will receive the control's value *before* the key event)
             var handler = valueUpdateHandler;
-            if (ko.utils.stringStartsWith(eventName, "after")) {
+            if ((eventName||'').startsWith("after")) {
                 handler = () => {
                     // The elementValueBeforeEvent variable is non-null *only* during the brief gap between
                     // a keyX event firing and the valueUpdateHandler running, which is scheduled to happen
@@ -45,11 +47,11 @@ ko.bindingHandlers['value'] = {
                     // techniques like rateLimit can trigger model changes at critical moments that will
                     // override the user's inputs, causing keystrokes to be lost.
                     elementValueBeforeEvent = ko.selectExtensions.readValue(element);
-                    ko.utils.setTimeout(valueUpdateHandler, 0);
+                    setTimeout(valueUpdateHandler, 0);
                 };
-                eventName = eventName.substring("after".length);
+                eventName = eventName.slice(5);
             }
-            ko.utils.registerEventHandler(element, eventName, handler);
+            registerEventHandler(eventName, handler);
         });
 
         var updateFromModel;
@@ -58,7 +60,7 @@ ko.bindingHandlers['value'] = {
             // For file input elements, can only write the empty string
             updateFromModel = () => {
                 var newValue = ko.utils.unwrapObservable(valueAccessor());
-                if (newValue === null || newValue === undefined || newValue === "") {
+                if (newValue == null || newValue === "") {
                     element.value = "";
                 } else {
                     ko.dependencyDetection.ignore(valueUpdateHandler);  // reset the model to match the element
@@ -70,7 +72,7 @@ ko.bindingHandlers['value'] = {
                 var elementValue = ko.selectExtensions.readValue(element);
 
                 if (elementValueBeforeEvent !== null && newValue === elementValueBeforeEvent) {
-                    ko.utils.setTimeout(updateFromModel, 0);
+                    setTimeout(updateFromModel, 0);
                     return;
                 }
 
@@ -96,7 +98,7 @@ ko.bindingHandlers['value'] = {
             var updateFromModelComputed;
             ko.bindingEvent.subscribe(element, ko.bindingEvent.childrenComplete, () => {
                 if (!updateFromModelComputed) {
-                    ko.utils.registerEventHandler(element, "change", valueUpdateHandler);
+                    registerEventHandler("change", valueUpdateHandler);
                     updateFromModelComputed = ko.computed(updateFromModel, { disposeWhenNodeIsRemoved: element });
                 } else if (allBindings.get('valueAllowUnset')) {
                     updateFromModel();
@@ -105,7 +107,7 @@ ko.bindingHandlers['value'] = {
                 }
             }, null, { 'notifyImmediately': true });
         } else {
-            ko.utils.registerEventHandler(element, "change", valueUpdateHandler);
+            registerEventHandler("change", valueUpdateHandler);
             ko.computed(updateFromModel, { disposeWhenNodeIsRemoved: element });
         }
     },

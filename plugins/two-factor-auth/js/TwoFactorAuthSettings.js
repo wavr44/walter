@@ -33,8 +33,6 @@ class TwoFactorAuthSettings
 {
 
 	constructor() {
-		this.lock = ko.observable(false);
-
 		this.processing = ko.observable(false);
 		this.clearing = ko.observable(false);
 		this.secreting = ko.observable(false);
@@ -45,9 +43,8 @@ class TwoFactorAuthSettings
 		this.twoFactorTested = ko.observable(false);
 
 		this.viewSecret = ko.observable('');
+		this.viewQRCode = ko.observable('');
 		this.viewBackupCodes = ko.observable('');
-		this.viewUrlTitle = ko.observable('');
-		this.viewUrl = ko.observable('');
 
 		this.viewEnable_ = ko.observable(false);
 
@@ -91,10 +88,6 @@ class TwoFactorAuthSettings
 		this.onShowSecretResult = this.onShowSecretResult.bind(this);
 	}
 
-	configureTwoFactor() {
-//		showScreenPopup(require('View/Popup/TwoFactorConfiguration'));
-	}
-
 	showSecret() {
 		this.secreting(true);
 		rl.pluginRemoteRequest(this.onShowSecretResult, 'ShowTwoFactorSecret');
@@ -102,9 +95,8 @@ class TwoFactorAuthSettings
 
 	hideSecret() {
 		this.viewSecret('');
+		this.viewQRCode('');
 		this.viewBackupCodes('');
-		this.viewUrlTitle('');
-		this.viewUrl('');
 	}
 
 	createTwoFactor() {
@@ -112,19 +104,12 @@ class TwoFactorAuthSettings
 		rl.pluginRemoteRequest(this.onResult, 'CreateTwoFactorSecret');
 	}
 
-	logout() {
-		rl.app.logout();
-	}
-
 	testTwoFactor() {
-		rl.showPluginPopup(TwoFactorAuthTestPopupView, [this.twoFactorTested]);
+		TwoFactorAuthTestPopupView.showModal([this.twoFactorTested]);
 	}
 
 	clearTwoFactor() {
-		this.viewSecret('');
-		this.viewBackupCodes('');
-		this.viewUrlTitle('');
-		this.viewUrl('');
+		this.hideSecret();
 
 		this.twoFactorTested(false);
 
@@ -132,19 +117,8 @@ class TwoFactorAuthSettings
 		rl.pluginRemoteRequest(this.onResult, 'ClearTwoFactorInfo');
 	}
 
-	onShow(bLock) {
-		this.lock(!!bLock);
-
-		this.viewSecret('');
-		this.viewBackupCodes('');
-		this.viewUrlTitle('');
-		this.viewUrl('');
-	}
-
-	onHide() {
-		if (this.lock()) {
-			location.reload();
-		}
+	onShow() {
+		this.hideSecret('');
 	}
 
 	getQr() {
@@ -162,11 +136,7 @@ class TwoFactorAuthSettings
 			this.viewEnable_(false);
 			this.twoFactorStatus(false);
 			this.twoFactorTested(false);
-
-			this.viewSecret('');
-			this.viewBackupCodes('');
-			this.viewUrlTitle('');
-			this.viewUrl('');
+			this.hideSecret('');
 		} else {
 			this.viewUser(pString(oData.Result.User));
 			this.viewEnable_(!!oData.Result.Enable);
@@ -174,10 +144,8 @@ class TwoFactorAuthSettings
 			this.twoFactorTested(!!oData.Result.Tested);
 
 			this.viewSecret(pString(oData.Result.Secret));
+			this.viewQRCode(oData.Result.QRCode);
 			this.viewBackupCodes(pString(oData.Result.BackupCodes).replace(/[\s]+/g, '  '));
-
-			this.viewUrlTitle(pString(oData.Result.UrlTitle));
-			this.viewUrl(null/*qr.toDataURL({ level: 'M', size: 8, value: this.getQr() })*/);
 		}
 	}
 
@@ -186,12 +154,10 @@ class TwoFactorAuthSettings
 
 		if (iError) {
 			this.viewSecret('');
-			this.viewUrlTitle('');
-			this.viewUrl('');
+			this.viewQRCode('');
 		} else {
 			this.viewSecret(pString(data.Result.Secret));
-			this.viewUrlTitle(pString(data.Result.UrlTitle));
-			this.viewUrl(null/*qr.toDataURL({ level: 'M', size: 6, value: this.getQr() })*/);
+			this.viewQRCode(pString(data.Result.QRCode));
 		}
 	}
 
@@ -208,11 +174,8 @@ class TwoFactorAuthTestPopupView extends rl.pluginPopupView {
 		this.addObservables({
 			code: '',
 			codeStatus: null,
-
 			testing: false
 		});
-
-		this.koTestedTrigger = null;
 
 		ko.decorateCommands(this, {
 			testCodeCommand: self => self.code() && !self.testing()
@@ -224,25 +187,15 @@ class TwoFactorAuthTestPopupView extends rl.pluginPopupView {
 		Remote.verifyCode(iError => {
 			this.testing(false);
 			this.codeStatus(!iError);
-
-			if (this.koTestedTrigger && this.codeStatus()) {
-				this.koTestedTrigger(true);
-			}
+			this.twoFactorTested(!iError);
 		}, this.code());
 	}
 
-	clearPopup() {
+	onShow(twoFactorTested) {
 		this.code('');
 		this.codeStatus(null);
 		this.testing(false);
-
-		this.koTestedTrigger = null;
-	}
-
-	onShow(koTestedTrigger) {
-		this.clearPopup();
-
-		this.koTestedTrigger = koTestedTrigger;
+		this.twoFactorTested = twoFactorTested;
 	}
 }
 

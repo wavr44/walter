@@ -15,93 +15,56 @@ namespace MailSo\Imap\Enumerations;
  * @category MailSo
  * @package Imap
  * @subpackage Enumerations
+ *
+ * https://datatracker.ietf.org/doc/html/rfc3501#section-6.4.5
  */
 abstract class FetchType
 {
-	const ALL = 'ALL';
+	// Macro equivalent to: (FLAGS INTERNALDATE RFC822.SIZE)
 	const FAST = 'FAST';
+	// Macro equivalent to: (FLAGS INTERNALDATE RFC822.SIZE ENVELOPE)
+	const ALL = 'ALL';
+	// Macro equivalent to: (FLAGS INTERNALDATE RFC822.SIZE ENVELOPE BODY)
 	const FULL = 'FULL';
+
+	const HEADER = 'HEADER'; // ([RFC-2822] header of the message)
+	const TEXT   = 'TEXT';   // ([RFC-2822] text body of the message)
+	const MIME   = 'MIME';   // ([MIME-IMB] header)
+
+	// Non-extensible form of BODYSTRUCTURE
 	const BODY = 'BODY';
+	// An alternate form of BODY[<section>] that does not implicitly set the \Seen flag.
 	const BODY_PEEK = 'BODY.PEEK';
+	// The text of a particular body section.
 	const BODY_HEADER = 'BODY[HEADER]';
 	const BODY_HEADER_PEEK = 'BODY.PEEK[HEADER]';
 	const BODYSTRUCTURE = 'BODYSTRUCTURE';
 	const ENVELOPE = 'ENVELOPE';
 	const FLAGS = 'FLAGS';
 	const INTERNALDATE = 'INTERNALDATE';
-	const RFC822 = 'RFC822';
-	const RFC822_HEADER = 'RFC822.HEADER';
+//	const RFC822 = 'RFC822'; // Functionally equivalent to BODY[]
+//	const RFC822_HEADER = 'RFC822.HEADER'; // Functionally equivalent to BODY.PEEK[HEADER]
 	const RFC822_SIZE = 'RFC822.SIZE';
-	const RFC822_TEXT = 'RFC822.TEXT';
+//	const RFC822_TEXT = 'RFC822.TEXT'; // Functionally equivalent to BODY[TEXT]
 	const UID = 'UID';
-	const INDEX = 'INDEX';
-
-	private static function addHelper(array &$aReturn, $mType)
-	{
-		if (\is_string($mType))
-		{
-			$aReturn[$mType] = '';
-		}
-		else if (\is_array($mType) && 2 === count($mType) && \is_string($mType[0]) &&
-			\is_callable($mType[1]))
-		{
-			$aReturn[$mType[0]] = $mType[1];
-		}
-	}
+	// RFC 3516
+	const BINARY = 'BINARY';
+	const BINARY_PEEK = 'BINARY.PEEK';
+	const BINARY_SIZE = 'BINARY.SIZE';
+	// RFC 4551
+	const MODSEQ = 'MODSEQ';
 
 	public static function BuildBodyCustomHeaderRequest(array $aHeaders, bool $bPeek = true) : string
 	{
 		$sResult = '';
-		if (0 < \count($aHeaders))
+		if (\count($aHeaders))
 		{
-			$aHeaders = \array_map('trim', $aHeaders);
-			$aHeaders = \array_map('strtoupper', $aHeaders);
+			$aHeaders = \array_map('strtoupper', \array_map('trim', $aHeaders));
 
 			$sResult = $bPeek ? self::BODY_PEEK : self::BODY;
 			$sResult .= '[HEADER.FIELDS ('.\implode(' ', $aHeaders).')]';
 		}
 
 		return $sResult;
-	}
-
-	public static function ChangeFetchItemsBefourRequest(array $aFetchItems) : array
-	{
-		$aReturn = array();
-		self::addHelper($aReturn, self::UID);
-		self::addHelper($aReturn, self::RFC822_SIZE);
-
-		foreach ($aFetchItems as $mFetchKey)
-		{
-			switch ($mFetchKey)
-			{
-				default:
-					if (is_string($mFetchKey) || is_array($mFetchKey))
-					{
-						self::addHelper($aReturn, $mFetchKey);
-					}
-					break;
-				case self::INDEX:
-				case self::UID:
-				case self::RFC822_SIZE:
-					break;
-				case self::ALL:
-					self::addHelper($aReturn, self::FLAGS);
-					self::addHelper($aReturn, self::INTERNALDATE);
-					self::addHelper($aReturn, self::ENVELOPE);
-					break;
-				case self::FAST:
-					self::addHelper($aReturn, self::FLAGS);
-					self::addHelper($aReturn, self::INTERNALDATE);
-					break;
-				case self::FULL:
-					self::addHelper($aReturn, self::FLAGS);
-					self::addHelper($aReturn, self::INTERNALDATE);
-					self::addHelper($aReturn, self::ENVELOPE);
-					self::addHelper($aReturn, self::BODY);
-					break;
-			}
-		}
-
-		return $aReturn;
 	}
 }

@@ -140,13 +140,13 @@ abstract class Driver
 
 	public function WriteOnErrorOnly(bool $bValue) : self
 	{
-		$this->bWriteOnErrorOnly = !!$bValue;
+		$this->bWriteOnErrorOnly = $bValue;
 		return $this;
 	}
 
 	public function WriteOnPhpErrorOnly(bool $bValue) : self
 	{
-		$this->bWriteOnPhpErrorOnly = !!$bValue;
+		$this->bWriteOnPhpErrorOnly = $bValue;
 		return $this;
 	}
 
@@ -196,7 +196,7 @@ abstract class Driver
 
 	protected function getTypedPrefix(int $iType, string $sName = '') : string
 	{
-		$sName = 0 < \strlen($sName) ? $sName : $this->sName;
+		$sName = \strlen($sName) ? $sName : $this->sName;
 		return isset($this->aPrefixes[$iType]) ? $sName.$this->aPrefixes[$iType].': ' : '';
 	}
 

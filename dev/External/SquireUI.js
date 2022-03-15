@@ -11,11 +11,14 @@ const
 
 	ctrlKey = shortcuts.getMetaKey() + ' + ',
 
-	tpl = doc.createElement('template'),
-	clr = doc.createElement('input'),
+	createElement = name => doc.createElement(name),
+
+	tpl = createElement('template'),
+	clr = createElement('input'),
 
 	trimLines = html => html.trim().replace(/^(<div>\s*<br\s*\/?>\s*<\/div>)+/, '').trim(),
-	clearHtmlLine = html => rl.Utils.htmlToPlain(html).trim(),
+	htmlToPlain = html => rl.Utils.htmlToPlain(html).trim(),
+	plainToHtml = text => rl.Utils.plainToHtml(text),
 
 	getFragmentOfChildren = parent => {
 		let frag = doc.createDocumentFragment();
@@ -33,13 +36,12 @@ const
 		addLinks: true // allow_smart_html_links
 */
 		sanitizeToDOMFragment: (html, isPaste/*, squire*/) => {
-			tpl.innerHTML = html
+			tpl.innerHTML = (html||'')
 				.replace(/<\/?(BODY|HTML)[^>]*>/gi,'')
 				.replace(/<!--[^>]+-->/g,'')
 				.replace(/<span[^>]*>\s*<\/span>/gi,'')
 				.trim();
 			tpl.querySelectorAll('a:empty,span:empty').forEach(el => el.remove());
-			tpl.querySelectorAll('[data-x-div-type]').forEach(el => el.replaceWith(getFragmentOfChildren(el)));
 			if (isPaste) {
 				tpl.querySelectorAll(removeElements).forEach(el => el.remove());
 				tpl.querySelectorAll('*').forEach(el => {
@@ -57,66 +59,6 @@ const
 			}
 			return tpl.content;
 		}
-	},
-
-	rl_signature_replacer = (editor, text, signature, isHtml, insertBefore) => {
-		let
-			prevSignature = editor.__previous_signature,
-			skipInsert = false,
-			isEmptyText = false;
-
-		isEmptyText = !text.trim();
-		if (!isEmptyText && isHtml) {
-			isEmptyText = !clearHtmlLine(text);
-		}
-
-		if (prevSignature && !isEmptyText) {
-			if (isHtml && !prevSignature.isHtml) {
-				prevSignature = {
-					body: rl.Utils.plainToHtml(prevSignature.body),
-					isHtml: true
-				};
-			} else if (!isHtml && prevSignature.isHtml) {
-				prevSignature = {
-					body: rl.Utils.htmlToPlain(prevSignature.body),
-					isHtml: true
-				};
-			}
-
-			if (isHtml) {
-				var clearSig = clearHtmlLine(prevSignature.body);
-				text = text.replace(/<signature>([\s\S]*)<\/signature>/igm, all => {
-					var c = clearSig === clearHtmlLine(all);
-					if (!c) {
-						skipInsert = true;
-					}
-					return c ? '' : all;
-				});
-			} else {
-				var textLen = text.length;
-				text = text
-					.replace(prevSignature.body, '')
-					.replace(prevSignature.body, '');
-				skipInsert = textLen === text.length;
-			}
-		}
-
-		if (!skipInsert) {
-			signature = (isHtml ? '<br/><br/><signature>' : "\n\n") + signature + (isHtml ? '</signature>' : '');
-
-			text = insertBefore ? signature + text : text + signature;
-
-			if (10 < signature.length) {
-				prevSignature = {
-					body: signature,
-					isHtml: isHtml
-				};
-			}
-		}
-
-		editor.__previous_signature = prevSignature;
-
-		return text;
 	};
 
 clr.type = "color";
@@ -127,9 +69,9 @@ class SquireUI
 {
 	constructor(container) {
 		const
-			doClr = fn => () => {
+			doClr = name => () => {
 				clr.value = '';
-				clr.onchange = () => squire[fn](clr.value);
+				clr.onchange = () => squire.setStyle({[name]:clr.value});
 				clr.click();
 			},
 
@@ -171,29 +113,15 @@ class SquireUI
 				colors: {
 					textColor: {
 						html: 'A<sub>▾</sub>',
-						cmd: doClr('setTextColor'),
+						cmd: doClr('color'),
 						hint: 'Text color'
 					},
 					backgroundColor: {
 						html: '🎨', /* ▧ */
-						cmd: doClr('setBackgroundColor'),
+						cmd: doClr('backgroundColor'),
 						hint: 'Background color'
 					},
 				},
-/*
-				bidi: {
-					bdoLtr: {
-						html: '&lrm;𝐁',
-						cmd: () => this.doAction('bold','B'),
-						hint: 'Bold'
-					},
-					bdoRtl: {
-						html: '&rlm;𝐁',
-						cmd: () => this.doAction('bold','B'),
-						hint: 'Bold'
-					}
-				},
-*/
 				inline: {
 					bold: {
 						html: 'B',
@@ -318,10 +246,10 @@ class SquireUI
 				}
 			},
 
-			plain = doc.createElement('textarea'),
-			wysiwyg = doc.createElement('div'),
-			toolbar = doc.createElement('div'),
-			browseImage = doc.createElement('input'),
+			plain = createElement('textarea'),
+			wysiwyg = createElement('div'),
+			toolbar = createElement('div'),
+			browseImage = createElement('input'),
 			squire = new Squire(wysiwyg, SquireDefaultConfig);
 
 		browseImage.type = 'file';
@@ -356,17 +284,17 @@ class SquireUI
 				continue;
 			}
 */
-			let toolgroup = doc.createElement('div');
+			let toolgroup = createElement('div');
 			toolgroup.className = 'btn-group';
 			toolgroup.id = 'squire-toolgroup-'+group;
 			for (action in actions[group]) {
 				let cfg = actions[group][action], input, ev = 'click';
 				if (cfg.input) {
-					input = doc.createElement('input');
+					input = createElement('input');
 					input.type = cfg.input;
 					ev = 'change';
 				} else if (cfg.select) {
-					input = doc.createElement('select');
+					input = createElement('select');
 					input.className = 'btn';
 					if (Array.isArray(cfg.select)) {
 						cfg.select.forEach(value => {
@@ -376,7 +304,7 @@ class SquireUI
 						});
 					} else {
 						Object.entries(cfg.select).forEach(([label, options]) => {
-							let group = doc.createElement('optgroup');
+							let group = createElement('optgroup');
 							group.label = label;
 							Object.entries(options).forEach(([text, value]) => {
 								var option = new Option(text, value);
@@ -388,7 +316,7 @@ class SquireUI
 					}
 					ev = 'input';
 				} else {
-					input = doc.createElement('button');
+					input = createElement('button');
 					input.type = 'button';
 					input.className = 'btn';
 					input.innerHTML = cfg.html;
@@ -425,8 +353,8 @@ class SquireUI
 			changes.redo.input.disabled = !state.canRedo;
 		});
 
-		squire.addEventListener('focus', () => shortcuts.off());
-		squire.addEventListener('blur', () => shortcuts.on());
+//		squire.addEventListener('focus', () => shortcuts.off());
+//		squire.addEventListener('blur', () => shortcuts.on());
 
 		container.append(toolbar, wysiwyg, plain);
 
@@ -477,9 +405,9 @@ class SquireUI
 			let cl = this.container.classList;
 			cl.remove('squire-mode-'+this.mode);
 			if ('plain' == mode) {
-				this.plain.value = rl.Utils.htmlToPlain(this.squire.getHTML(), true).trim();
+				this.plain.value = htmlToPlain(this.squire.getHTML(), true);
 			} else {
-				this.setData(rl.Utils.plainToHtml(this.plain.value, true));
+				this.setData(plainToHtml(this.plain.value, true));
 				mode = 'wysiwyg';
 			}
 			this.mode = mode; // 'wysiwyg' or 'plain'
@@ -509,19 +437,32 @@ class SquireUI
 			}, cfg);
 
 			if (cfg.clearCache) {
-				this.__previous_signature = null;
+				this._prev_txt_sig = null;
 			} else try {
+				const signature = cfg.isHtml ? htmlToPlain(cfg.signature) : cfg.signature;
 				if ('plain' === this.mode) {
-					if (cfg.isHtml) {
-						cfg.signature = rl.Utils.htmlToPlain(cfg.signature);
+					let
+						text = this.plain.value,
+						prevSignature = this._prev_txt_sig;
+					if (prevSignature) {
+						text = text.replace(prevSignature, '').trim();
 					}
-					this.plain.value = rl_signature_replacer(this, this.plain.value, cfg.signature, false, cfg.insertBefore);
+					this.plain.value = cfg.insertBefore ? '\n\n' + signature + '\n\n' + text : text + '\n\n' +  signature;
 				} else {
-					if (!cfg.isHtml) {
-						cfg.signature = rl.Utils.plainToHtml(cfg.signature);
-					}
-					this.setData(rl_signature_replacer(this, this.getData(), cfg.signature, true, cfg.insertBefore));
+					const squire = this.squire,
+						root = squire.getRoot(),
+						range = squire.getSelection(),
+						div = createElement('div');
+					div.className = 'rl-signature';
+					div.innerHTML = cfg.isHtml ? cfg.signature : plainToHtml(cfg.signature);
+					root.querySelectorAll('div.rl-signature').forEach(node => node.remove());
+					cfg.insertBefore ? root.prepend(div) : root.append(div);
+					// Move cursor above signature
+					range.setStart(div, 0);
+					range.setEnd(div, 0);
+					squire.setSelection( range );
 				}
+				this._prev_txt_sig = signature;
 			} catch (e) {
 				console.error(e);
 			}
@@ -539,12 +480,6 @@ class SquireUI
 
 	focus() {
 		('plain' == this.mode ? this.plain : this.squire).focus();
-	}
-
-	resize(width, height) {
-		height = Math.max(200, (height - this.wysiwyg.offsetTop)) + 'px';
-		this.wysiwyg.style.height = height;
-		this.plain.style.height = height;
 	}
 }
 

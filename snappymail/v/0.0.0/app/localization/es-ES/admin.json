@@ -1,4 +1,7 @@
 {
+	"GLOBAL": {
+		"SAVE": "Guardar"
+	},
 	"LOGIN": {
 		"LABEL_LOGIN": "Ingresar",
 		"LABEL_PASSWORD": "Contraseña",
@@ -8,7 +11,7 @@
 	"TOP_PANEL": {
 		"LABEL_ADMIN_PANEL": "Panel de Control"
 	},
-	"TABS_LABELS": {
+	"SETTINGS_LABELS": {
 		"LABEL_GENERAL_NAME": "General",
 		"LABEL_LOGIN_NAME": "Ingresar",
 		"LABEL_BRANDING_NAME": "Personalización",
@@ -16,6 +19,7 @@
 		"LABEL_DOMAINS_NAME": "Dominios",
 		"LABEL_SECURITY_NAME": "Seguridad",
 		"LABEL_PACKAGES_NAME": "Extensiones",
+		"LABEL_CONFIG_NAME": "Config",
 		"LABEL_ABOUT_NAME": "Acerca"
 	},
 	"TAB_GENERAL": {
@@ -35,7 +39,7 @@
 		"LABEL_ALLOW_TEMPLATES": "Permitir plantillas",
 		"ALERT_DATA_ACCESS": "Data folder is accessible. Please configure your web server to hide the data folder from external access. Read more here:",
 		"ALERT_WARNING": "¡Atención!",
-		"HTML_ALERT_WEAK_PASSWORD": "Estas utilizando la contraseña por defecto.\n<br \/>\nDebido a razones de seguridad, debes\n<strong><a href=\"#\/security\">cambiar<\/a><\/strong>\ntu contraseña inmediatamente.\n"
+		"HTML_ALERT_WEAK_PASSWORD": "Estas utilizando la contraseña por defecto.\n<br>\nDebido a razones de seguridad, debes\n<strong><a href=\"#\/security\">cambiar<\/a><\/strong>\ntu contraseña inmediatamente.\n"
 	},
 	"TAB_LOGIN": {
 		"LEGEND_LOGIN_SCREEN": "Pantalla de Ingreso",
@@ -63,14 +67,14 @@
 		"BUTTON_TEST": "Probar",
 		"ALERT_NOTICE": "¡Advertencia!",
 		"HTML_ALERT_DO_NOT_USE_THIS_DATABASE": "No utilices este tipo de Base de Datos para un número grande de usuarios.",
-		"HTML_ALERT_DOES_NOT_SUPPORTED": "Tu sistema no soporta el uso de Contactos.\n<br \/>\nDebes instalar o habilitar el uso de <strong>PDO (SQLite \/ MySQL \/ PostgreSQL)<\/strong> en tu servidor.\n"
+		"HTML_ALERT_DOES_NOT_SUPPORTED": "Tu sistema no soporta el uso de Contactos.\n<br>\nDebes instalar o habilitar el uso de <strong>PDO (SQLite \/ MySQL \/ PostgreSQL)<\/strong> en tu servidor.\n"
 	},
 	"TAB_DOMAINS": {
 		"LEGEND_DOMAINS": "Dominios",
 		"BUTTON_ADD_DOMAIN": "Agregar dominio",
 		"BUTTON_ADD_ALIAS": "Agregar alias",
 		"DELETE_ARE_YOU_SURE": "¿Estás seguro?",
-		"HTML_DOMAINS_HELPER": "Lista de los dominios de correo al que se permite ingresar.\n<br \/>\nHaz click en el nombre de un dominio para modificarlo.\n"
+		"HTML_DOMAINS_HELPER": "Lista de los dominios de correo al que se permite ingresar.\n<br>\nHaz click en el nombre de un dominio para modificarlo.\n"
 	},
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Seguridad",
@@ -135,14 +139,13 @@
 		"BUTTON_CLOSE": "Cerrar",
 		"BUTTON_ADD": "Agregar",
 		"BUTTON_UPDATE": "Actualizar",
-		"NEW_DOMAIN_DESC": "Esta configuración de Dominio le permitirá trabajar <br \/>con direcciones de correo tipo @<i>%NAME%<\/i>.",
+		"NEW_DOMAIN_DESC": "Esta configuración de Dominio le permitirá trabajar <br>con direcciones de correo tipo @<i>%NAME%<\/i>.",
 		"WHITE_LIST_ALERT": "Lista de dominios con que los usuarios pueden ingresar.\nUse un espacio como delimitador.\n"
 	},
 	"POPUPS_PLUGIN": {
 		"TITLE_PLUGIN": "Extensión",
 		"DESC_NOTHING_TO_CONFIGURE": "Nada para configurar",
-		"BUTTON_CLOSE": "Cerrar",
-		"BUTTON_SAVE": "Guardar"
+		"BUTTON_CLOSE": "Cerrar"
 	},
 	"POPUPS_ASK": {
 		"BUTTON_YES": "Sí",
@@ -164,44 +167,12 @@
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Token inválido",
 		"AUTH_ERROR": "Autenticación fallida",
-		"ACCESS_ERROR": "Error de acceso",
-		"CONNECTION_ERROR": "No se puede conectar al servidor",
-		"DOMAIN_NOT_ALLOWED": "Dominio no permitido",
-		"ACCOUNT_NOT_ALLOWED": "La cuenta no está permitida",
-		"CURRENT_PASSWORD_INCORRECT": "La contraseña actual es incorrecta",
-		"NEW_PASSWORD_SHORT": "La contraseña es muy corta",
-		"NEW_PASSWORD_WEAK": "La contraseña es muy fácil",
-		"CONTACTS_SYNC_ERROR": "Error de sincronización de Contactos",
-		"CANT_GET_MESSAGE_LIST": "No se puede obtener la lista de mensajes",
-		"CANT_GET_MESSAGE": "No se puede obtener el mensaje",
-		"CANT_DELETE_MESSAGE": "No se puede eliminar el mensaje",
-		"CANT_COPY_MESSAGE": "No se puede copiar el mensaje",
-		"CANT_MOVE_MESSAGE": "No se puede mover el mensaje",
-		"CANT_SAVE_MESSAGE": "No se puede guardar el mensaje",
-		"CANT_SEND_MESSAGE": "No se puede enviar el mensaje",
-		"INVALID_RECIPIENTS": "Los destinatarios no son válidos",
-		"CANT_SAVE_FILTERS": "No se han podido guardar los filtros",
-		"CANT_GET_FILTERS": "No se pudieron obtener los filtros",
-		"FILTERS_ARE_NOT_CORRECT": "Los filtros no son correctos",
-		"CANT_CREATE_FOLDER": "No se puede crear la carpeta",
-		"CANT_RENAME_FOLDER": "No se puede renombrar la carpeta",
-		"CANT_DELETE_FOLDER": "No se puede eliminar la carpeta",
-		"CANT_DELETE_NON_EMPTY_FOLDER": "No se puede eliminar una carpeta que no está vacía",
-		"CANT_SUBSCRIBE_FOLDER": "No se pudo suscribir a la carpeta",
-		"CANT_UNSUBSCRIBE_FOLDER": "No se pudo dessuscribir a la carpeta",
-		"CANT_SAVE_SETTINGS": "No se pudieron guardar las configuraciones",
-		"CANT_SAVE_PLUGIN_SETTINGS": "No se pudieron guardar las configuraciones",
 		"DOMAIN_ALREADY_EXISTS": "El Dominio ya existe",
+		"CANT_SAVE_PLUGIN_SETTINGS": "No se pudieron guardar las configuraciones",
 		"CANT_INSTALL_PACKAGE": "No se ha podido instalar el extensión",
 		"CANT_DELETE_PACKAGE": "No se ha podido eliminar el extensión",
 		"INVALID_PLUGIN_PACKAGE": "El paquete de extensión no válido",
 		"UNSUPPORTED_PLUGIN_PACKAGE": "El paquete del extensión es incompatible",
-		"DEMO_SEND_MESSAGE_ERROR": "Por razones de seguridad, esta cuenta no permite enviar mensajes a direcciones de correo electrónico externas",
-		"DEMO_ACCOUNT_ERROR": "Debido a razones de seguridad, esta cuenta no puede realizar esta acción",
-		"ACCOUNT_ALREADY_EXISTS": "La cuenta ya existe",
-		"ACCOUNT_DOES_NOT_EXIST": "La cuenta no existe",
-		"MAIL_SERVER_ERROR": "Ocurrió un error mientras se accedía al servidor",
-		"INVALID_INPUT_ARGUMENT": "Los datos ingresados son inválidos",
 		"UNKNOWN_ERROR": "Error desconocido"
 	}
 }

@@ -4,6 +4,12 @@
 
 .b-folders {
 
+	> * {
+		position: absolute;
+		right: 0;
+		left: 0;
+	}
+
 	ul {
 		margin: 0;
 	}
@@ -24,10 +30,7 @@
 	}
 
 	.b-toolbar {
-		position: absolute;
 		top: 0;
-		right: 0;
-		left: 0;
 		height: 30px;
 		padding: 10px 0 0 @rlLowMargin;
 		color: #fff;
@@ -35,10 +38,7 @@
 	}
 
 	.b-footer {
-		position: absolute;
 		bottom: 10px;
-		right: 0;
-		left: 0;
 		height: 30px;
 		padding: 0 10px 0 5px;
 		z-index: 101;
@@ -48,11 +48,8 @@
 	}
 
 	.b-content {
-		position: absolute;
-		top: 50px + @rlLowMargin;
 		bottom: 32px + @rlLowMargin + @rlBottomMargin;
-		left: 0;
-		right: 0;
+		top: 50px + @rlLowMargin;
 		overflow: hidden;
 		overflow-y: auto;
 		min-width: 100px;
@@ -60,8 +57,7 @@
 
 	hr {
 		margin: 10px;
-		border-top: 0;
-		border-bottom: 1px solid #999;
+		border-color: #999;
 	}
 
 	li {
@@ -78,7 +74,6 @@
 			background-color: transparent;
 			vertical-align: middle;
 			color: var(--folders-disabled-color, #666);
-			font-size: 14px;
 			border-left: 3px solid transparent;
 
 			padding: 0 2em 0 @folderItemPadding;
@@ -226,13 +221,12 @@
 
 .btn {
 	&.buttonCompose {
-		width: calc(100% - 85px);
+		width: calc(100% - 68px);
 		max-width: -moz-fit-content;
 		max-width: -webkit-fit-content;
 		max-width: fit-content;
 		overflow: hidden;
 		height: 19px;
-		margin-top: 1px;
 		padding: 4px 8px;
 	}
 }
@@ -251,4 +245,8 @@ html.rl-left-panel-disabled {
 	&.rl-mobile #rl-left {
 		visibility: hidden;
 	}
+}
+
+html.rl-mobile .b-folders .b-content {
+	bottom: 0;
 }

@@ -57,7 +57,11 @@
 		"LABEL_ADV_DATE_MONTH": "Nicht älter als 1 Monat",
 		"LABEL_ADV_DATE_3_MONTHS": "Nicht älter als 3 Monate",
 		"LABEL_ADV_DATE_6_MONTHS": "Nicht älter als 6 Monate",
-		"LABEL_ADV_DATE_YEAR": "Nicht älter als 1 Jahr"
+		"LABEL_ADV_DATE_YEAR": "Nicht älter als 1 Jahr",
+		"LABEL_ADV_SUBFOLDERS": "Subfolders",
+		"LABEL_ADV_SUBFOLDERS_NONE": "None",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE": "All",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE_ONE": "One level"
 	},
 	"PREVIEW_POPUP": {
 		"FULLSCREEN": "Vollbild umschalten",
@@ -132,6 +136,8 @@
 		"BUTTON_THREAD_MORE": "Mehr Nachrichten",
 		"MENU_HEADERS": "Kopfzeilen anzeigen",
 		"MENU_VIEW_ORIGINAL": "Original anzeigen",
+		"HTML_VIEW": "View HTML message",
+		"PLAIN_VIEW": "View plain text message",
 		"MENU_DOWNLOAD_ORIGINAL": "Als .eml-Datei herunterladen",
 		"MENU_FILTER_SIMILAR": "Ähnliche Nachrichten",
 		"MENU_PRINT": "Drucken",
@@ -142,8 +148,6 @@
 		"PRINT_LABEL_ATTACHMENTS": "Anhänge",
 		"MESSAGE_VIEW_DESC": "Wählen Sie eine Nachricht aus der Liste aus, um sie anzuzeigen.",
 		"MESSAGE_VIEW_MOVE_DESC": "Klicke auf den Ordnernamen auf der linken Seite, um die Nachricht zu verschieben.",
-		"PGP_SIGNED_MESSAGE_DESC": "OpenPGP-signierte Nachricht (klicken, um zu überprüfen)",
-		"PGP_ENCRYPTED_MESSAGE_DESC": "OpenPGP-verschlüsselte Nachricht (klicken, um zu entschlüsseln)",
 		"LINK_DOWNLOAD_AS_ZIP": "Als ZIP-Datei herunterladen",
 		"SPAM_SCORE": "Spam-Score",
 		"HAS_VIRUS_WARNING": "WARNUNG: Virus erkannt"
@@ -208,7 +212,6 @@
 		"ATTACHMENTS_UPLOAD_ERROR_DESC": "Es wurden noch nicht alle Anhänge hochgeladen.",
 		"BUTTON_REQUEST_READ_RECEIPT": "Empfangsbestätigung anfordern",
 		"BUTTON_MARK_AS_IMPORTANT": "Als Wichtig markieren",
-		"BUTTON_OPEN_PGP": "OpenPGP (nur bei unformatiertem Text)",
 		"BUTTON_REQUEST_DSN": "Übermittlungsstatus anfordern"
 	},
 	"POPUPS_ASK": {
@@ -246,31 +249,24 @@
 		"DANGER_DESC_HTML_2": "Einmal begonnen, kann dieser Vorgang nicht mehr abgebrochen oder beendet werden.",
 		"TITLE_CLEARING_PROCESS": "Ordner wird gelöscht ..."
 	},
-	"POPUPS_IMPORT_OPEN_PGP_KEY": {
-		"TITLE_IMPORT_OPEN_PGP_KEY": "OpenPGP-Schlüssel importieren",
-		"BUTTON_IMPORT_OPEN_PGP_KEY": "Importieren"
-	},
-	"POPUPS_VIEW_OPEN_PGP_KEY": {
-		"TITLE_VIEW_OPEN_PGP_KEY": "OpenPGP-Schlüssel anzeigen",
-		"BUTTON_SELECT": "Auswählen"
-	},
-	"POPUPS_GENERATE_OPEN_PGP_KEYS": {
-		"TITLE_GENERATE_OPEN_PGP_KEYS": "OpenPGP-Schlüssel generieren",
-		"LABEL_KEY_BIT_LENGTH": "Schlüssellänge",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generieren"
-	},
-	"POPUPS_COMPOSE_OPEN_PGP": {
-		"TITLE_COMPOSE_OPEN_PGP": "OpenPGP unterschreiben\/verschlüsseln",
+	"OPENPGP": {
+		"POPUP_IMPORT_TITLE": "OpenPGP-Schlüssel importieren",
+		"POPUP_IMPORT_BUTTON": "Importieren",
+		"POPUP_VIEW_TITLE": "OpenPGP-Schlüssel anzeigen",
+		"POPUP_VIEW_BUTTON": "Auswählen",
+		"POPUP_GENERATE_TITLE": "OpenPGP-Schlüssel generieren",
+		"POPUP_GENERATE_BUTTON": "Generieren",
+		"LABEL_KEY_TYPE": "Type",
 		"LABEL_SIGN": "Unterschrift",
 		"LABEL_ENCRYPT": "Verschlüsselung",
-		"BUTTON_SIGN": "Unterschreiben",
-		"BUTTON_ENCRYPT": "Verschlüsseln",
-		"BUTTON_SIGN_AND_ENCRYPT": "Unterschreiben und verschlüsseln"
-	},
-	"POPUPS_MESSAGE_OPEN_PGP": {
-		"TITLE_MESSAGE_OPEN_PGP": "OpenPGP Decrypt",
-		"LABEL_KEY": "Private Key",
-		"BUTTON_DECRYPT": "Decrypt"
+		"BUTTON_DECRYPT": "Decrypt",
+		"BUTTON_VERIFY": "Verify",
+		"SIGNED_MESSAGE": "OpenPGP-signierte Nachricht",
+		"ENCRYPTED_MESSAGE": "OpenPGP-verschlüsselte Nachricht",
+		"STORE_IN_GNUPG": "Store on server in GnuPG",
+		"BACKUP_ON_SERVER": "Store (encrypted) on server",
+		"GOOD_SIGNATURE": "Gültige Unterschrift von %USER%",
+		"ERROR": "OpenPGP-Fehler: %ERROR%"
 	},
 	"POPUPS_FILTER": {
 		"TITLE_CREATE_FILTER": "Filter erstellen?",
@@ -330,10 +326,8 @@
 		"NOTIFICATION_ARCHIVE": "Sie haben keinen \"Archiv\"-Systemordner gewählt, in dem die archivierten Nachrichten abgelegt werden."
 	},
 	"TITLES": {
-		"LOGIN": "Anmeldung",
 		"MAILBOX": "Postfach",
-		"SETTINGS": "Einstellungen",
-		"COMPOSE": "Erstellen"
+		"SETTINGS": "Einstellungen"
 	},
 	"UPLOAD": {
 		"ERROR_FILE_IS_TOO_BIG": "Datei ist zu groß",
@@ -353,7 +347,6 @@
 		"LABEL_CONTACTS_NAME": "Kontakte",
 		"LABEL_FOLDERS_NAME": "Ordner",
 		"LABEL_ACCOUNTS_NAME": "Konten",
-		"LABEL_IDENTITIES_NAME": "Identitäten",
 		"LABEL_FILTERS_NAME": "Filter",
 		"LABEL_TEMPLATES_NAME": "Vorlagen",
 		"LABEL_SECURITY_NAME": "Sicherheit",
@@ -395,6 +388,8 @@
 		"LABEL_USE_THREADS": "Als Unterhaltungen anzeigen",
 		"LABEL_REPLY_SAME_FOLDER": "Antworten im gleichen Ordner wie die Nachricht, auf die geantwortet wurde, abspeichern",
 		"LABEL_SHOW_IMAGES": "In der Nachricht enthaltene Bilder immer anzeigen",
+		"LABEL_PREFER_HTML": "Prefer HTML to plain text",
+		"LABEL_PREFER_HTML_INFO": "Messages sometimes come in both formats. This option controls whether you want the HTML part or the plain text part to be displayed.",
 		"LABEL_REMOVE_COLORS": "Entferne Hintergrund- und Textfarben aus der Nachricht",
 		"LABEL_MESSAGE_PER_PAGE": "Nachrichten pro Seite",
 		"LABEL_MARK_MESSAGE_READ_AFTER": "Nachricht als gelesen markieren nach",
@@ -439,7 +434,14 @@
 		"HELP_DELETE_FOLDER": "Ordner löschen",
 		"HELP_SHOW_HIDE_FOLDER": "Ordner ein-\/ausblenden",
 		"HELP_CHECK_FOR_NEW_MESSAGES": "Auf neue Nachrichten prüfen\/nicht prüfen",
-		"HIDE_UNSUBSCRIBED": "Nicht abonnierte Ordner ausblenden"
+		"HIDE_UNSUBSCRIBED": "Nicht abonnierte Ordner ausblenden",
+		"TYPE_CALENDAR": "Kalender",
+		"TYPE_CONFIGURATION": "Konfiguration",
+		"TYPE_CONTACTS": "Kontakte",
+		"TYPE_FILES": "Dateien",
+		"TYPE_JOURNAL": "Journal",
+		"TYPE_NOTES": "Aufzeichnungen",
+		"TYPE_TASKS": "Aufgaben"
 	},
 	"SETTINGS_ACCOUNTS": {
 		"LEGEND_ACCOUNTS": "Konten",
@@ -450,13 +452,13 @@
 		"LOADING_PROCESS": "Aktualisiere Kontenliste",
 		"DEFAULT_IDENTITY_LABEL": "Standard"
 	},
-	"SETTINGS_OPEN_PGP": {
-		"BUTTON_ADD_OPEN_PGP_KEY": "OpenPGP-Schlüssel importieren",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "OpenPGP-Schlüssel generieren",
+	"SETTINGS_OPENPGP": {
+		"BUTTON_IMPORT_KEY": "Schlüssel importieren",
+		"BUTTON_GENERATE_KEY_PAIR": "Schlüssel generieren",
 		"TITLE_PRIVATE": "Privat",
 		"TITLE_PUBLIC": "Öffentlich",
-		"GENERATE_ONLY_HTTPS": "Nur HTTPS",
-		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft"
+		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft",
+		"GET_MAILVELOPE": "Get Mailvelope browser add-on."
 	},
 	"SHORTCUTS_HELP": {
 		"LEGEND_SHORTCUTS_HELP": "Tastaturkürzel-Hilfe",
@@ -497,25 +499,11 @@
 		"LABEL_SEND_MESSAGE": "Nachricht senden",
 		"LABEL_CLOSE_COMPOSE": "Popup schließen"
 	},
-	"PGP_NOTIFICATIONS": {
-		"NO_PUBLIC_KEYS_FOUND": "Keine öffentlichen Schlüssel gefunden",
-		"NO_PUBLIC_KEYS_FOUND_FOR": "Keine öffentlichen Schlüssel für die E-Mail \"%EMAIL%\" gefunden",
-		"NO_PRIVATE_KEY_FOUND": "Keine privaten Schlüssel gefunden",
-		"NO_PRIVATE_KEY_FOUND_FOR": "Keine privaten Schlüssel für die E-Mail \"%EMAIL%\" gefunden",
-		"ADD_A_PUBLICK_KEY": "Öffentlicher Schlüssel hinzufügen",
-		"SELECT_A_PRIVATE_KEY": "Privaten Schlüssel auswählen",
-		"UNVERIFIRED_SIGNATURE": "Nich verifizierte Unterschrift",
-		"DECRYPTION_ERROR": "OpenPGP-Entschlüsselungsfehler",
-		"GOOD_SIGNATURE": "Gültige Unterschrift von %USER%",
-		"PGP_ERROR": "OpenPGP-Fehler: %ERROR%",
-		"SPECIFY_FROM_EMAIL": "Bitte die VON-E-Mail-Adresse angeben",
-		"SPECIFY_AT_LEAST_ONE_RECIPIENT": "Bitte geben Sie mindestens einen Empfänger an"
-	},
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Ungültiger Token",
 		"AUTH_ERROR": "Authentifizierung fehlgeschlagen",
-		"ACCESS_ERROR": "Zugriffsfehler",
 		"CONNECTION_ERROR": "Serververbindung kann nicht hergestellt werden",
+		"DOMAIN_ALREADY_EXISTS": "Diese Domain existiert bereits",
 		"DOMAIN_NOT_ALLOWED": "Diese Domain ist nicht zugelassen.",
 		"ACCOUNT_NOT_ALLOWED": "Konto ist nicht zugelassen.",
 		"CONTACTS_SYNC_ERROR": "Fehler bei Kontakte-Synchronisierung",
@@ -538,17 +526,11 @@
 		"CANT_DELETE_NON_EMPTY_FOLDER": "Der Ordner kann nicht gelöscht werden; er ist nicht leer",
 		"CANT_SUBSCRIBE_FOLDER": "Dieser Ordner kann nicht abonniert werden",
 		"CANT_UNSUBSCRIBE_FOLDER": "Das Abonnement dieses Ordners kann nicht gelöscht werden",
-		"CANT_SAVE_SETTINGS": "Einstellungen können nicht gespeichert werden",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Einstellungen können nicht gespeichert werden",
-		"DOMAIN_ALREADY_EXISTS": "Diese Domain existiert bereits",
-		"CANT_INSTALL_PACKAGE": "Paket konnte nicht installiert werden",
-		"CANT_DELETE_PACKAGE": "Paket konnte nicht entfernt werden",
-		"INVALID_PLUGIN_PACKAGE": "Plugin-Paket ist ungültig",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Plugin-Paket wird nicht unterstützt",
 		"DEMO_SEND_MESSAGE_ERROR": "Dieses Demokonto darf aus Sicherheitsgründen keine Nachrichten an externe E-Mail-Adressen versenden!",
 		"DEMO_ACCOUNT_ERROR": "Aus Sicherheitsgründen ist dieses Konto nicht zu dieser Aktion berechtigt!",
 		"ACCOUNT_ALREADY_EXISTS": "Dieses Konto existiert bereits",
 		"ACCOUNT_DOES_NOT_EXIST": "Dieser Account existiert nicht.",
+		"ACCOUNT_SWITCH_FAILED": "Switch to account \"%EMAIL%\" failed",
 		"MAIL_SERVER_ERROR": "Beim Zugriff auf den E-Mail-Server trat ein Fehler auf.",
 		"INVALID_INPUT_ARGUMENT": "Ungültige Eingabe",
 		"UNKNOWN_ERROR": "Unbekannter Fehler"

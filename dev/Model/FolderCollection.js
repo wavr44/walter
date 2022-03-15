@@ -1,34 +1,112 @@
 import { AbstractCollectionModel } from 'Model/AbstractCollection';
 
 import { UNUSED_OPTION_VALUE } from 'Common/Consts';
-import { isArray, pInt } from 'Common/Utils';
-import { ClientSideKeyName, FolderType } from 'Common/EnumsUser';
-import * as Cache from 'Common/Cache';
-import { Settings, SettingsGet } from 'Common/Globals';
+import { isArray, getKeyByValue, forEachObjectEntry, b64EncodeJSONSafe } from 'Common/Utils';
+import { ClientSideKeyNameExpandedFolders, FolderType, FolderMetadataKeys } from 'Common/EnumsUser';
+import { getFolderFromCacheList, setFolder, setFolderInboxName, setFolderHash } from 'Common/Cache';
+import { Settings, SettingsGet, fireEvent } from 'Common/Globals';
 
 import * as Local from 'Storage/Client';
 
 import { AppUserStore } from 'Stores/User/App';
 import { FolderUserStore } from 'Stores/User/Folder';
-import { MessageUserStore } from 'Stores/User/Message';
+import { MessagelistUserStore } from 'Stores/User/Messagelist';
 import { SettingsUserStore } from 'Stores/User/Settings';
 
 import ko from 'ko';
 
-import { isPosNumeric } from 'Common/UtilsUser';
+import { sortFolders } from 'Common/Folders';
 import { i18n, trigger as translatorTrigger } from 'Common/Translator';
 
 import { AbstractModel } from 'Knoin/AbstractModel';
 
-const
-normalizeFolder = sFolderFullNameRaw => ('' === sFolderFullNameRaw
-	|| UNUSED_OPTION_VALUE === sFolderFullNameRaw
-	|| null !== Cache.getFolderFromCacheList(sFolderFullNameRaw))
-		? sFolderFullNameRaw
-		: '';
+import { koComputable } from 'External/ko';
 
-// index is FolderType value
-let SystemFolders = [];
+//import { mailBox } from 'Common/Links';
+
+import Remote from 'Remote/User/Fetch';
+
+const
+	isPosNumeric = value => null != value && /^[0-9]*$/.test(value.toString()),
+
+	normalizeFolder = sFolderFullName => ('' === sFolderFullName
+		|| UNUSED_OPTION_VALUE === sFolderFullName
+		|| null !== getFolderFromCacheList(sFolderFullName))
+			? sFolderFullName
+			: '',
+
+	SystemFolders = {
+		Inbox:   0,
+		Sent:    0,
+		Drafts:  0,
+		Spam:    0,
+		Trash:   0,
+		Archive: 0
+	},
+
+	kolabTypes = {
+		configuration: 'CONFIGURATION',
+		event: 'CALENDAR',
+		contact: 'CONTACTS',
+		task: 'TASKS',
+		note: 'NOTES',
+		file: 'FILES',
+		journal: 'JOURNAL'
+	},
+
+	getKolabFolderName = type => kolabTypes[type] ? 'Kolab ' + i18n('SETTINGS_FOLDERS/TYPE_' + kolabTypes[type]) : '',
+
+	getSystemFolderName = (type, def) => {
+		switch (type) {
+			case FolderType.Inbox:
+			case FolderType.Sent:
+			case FolderType.Drafts:
+			case FolderType.Trash:
+			case FolderType.Archive:
+				return i18n('FOLDER_LIST/' + getKeyByValue(FolderType, type).toUpperCase() + '_NAME');
+			case FolderType.Spam:
+				return i18n('GLOBAL/SPAM');
+			// no default
+		}
+		return def;
+	};
+
+export const
+	/**
+	 * @param {string} sFullName
+	 * @param {boolean} bExpanded
+	 */
+	setExpandedFolder = (sFullName, bExpanded) => {
+		let aExpandedList = Local.get(ClientSideKeyNameExpandedFolders);
+		if (!isArray(aExpandedList)) {
+			aExpandedList = [];
+		}
+
+		if (bExpanded) {
+			aExpandedList.includes(sFullName) || aExpandedList.push(sFullName);
+		} else {
+			aExpandedList = aExpandedList.filter(value => value !== sFullName);
+		}
+
+		Local.set(ClientSideKeyNameExpandedFolders, aExpandedList);
+	},
+
+	/**
+	 * @param {?Function} fCallback
+	 */
+	loadFolders = fCallback => {
+//		clearTimeout(this.foldersTimeout);
+		Remote.abort('Folders')
+			.post('Folders', FolderUserStore.foldersLoading)
+			.then(data => {
+				data = FolderCollectionModel.reviveFromJson(data.Result);
+				data && data.storeIt();
+				fCallback && fCallback(true);
+				// Repeat every 15 minutes?
+//				this.foldersTimeout = setTimeout(loadFolders, 900000);
+			})
+			.catch(() => fCallback && setTimeout(fCallback, 1, false));
+	};
 
 export class FolderCollectionModel extends AbstractCollectionModel
 {
@@ -36,11 +114,11 @@ export class FolderCollectionModel extends AbstractCollectionModel
 	constructor() {
 		super();
 		this.CountRec
-		this.FoldersHash
 		this.IsThreadsSupported
 		this.Namespace;
 		this.Optimized
 		this.SystemFolders
+		this.Capabilities
 	}
 */
 
@@ -49,53 +127,40 @@ export class FolderCollectionModel extends AbstractCollectionModel
 	 * @returns {FolderCollectionModel}
 	 */
 	static reviveFromJson(object) {
-		const expandedFolders = Local.get(ClientSideKeyName.ExpandedFolders);
+		const expandedFolders = Local.get(ClientSideKeyNameExpandedFolders);
 		if (object && object.SystemFolders) {
-			let sf = object.SystemFolders;
-			SystemFolders = [
-				/* USER  */ 0,
-				/* INBOX */ sf[1],
-				SettingsGet('SentFolder') || sf[2],
-				SettingsGet('DraftFolder') || sf[3],
-				SettingsGet('SpamFolder') || sf[4],
-				SettingsGet('TrashFolder') || sf[5],
-				SettingsGet('ArchiveFolder') || sf[12]
-//				IMPORTANT: sf[10],
-//				FLAGGED: sf[11],
-//				ALL: sf[13]
-			];
+			forEachObjectEntry(SystemFolders, key =>
+				SystemFolders[key] = SettingsGet(key+'Folder') || object.SystemFolders[FolderType[key]]
+			);
 		}
 
-		return super.reviveFromJson(object, oFolder => {
-			let oCacheFolder = Cache.getFolderFromCacheList(oFolder.FullNameRaw);
+		const result = super.reviveFromJson(object, oFolder => {
+			let oCacheFolder = getFolderFromCacheList(oFolder.FullName),
+				type = FolderType[getKeyByValue(SystemFolders, oFolder.FullName)];
 
-			if (oCacheFolder) {
-				oFolder.SubFolders = FolderCollectionModel.reviveFromJson(oFolder.SubFolders);
-				oFolder.SubFolders && oCacheFolder.subFolders(oFolder.SubFolders);
-			} else {
+			if (!oCacheFolder) {
 				oCacheFolder = FolderModel.reviveFromJson(oFolder);
 				if (!oCacheFolder)
 					return null;
 
-				if (1 == SystemFolders.indexOf(oFolder.FullNameRaw)) {
+				if (1 == type) {
 					oCacheFolder.type(FolderType.Inbox);
-					Cache.setFolderInboxName(oFolder.FullNameRaw);
+					setFolderInboxName(oFolder.FullName);
 				}
-				Cache.setFolder(oCacheFolder.fullNameHash, oFolder.FullNameRaw, oCacheFolder);
+				setFolder(oCacheFolder);
 			}
 
-			let type = SystemFolders.indexOf(oFolder.FullNameRaw);
 			if (1 < type) {
 				oCacheFolder.type(type);
 			}
 
 			oCacheFolder.collapsed(!expandedFolders
 				|| !isArray(expandedFolders)
-				|| !expandedFolders.includes(oCacheFolder.fullNameHash));
+				|| !expandedFolders.includes(oCacheFolder.fullName));
 
 			if (oFolder.Extended) {
 				if (oFolder.Extended.Hash) {
-					Cache.setFolderHash(oCacheFolder.fullNameRaw, oFolder.Extended.Hash);
+					setFolderHash(oCacheFolder.fullName, oFolder.Extended.Hash);
 				}
 
 				if (null != oFolder.Extended.MessageCount) {
@@ -108,73 +173,60 @@ export class FolderCollectionModel extends AbstractCollectionModel
 			}
 			return oCacheFolder;
 		});
+
+		let i = result.length;
+		if (i) {
+			sortFolders(result);
+			try {
+				while (i--) {
+					let folder = result[i], parent = getFolderFromCacheList(folder.parentName);
+					if (parent) {
+						parent.subFolders.unshift(folder);
+						result.splice(i,1);
+					}
+				}
+			} catch (e) {
+				console.error(e);
+			}
+		}
+
+		return result;
 	}
 
 	storeIt() {
-		const cnt = pInt(this.CountRec);
+		FolderUserStore.displaySpecSetting(Settings.app('folderSpecLimit') < this.CountRec);
 
-		FolderUserStore.displaySpecSetting(0 >= cnt
-			|| Math.max(10, Math.min(100, pInt(Settings.app('folderSpecLimit')))) < cnt);
-
-		if (SystemFolders &&
-			!('' +
+		if (!(
 				SettingsGet('SentFolder') +
-				SettingsGet('DraftFolder') +
+				SettingsGet('DraftsFolder') +
 				SettingsGet('SpamFolder') +
 				SettingsGet('TrashFolder') +
-				SettingsGet('ArchiveFolder'))
+				SettingsGet('ArchiveFolder')
+			)
 		) {
-			FolderUserStore.saveSystemFolders({
-				SentFolder: SystemFolders[FolderType.SENT] || null,
-				DraftFolder: SystemFolders[FolderType.DRAFTS] || null,
-				SpamFolder: SystemFolders[FolderType.SPAM] || null,
-				TrashFolder: SystemFolders[FolderType.TRASH] || null,
-				ArchiveFolder: SystemFolders[FolderType.ARCHIVE] || null
-			});
+			FolderUserStore.saveSystemFolders(SystemFolders);
 		}
 
 		FolderUserStore.folderList(this);
 
-		if (undefined !== this.Namespace) {
-			FolderUserStore.namespace = this.Namespace;
-		}
+		FolderUserStore.namespace = this.Namespace;
 
 		AppUserStore.threadsAllowed(!!(Settings.app('useImapThread') && this.IsThreadsSupported));
 
 		FolderUserStore.folderListOptimized(!!this.Optimized);
-		FolderUserStore.sortSupported(!!this.IsSortSupported);
+		FolderUserStore.quotaUsage(this.quotaUsage);
+		FolderUserStore.quotaLimit(this.quotaLimit);
+		FolderUserStore.capabilities(this.Capabilities);
 
-		FolderUserStore.sentFolder(normalizeFolder(SettingsGet('SentFolder')));
-		FolderUserStore.draftFolder(normalizeFolder(SettingsGet('DraftFolder')));
-		FolderUserStore.spamFolder(normalizeFolder(SettingsGet('SpamFolder')));
-		FolderUserStore.trashFolder(normalizeFolder(SettingsGet('TrashFolder')));
-		FolderUserStore.archiveFolder(normalizeFolder(SettingsGet('ArchiveFolder')));
+		FolderUserStore.sentFolder(normalizeFolder(SystemFolders.Sent));
+		FolderUserStore.draftsFolder(normalizeFolder(SystemFolders.Drafts));
+		FolderUserStore.spamFolder(normalizeFolder(SystemFolders.Spam));
+		FolderUserStore.trashFolder(normalizeFolder(SystemFolders.Trash));
+		FolderUserStore.archiveFolder(normalizeFolder(SystemFolders.Archive));
 
 //		FolderUserStore.folderList.valueHasMutated();
-
-		Local.set(ClientSideKeyName.FoldersLashHash, this.FoldersHash);
 	}
 
-}
-
-function getSystemFolderName(type, def)
-{
-	switch (type) {
-		case FolderType.Inbox:
-			return i18n('FOLDER_LIST/INBOX_NAME');
-		case FolderType.Sent:
-			return i18n('FOLDER_LIST/SENT_NAME');
-		case FolderType.Drafts:
-			return i18n('FOLDER_LIST/DRAFTS_NAME');
-		case FolderType.Spam:
-			return i18n('GLOBAL/SPAM');
-		case FolderType.Trash:
-			return i18n('FOLDER_LIST/TRASH_NAME');
-		case FolderType.Archive:
-			return i18n('FOLDER_LIST/ARCHIVE_NAME');
-		// no default
-	}
-	return def;
 }
 
 export class FolderModel extends AbstractModel {
@@ -182,14 +234,15 @@ export class FolderModel extends AbstractModel {
 		super();
 
 		this.fullName = '';
-		this.fullNameRaw = '';
-		this.fullNameHash = '';
 		this.delimiter = '';
-		this.namespace = '';
 		this.deep = 0;
 		this.expires = 0;
+		this.metadata = {};
 
 		this.exists = true;
+
+//		this.hash = '';
+//		this.uidNext = 0;
 
 		this.addObservables({
 			name: '',
@@ -200,19 +253,34 @@ export class FolderModel extends AbstractModel {
 			selected: false,
 			edited: false,
 			subscribed: true,
-			checkable: false,
-			deleteAccess: false,
+			checkable: false, // Check for new messages
+			askDelete: false,
 
 			nameForEdit: '',
+			errorMsg: '',
 
 			privateMessageCountAll: 0,
 			privateMessageCountUnread: 0,
 
-			collapsedPrivate: true
+			kolabType: null,
+
+			collapsed: true
+		});
+
+		this.addSubscribables({
+			kolabType: sValue => this.metadata[FolderMetadataKeys.KolabFolderType] = sValue
 		});
 
 		this.subFolders = ko.observableArray(new FolderCollectionModel);
 		this.actionBlink = ko.observable(false).extend({ falseTimeout: 1000 });
+	}
+
+	/**
+	 * For url safe '/#/mailbox/...' path
+	 */
+	get fullNameHash() {
+		return this.fullName.replace(/[^a-z0-9._-]+/giu, b64EncodeJSONSafe);
+//		return /^[a-z0-9._-]+$/iu.test(this.fullName) ? this.fullName : b64EncodeJSONSafe(this.fullName);
 	}
 
 	/**
@@ -223,9 +291,19 @@ export class FolderModel extends AbstractModel {
 	static reviveFromJson(json) {
 		const folder = super.reviveFromJson(json);
 		if (folder) {
-			folder.deep = json.FullNameRaw.split(folder.delimiter).length - 1;
+			const path = folder.fullName.split(folder.delimiter),
+				type = (folder.metadata[FolderMetadataKeys.KolabFolderType]
+					|| folder.metadata[FolderMetadataKeys.KolabFolderTypeShared]
+					|| ''
+				).split('.')[0];
 
-			folder.messageCountAll = ko.computed({
+			folder.deep = path.length - 1;
+			path.pop();
+			folder.parentName = path.join(folder.delimiter);
+
+			type && 'mail' != type && folder.kolabType(type);
+
+			folder.messageCountAll = koComputable({
 					read: folder.privateMessageCountAll,
 					write: (iValue) => {
 						if (isPosNumeric(iValue)) {
@@ -237,7 +315,7 @@ export class FolderModel extends AbstractModel {
 				})
 				.extend({ notify: 'always' });
 
-			folder.messageCountUnread = ko.computed({
+			folder.messageCountUnread = koComputable({
 					read: folder.privateMessageCountUnread,
 					write: (value) => {
 						if (isPosNumeric(value)) {
@@ -254,28 +332,44 @@ export class FolderModel extends AbstractModel {
 				isInbox: () => FolderType.Inbox === folder.type(),
 
 				isFlagged: () => FolderUserStore.currentFolder() === folder
-					&& MessageUserStore.listSearch().trim().includes('is:flagged'),
+					&& MessagelistUserStore.listSearch().includes('flagged'),
 
-				hasSubscribedSubfolders:
-					() => !!folder.subFolders().find(
+				hasVisibleSubfolders: () => !!folder.subFolders().find(folder => folder.visible()),
+
+				hasSubscriptions: () => folder.subscribed() | !!folder.subFolders().find(
 						oFolder => {
 							const subscribed = oFolder.hasSubscriptions();
 							return !oFolder.isSystemFolder() && subscribed;
 						}
 					),
 
-				hasSubscriptions: () => folder.subscribed() | folder.hasSubscribedSubfolders(),
-
 				canBeEdited: () => FolderType.User === folder.type() && folder.exists/* && folder.selectable()*/,
 
-				visible: () => folder.hasSubscriptions() | !SettingsUserStore.hideUnsubscribed(),
+				isSystemFolder: () => FolderType.User !== folder.type() | !!folder.kolabType(),
 
-				isSystemFolder: () => FolderType.User !== folder.type(),
+				canBeSelected: () => folder.selectable() && !folder.isSystemFolder(),
 
-				hidden: () => {
-					let hasSubFolders = folder.hasSubscribedSubfolders();
-					return (folder.isSystemFolder() | !folder.selectable()) && !hasSubFolders;
+				canBeDeleted: () => folder.canBeSelected() && folder.exists,
+
+				canBeSubscribed: () => folder.selectable()
+					&& !(folder.isSystemFolder() | !SettingsUserStore.hideUnsubscribed()),
+
+				/**
+				 * Folder is visible when:
+				 * - hasVisibleSubfolders()
+				 * Or when all below conditions are true:
+				 * - selectable()
+				 * - subscribed() OR hideUnsubscribed = false
+				 * - FolderType.User
+				 * - not kolabType()
+				 */
+				visible: () => {
+					const selectable = folder.canBeSelected(),
+						visible = (folder.subscribed() | !SettingsUserStore.hideUnsubscribed()) && selectable;
+					return folder.hasVisibleSubfolders() | visible;
 				},
+
+				hidden: () => !folder.selectable() && (folder.isSystemFolder() | !folder.hasVisibleSubfolders()),
 
 				printableUnreadCount: () => {
 					const count = folder.messageCountAll(),
@@ -299,13 +393,6 @@ export class FolderModel extends AbstractModel {
 					return null;
 				},
 
-				canBeDeleted: () => !(folder.isSystemFolder() | !folder.selectable()),
-
-				canBeSubscribed: () => Settings.app('useImapSubscribe')
-					&& !(folder.isSystemFolder() | !SettingsUserStore.hideUnsubscribed() | !folder.selectable()),
-
-				canBeSelected:   () => !(folder.isSystemFolder() | !folder.selectable()),
-
 				localName: () => {
 					let name = folder.name();
 					if (folder.isSystemFolder()) {
@@ -318,28 +405,22 @@ export class FolderModel extends AbstractModel {
 				manageFolderSystemName: () => {
 					if (folder.isSystemFolder()) {
 						translatorTrigger();
-						let suffix = getSystemFolderName(folder.type(), '');
+						let suffix = getSystemFolderName(folder.type(), getKolabFolderName(folder.kolabType()));
 						if (folder.name() !== suffix && 'inbox' !== suffix.toLowerCase()) {
 							return '(' + suffix + ')';
 						}
 					}
-
 					return '';
-				},
-
-				collapsed: {
-					read: () => folder.isInbox() && FolderUserStore.singleRootFolder()
-						? false
-						: !folder.hidden() && folder.collapsedPrivate(),
-					write: value => folder.collapsedPrivate(value)
 				},
 
 				hasUnreadMessages: () => 0 < folder.messageCountUnread() && folder.printableUnreadCount(),
 
 				hasSubscribedUnreadMessagesSubfolders: () =>
-						!!folder.subFolders().find(
-							folder => folder.hasUnreadMessages() || folder.hasSubscribedUnreadMessagesSubfolders()
-						)
+					!!folder.subFolders().find(
+						folder => folder.hasUnreadMessages() | folder.hasSubscribedUnreadMessagesSubfolders()
+					)
+
+//				,href: () => folder.canBeSelected() && mailBox(folder.fullNameHash)
 			});
 
 			folder.addSubscribables({
@@ -349,7 +430,7 @@ export class FolderModel extends AbstractModel {
 
 				messageCountUnread: unread => {
 					if (FolderType.Inbox === folder.type()) {
-						dispatchEvent(new CustomEvent('mailbox.inbox-unread-count', {detail:unread}));
+						fireEvent('mailbox.inbox-unread-count', unread);
 					}
 				}
 			});
@@ -361,16 +442,9 @@ export class FolderModel extends AbstractModel {
 	 * @returns {string}
 	 */
 	collapsedCss() {
-		return 'e-collapsed-sign ' + (this.hasSubscribedSubfolders()
+		return 'e-collapsed-sign ' + (this.hasVisibleSubfolders()
 			? (this.collapsed() ? 'icon-right-mini' : 'icon-down-mini')
 			: 'icon-none'
 		);
-	}
-
-	/**
-	 * @returns {string}
-	 */
-	printableFullName() {
-		return this.fullName.replace(this.delimiter, ' / ');
 	}
 }

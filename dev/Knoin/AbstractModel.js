@@ -1,10 +1,5 @@
-import { isArray, isFunction, addObservablesTo, addComputablesTo } from 'Common/Utils';
-
-function dispose(disposable) {
-	if (disposable && isFunction(disposable.dispose)) {
-		disposable.dispose();
-	}
-}
+import { isArray, forEachObjectValue, forEachObjectEntry } from 'Common/Utils';
+import { dispose, addObservablesTo, addComputablesTo } from 'External/ko';
 
 function typeCast(curValue, newValue) {
 	if (null != curValue) {
@@ -31,7 +26,7 @@ export class AbstractModel {
 			throw new Error("Can't instantiate AbstractModel!");
 		}
 */
-		this.subscribables = [];
+		this.disposables = [];
 	}
 
 	addObservables(observables) {
@@ -43,25 +38,26 @@ export class AbstractModel {
 	}
 
 	addSubscribables(subscribables) {
-		Object.entries(subscribables).forEach(([key, fn]) => this.subscribables.push( this[key].subscribe(fn) ) );
+//		addSubscribablesTo(this, subscribables);
+		forEachObjectEntry(subscribables, (key, fn) => this.disposables.push( this[key].subscribe(fn) ) );
 	}
 
 	/** Called by delegateRunOnDestroy */
 	onDestroy() {
 		/** dispose ko subscribables */
-		this.subscribables.forEach(dispose);
+		this.disposables.forEach(dispose);
 		/** clear object entries */
-//		Object.entries(this).forEach(([key, value]) => {
-		Object.values(this).forEach(value => {
+//		forEachObjectEntry(this, (key, value) => {
+		forEachObjectValue(this, value => {
 			/** clear CollectionModel */
 			let arr = ko.isObservableArray(value) ? value() : value;
-			arr && arr.onDestroy && value.onDestroy();
+			arr && arr.onDestroy && arr.onDestroy();
 			/** destroy ko.observable/ko.computed? */
-			dispose(value);
+//			dispose(value);
 			/** clear object value */
 //			this[key] = null; // TODO: issue with Contacts view
 		});
-//		this.subscribables = [];
+//		this.disposables = [];
 	}
 
 	/**
@@ -89,9 +85,9 @@ export class AbstractModel {
 		if (!model.validJson(json)) {
 			return false;
 		}
-		Object.entries(json).forEach(([key, value]) => {
+		forEachObjectEntry(json, (key, value) => {
 			if ('@' !== key[0]) try {
-				key = key[0].toLowerCase() + key.substr(1);
+				key = key[0].toLowerCase() + key.slice(1);
 				switch (typeof this[key])
 				{
 				case 'function':

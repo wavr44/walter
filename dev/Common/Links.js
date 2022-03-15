@@ -2,11 +2,14 @@ import { pString, pInt } from 'Common/Utils';
 import { Settings } from 'Common/Globals';
 
 const
-	ROOT = './',
 	HASH_PREFIX = '#/',
 	SERVER_PREFIX = './?',
 	VERSION = Settings.app('version'),
-	VERSION_PREFIX = Settings.app('webVersionPath') || 'snappymail/v/' + VERSION + '/';
+	VERSION_PREFIX = () => Settings.app('webVersionPath') || 'snappymail/v/' + VERSION + '/',
+
+	adminPath = () => rl.adminArea() && !Settings.app('adminHostUse'),
+
+	prefix = () => SERVER_PREFIX + (adminPath() ? Settings.app('adminPath') : '');
 
 export const
 	SUB_QUERY_PREFIX = '&q[]=',
@@ -15,14 +18,12 @@ export const
 	 * @param {string=} startupUrl
 	 * @returns {string}
 	 */
-	root = (startupUrl = '') => HASH_PREFIX + pString(startupUrl),
+	root = () => HASH_PREFIX,
 
 	/**
 	 * @returns {string}
 	 */
-	logoutLink = () => (rl.adminArea() && !Settings.app('adminHostUse'))
-		? SERVER_PREFIX + (Settings.app('adminPath') || 'admin')
-		: ROOT,
+	logoutLink = () => adminPath() ? prefix() : './',
 
 	/**
 	 * @param {string} type
@@ -45,17 +46,21 @@ export const
 	attachmentDownload = (download, customSpecSuffix) =>
 		serverRequestRaw('Download', download, customSpecSuffix),
 
+	proxy = url =>
+		SERVER_PREFIX + '/ProxyExternal/' + btoa(url).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+/*
+		return './?/ProxyExternal/'.Utils::EncodeKeyValuesQ(array(
+			'Rnd' => \md5(\microtime(true)),
+			'Token' => Utils::GetConnectionToken(),
+			'Url' => $sUrl
+		)).'/';
+*/
+
 	/**
 	 * @param {string} type
 	 * @returns {string}
 	 */
-	serverRequest = type => SERVER_PREFIX + '/' + type + '/' + SUB_QUERY_PREFIX + '/0/',
-
-	/**
-	 * @param {string} email
-	 * @returns {string}
-	 */
-	change = email => serverRequest('Change') + encodeURIComponent(email) + '/',
+	serverRequest = type => prefix() + '/' + type + '/' + SUB_QUERY_PREFIX + '/0/',
 
 	/**
 	 * @param {string} lang
@@ -69,26 +74,16 @@ export const
 	 * @param {string} path
 	 * @returns {string}
 	 */
-	staticLink = path => VERSION_PREFIX + 'static/' + path,
-
-	/**
-	 * @returns {string}
-	 */
-	openPgpJs = () => staticLink('js/min/openpgp.min.js'),
-
-	/**
-	 * @returns {string}
-	 */
-	openPgpWorkerJs = () => staticLink('js/min/openpgp.worker.min.js'),
+	staticLink = path => VERSION_PREFIX() + 'static/' + path,
 
 	/**
 	 * @param {string} theme
 	 * @returns {string}
 	 */
 	themePreviewLink = theme => {
-		let prefix = VERSION_PREFIX;
-		if ('@custom' === theme.substr(-7)) {
-			theme = theme.substr(0, theme.length - 7).trim();
+		let prefix = VERSION_PREFIX();
+		if ('@custom' === theme.slice(-7)) {
+			theme = theme.slice(0, theme.length - 7).trim();
 			prefix = Settings.app('webPath') || '';
 		}
 
@@ -124,23 +119,22 @@ export const
 	 * @param {number=} threadUid = 0
 	 * @returns {string}
 	 */
-	mailBox = (folder, page = 1, search = '', threadUid = 0) => {
-		page = pInt(page, 1);
-		search = pString(search);
-
-		let result = HASH_PREFIX + 'mailbox/';
+	mailBox = (folder, page, search, threadUid) => {
+		let result = [HASH_PREFIX + 'mailbox'];
 
 		if (folder) {
-			result += encodeURI(folder) + (threadUid ? '~' + threadUid : '');
+			result.push(folder + (threadUid ? '~' + threadUid : ''));
 		}
 
+		page = pInt(page, 1);
 		if (1 < page) {
-			result = result.replace(/\/+$/, '') + '/p' + page;
+			result.push('p' + page);
 		}
 
+		search = pString(search);
 		if (search) {
-			result = result.replace(/\/+$/, '') + '/' + encodeURI(search);
+			result.push(encodeURI(search));
 		}
 
-		return result;
+		return result.join('/');
 	};

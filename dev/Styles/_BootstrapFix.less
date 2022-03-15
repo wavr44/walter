@@ -1,48 +1,34 @@
 
-label.inline, span.inline {
-	display: inline-block;
-}
-
 .legend {
 	display: block;
 	width: 100%;
 	padding: 0;
 	margin-bottom: @baseLineHeight;
 	font-size: @baseFontSize * 1.5;
-	line-height: @baseLineHeight * 2;
+	line-height: @baseLineHeight * 1.5;
 	color: @grayDark;
 	border: 0;
 	border-bottom: 1px solid @dropdownDividerTop;
 }
-
-.legend + .control-group {
-	margin-top: @baseLineHeight;
-	-webkit-margin-top-collapse: separate;
-}
-
-.btn-small.btn-small-small {
-	font-size: 11px;
-	line-height: 11px;
+summary.legend {
+	display: list-item;
+	cursor: pointer;
 }
 
 .btn.btn-thin {
 	padding: 4px 9px;
 }
 
-.btn.btn-thin-2 {
-	padding: 4px 7px;
-}
-
-.alert a {
+.alert a:not(.close) {
 	text-decoration: underline;
 	color: @warningText;
 }
 
-.alert.alert-info a {
+.alert.alert-info a:not(.close) {
 	color: @infoText;
 }
 
-.alert.alert-error a {
+.alert.alert-error a:not(.close) {
 	color: @errorText;
 }
 
@@ -50,34 +36,14 @@ label.inline, span.inline {
 @media screen and (max-width: 999px) {
 	.form-horizontal {
 		.control-group {
-			.control-label {
+			> label {
 				text-align: left;
 			}
-			.controls {
-				margin-left: 10px;
+
+			// Move over all input controls and content
+			> *:not(label) {
+				margin-left: 20px;
 			}
-		}
-	}
-}
-
-.close-input-wrp {
-	display: inline-block;
-	position: relative;
-
-	input {
-		padding-right: 15px;
-	}
-
-	.close {
-		position: absolute;
-		right: 0;
-		top: 5px;
-		margin: 0 7px;
-		z-index: 100;
-		vertical-align: middle;
-		opacity: .4;
-		&:hover {
-			opacity: .6;
 		}
 	}
 }

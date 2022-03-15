@@ -1,84 +1,68 @@
-import { Scope } from 'Common/Enums';
 import { i18n } from 'Common/Translator';
 import { isFunction } from 'Common/Utils';
 
 import { AbstractViewPopup } from 'Knoin/AbstractViews';
 
-class AskPopupView extends AbstractViewPopup {
+export class AskPopupView extends AbstractViewPopup {
 	constructor() {
 		super('Ask');
 
 		this.addObservables({
 			askDesc: '',
 			yesButton: '',
-			noButton: ''
+			noButton: '',
+			passphrase: '',
+			askPass: false
 		});
 
 		this.fYesAction = null;
 		this.fNoAction = null;
 
-		this.bFocusYesOnShow = true;
-		this.bDisabeCloseOnEsc = true;
-	}
-
-	clearPopup() {
-		this.askDesc('');
-		this.yesButton(i18n('POPUPS_ASK/BUTTON_YES'));
-		this.noButton(i18n('POPUPS_ASK/BUTTON_NO'));
-
-		this.fYesAction = null;
-		this.fNoAction = null;
+		this.focusOnShow = true;
 	}
 
 	yesClick() {
-		this.cancelCommand();
+		this.close();
 
-		isFunction(this.fYesAction) && this.fYesAction.call(null);
+		isFunction(this.fYesAction) && this.fYesAction();
 	}
 
 	noClick() {
-		this.cancelCommand();
+		this.close();
 
-		isFunction(this.fNoAction) && this.fNoAction.call(null);
+		isFunction(this.fNoAction) && this.fNoAction();
 	}
 
 	/**
 	 * @param {string} sAskDesc
 	 * @param {Function=} fYesFunc
 	 * @param {Function=} fNoFunc
-	 * @param {string=} sYesButton
-	 * @param {string=} sNoButton
-	 * @param {boolean=} bFocusYesOnShow = true
+	 * @param {boolean=} focusOnShow = true
 	 * @returns {void}
 	 */
-	onShow(askDesc, fYesFunc = null, fNoFunc = null, yesButton = '', noButton = '', isFocusYesOnShow = true) {
-		this.clearPopup();
-
-		this.fYesAction = fYesFunc || null;
-		this.fNoAction = fNoFunc || null;
-
-		this.askDesc(askDesc || '');
-
-		if (yesButton) {
-			this.yesButton(yesButton);
-		}
-
-		if (noButton) {
-			this.noButton(noButton);
-		}
-
-		this.bFocusYesOnShow = !!isFocusYesOnShow;
+	onShow(sAskDesc, fYesFunc = null, fNoFunc = null, focusOnShow = true, askPass = false, btnText = '') {
+		this.askDesc(sAskDesc || '');
+		this.askPass(askPass);
+		this.passphrase('');
+		this.yesButton(i18n(btnText || 'POPUPS_ASK/BUTTON_YES'));
+		this.noButton(i18n(askPass ? 'GLOBAL/CANCEL' : 'POPUPS_ASK/BUTTON_NO'));
+		this.fYesAction = fYesFunc;
+		this.fNoAction = fNoFunc;
+		this.focusOnShow = focusOnShow ? (askPass ? 'input[type="password"]' : '.buttonYes') : '';
 	}
 
-	onShowWithDelay() {
-		if (this.bFocusYesOnShow) {
-			this.querySelector('.buttonYes').focus();
-		}
+	afterShow() {
+		this.focusOnShow && this.querySelector(this.focusOnShow).focus();
+	}
+
+	onClose() {
+		this.noClick();
+		return false;
 	}
 
 	onBuild() {
-//		shortcuts.add('tab', 'shift', Scope.Ask, () => {
-		shortcuts.add('tab,arrowright,arrowleft', '', Scope.Ask, () => {
+//		shortcuts.add('tab', 'shift', 'Ask', () => {
+		shortcuts.add('tab,arrowright,arrowleft', '', 'Ask', () => {
 			let btn = this.querySelector('.buttonYes');
 			if (btn.matches(':focus')) {
 				btn = this.querySelector('.buttonNo');
@@ -86,12 +70,18 @@ class AskPopupView extends AbstractViewPopup {
 			btn.focus();
 			return false;
 		});
-
-		shortcuts.add('escape', '', Scope.Ask, () => {
-			this.noClick();
-			return false;
-		});
 	}
 }
 
-export { AskPopupView, AskPopupView as default };
+AskPopupView.password = function(sAskDesc, btnText) {
+	return new Promise(resolve => {
+		this.showModal([
+			sAskDesc,
+			() => resolve(this.__vm.passphrase()),
+			() => resolve(null),
+			true,
+			true,
+			btnText
+		]);
+	});
+}

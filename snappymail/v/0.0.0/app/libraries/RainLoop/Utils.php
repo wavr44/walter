@@ -14,129 +14,81 @@ class Utils
 	 */
 	static $CookieDefaultSecure = null;
 
-	public static function EncryptString(string $sString, string $sKey) : string
-	{
-		return \MailSo\Base\Crypt::Encrypt($sString, $sKey);
-	}
+	const
+		/**
+		 * 30 days cookie
+		 * Used by: ServiceProxyExternal, compileLogParams, GetCsrfToken
+		 */
+		CONNECTION_TOKEN = 'smtoken',
 
-	public static function DecryptString(string $sEncryptedString, string $sKey) : string
-	{
-		return \MailSo\Base\Crypt::Decrypt($sEncryptedString, $sKey);
-	}
-
-	public static function EncryptStringQ(string $sString, string $sKey) : string
-	{
-		return \MailSo\Base\Crypt::Encrypt($sString, $sKey.'Q'.static::GetShortToken());
-	}
-
-	public static function DecryptStringQ(string $sEncryptedString, string $sKey) : string
-	{
-		return \MailSo\Base\Crypt::Decrypt($sEncryptedString, $sKey.'Q'.static::GetShortToken());
-	}
-
-	public static function EncodeKeyValues(array $aValues, string $sCustomKey = '') : string
-	{
-		return \MailSo\Base\Utils::UrlSafeBase64Encode(
-			static::EncryptString(\serialize($aValues), \md5(APP_SALT.$sCustomKey)));
-	}
-
-	public static function DecodeKeyValues(string $sEncodedValues, string $sCustomKey = '') : array
-	{
-		$aResult = \unserialize(
-			static::DecryptString(
-				\MailSo\Base\Utils::UrlSafeBase64Decode($sEncodedValues), \md5(APP_SALT.$sCustomKey)));
-
-		return \is_array($aResult) ? $aResult : array();
-	}
+		/**
+		 * Session cookie
+		 * Used by: EncodeKeyValuesQ, DecodeKeyValuesQ
+		 */
+		SESSION_TOKEN = 'smsession';
 
 	public static function EncodeKeyValuesQ(array $aValues, string $sCustomKey = '') : string
 	{
-		return \MailSo\Base\Utils::UrlSafeBase64Encode(
-			static::EncryptStringQ(
-				\serialize($aValues), \md5(APP_SALT.$sCustomKey)));
+		return \SnappyMail\Crypt::EncryptUrlSafe(
+			$aValues,
+			\sha1(APP_SALT.$sCustomKey.'Q'.static::GetSessionToken())
+		);
 	}
 
-	public static function DecodeKeyValuesQ(string $sEncodedValues, string $sCustomKey = '') : array
+	public static function DecodeKeyValuesQ(string $sEncodedValues, string $sCustomKey = '') : ?array
 	{
-		$aResult = \unserialize(
-			static::DecryptStringQ(
-				\MailSo\Base\Utils::UrlSafeBase64Decode($sEncodedValues), \md5(APP_SALT.$sCustomKey)));
+		return \SnappyMail\Crypt::DecryptUrlSafe(
+			$sEncodedValues,
+			\sha1(APP_SALT.$sCustomKey.'Q'.static::GetSessionToken(false))
+		) ?: null;
+	}
 
-		return \is_array($aResult) ? $aResult : array();
+	public static function GetSessionToken(bool $generate = true) : ?string
+	{
+		$sToken = static::GetCookie(self::SESSION_TOKEN, null);
+		if (!$sToken) {
+			if (!$generate) {
+				return null;
+			}
+			\SnappyMail\Log::debug('TOKENS', 'New SESSION_TOKEN');
+			$sToken = \MailSo\Base\Utils::Sha1Rand(APP_SALT);
+			static::SetCookie(self::SESSION_TOKEN, $sToken);
+		}
+		return \sha1('Session'.APP_SALT.$sToken.'Token'.APP_SALT);
 	}
 
 	public static function GetConnectionToken() : string
 	{
-		$sKey = 'rltoken';
-
-		$sToken = static::GetCookie($sKey, null);
-		if (null === $sToken)
+		$sToken = static::GetCookie(self::CONNECTION_TOKEN);
+		if (!$sToken)
 		{
-			$sToken = \MailSo\Base\Utils::Md5Rand(APP_SALT);
-			static::SetCookie($sKey, $sToken, \time() + 60 * 60 * 24 * 30);
+			$sToken = \MailSo\Base\Utils::Sha1Rand(APP_SALT);
+			static::SetCookie(self::CONNECTION_TOKEN, $sToken, \time() + 3600 * 24 * 30);
 		}
 
-		return \md5('Connection'.APP_SALT.$sToken.'Token'.APP_SALT);
-	}
-
-	public static function Fingerprint() : string
-	{
-		return \md5($_SERVER['HTTP_USER_AGENT'] ?: 'RainLoopFingerprint');
-	}
-
-	public static function GetShortToken() : string
-	{
-		$sKey = 'rlsession';
-
-		$sToken = static::GetCookie($sKey, null);
-		if (null === $sToken)
-		{
-			$sToken = \MailSo\Base\Utils::Md5Rand(APP_SALT);
-			static::SetCookie($sKey, $sToken, 0);
-		}
-
-		return \md5('Session'.APP_SALT.$sToken.'Token'.APP_SALT);
-	}
-
-	public static function UpdateConnectionToken() : void
-	{
-		$sKey = 'rltoken';
-
-		$sToken = static::GetCookie($sKey, '');
-		if (!empty($sToken))
-		{
-			static::SetCookie($sKey, $sToken, \time() + 60 * 60 * 24 * 30);
-		}
+		return \sha1('Connection'.APP_SALT.$sToken.'Token'.APP_SALT);
 	}
 
 	public static function GetCsrfToken() : string
 	{
-		return \md5('Csrf'.APP_SALT.self::GetConnectionToken().'Token'.APP_SALT);
+		return \sha1('Csrf'.APP_SALT.self::GetConnectionToken().'Token'.APP_SALT);
 	}
 
-	public static function PathMD5(string $sPath) : string
+	public static function UpdateConnectionToken() : void
 	{
-		$sResult = '';
-		if (\is_dir($sPath))
+		$sToken = static::GetCookie(self::CONNECTION_TOKEN);
+		if ($sToken)
 		{
-			$oDirIterator = new \RecursiveDirectoryIterator($sPath);
-			$oIterator = new \RecursiveIteratorIterator($oDirIterator, \RecursiveIteratorIterator::SELF_FIRST);
-
-			foreach ($oIterator as $oFile)
-			{
-				$sResult = \md5($sResult.($oFile->isFile() ? \md5_file($oFile) : $oFile));
-			}
+			static::SetCookie(self::CONNECTION_TOKEN, $sToken, \time() + 3600 * 24 * 30);
 		}
-
-		return $sResult;
 	}
 
 	public static function ClearHtmlOutput(string $sHtml) : string
 	{
 //		return $sHtml;
 		return \preg_replace(
-			['@"\\s*/>@', '/\\s*&nbsp;/i', '/&nbsp;\\s*/i', '/[\\r\\n\\t]+/', '/>\\s+</'],
-			['">', '&nbsp;', '&nbsp;', ' ', '><'],
+			['@\\s*/>@', '/\\s*&nbsp;/i', '/&nbsp;\\s*/i', '/[\\r\\n\\t]+/', '/>\\s+</'],
+			['>', "\xC2\xA0", "\xC2\xA0", ' ', '><'],
 			\trim($sHtml)
 		);
 	}
@@ -150,25 +102,22 @@ class Utils
 		return isset($_COOKIE[$sName]) ? $_COOKIE[$sName] : $mDefault;
 	}
 
-	public static function SetCookie(string $sName, string $sValue = '', int $iExpire = 0, ?string $sPath = null, ?string $sDomain = null, ?bool $bSecure = null, bool $bHttpOnly = true)
+	public static function GetSecureCookie(string $sName)
 	{
-		if (null === $sPath)
-		{
-			$sPath = static::$CookieDefaultPath;
-			$sPath = $sPath && 0 < \strlen($sPath) ? $sPath : '/';
-		}
+		return isset($_COOKIE[$sName]) && 1024 > \strlen($_COOKIE[$sName])
+			? \SnappyMail\Crypt::DecryptFromJSON(\MailSo\Base\Utils::UrlSafeBase64Decode($_COOKIE[$sName]))
+			: null;
+	}
 
-		if (null === $bSecure)
-		{
-			$bSecure = static::$CookieDefaultSecure;
-		}
-
+	public static function SetCookie(string $sName, string $sValue = '', int $iExpire = 0, bool $bHttpOnly = true)
+	{
+		$sPath = static::$CookieDefaultPath;
 		$_COOKIE[$sName] = $sValue;
 		\setcookie($sName, $sValue, array(
 			'expires' => $iExpire,
-			'path' => $sPath,
+			'path' => $sPath && \strlen($sPath) ? $sPath : '/',
 //			'domain' => $sDomain,
-			'secure' => $bSecure,
+			'secure' => isset($_SERVER['HTTPS']) || static::$CookieDefaultSecure,
 			'httponly' => $bHttpOnly,
 			'samesite' => 'Strict'
 		));
@@ -181,9 +130,9 @@ class Utils
 			unset($_COOKIE[$sName]);
 			\setcookie($sName, '', array(
 				'expires' => \time() - 3600 * 24 * 30,
-				'path' => $sPath && 0 < \strlen($sPath) ? $sPath : '/',
+				'path' => $sPath && \strlen($sPath) ? $sPath : '/',
 //				'domain' => null,
-				'secure' => static::$CookieDefaultSecure,
+				'secure' => isset($_SERVER['HTTPS']) || static::$CookieDefaultSecure,
 				'httponly' => true,
 				'samesite' => 'Strict'
 			));
@@ -235,5 +184,51 @@ class Utils
 	{
 		return @\parse_ini_file($sFileName, !!$bProcessSections) ?: array();
 //		return @\parse_ini_string(\file_get_contents($sFileName), $bProcessSections) ?: array();
+	}
+
+	public static function inOpenBasedir(string $name) : string
+	{
+		static $open_basedir;
+		if (null === $open_basedir) {
+			$open_basedir = \array_filter(\explode(PATH_SEPARATOR, \ini_get('open_basedir')));
+		}
+		if ($open_basedir) {
+			foreach ($open_basedir as $dir) {
+				if (\str_starts_with($name, $dir)) {
+					return true;
+				}
+			}
+			\SnappyMail\Log::warning('OpenBasedir', "open_basedir restriction in effect. {$name} is not within the allowed path(s): " . \ini_get('open_basedir'));
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Replace control characters, ampersand, spaces and reserved characters (based on Win95 VFAT)
+	 * en.wikipedia.org/wiki/Filename#Reserved_characters_and_words
+	 */
+	public static function fixName(string $filename) : string
+	{
+		return \preg_replace('#[|\\\\?*<":>+\\[\\]/&\\s\\pC]#su', '-', $filename);
+	}
+
+	public static function saveFile(string $filename, string $data) : void
+	{
+		$dir = \dirname($filename);
+		if (!\is_dir($dir) && !\mkdir($dir, 0700, true)) {
+			throw new Exceptions\Exception('Failed to create directory "'.$dir.'"');
+		}
+		if (false === \file_put_contents($filename, $data)) {
+			throw new Exceptions\Exception('Failed to save file "'.$filename.'"');
+		}
+		\clearstatcache();
+		\chmod($filename, 0600);
+/*
+		try {
+		} catch (\Throwable $oException) {
+			throw new Exceptions\Exception($oException->getMessage() . ': ' . \error_get_last()['message']);
+		}
+*/
 	}
 }

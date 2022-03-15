@@ -1,10 +1,11 @@
 import ko from 'ko';
+import { koComputable } from 'External/ko';
 
 import { SettingsGet } from 'Common/Globals';
 import { ContactUserStore } from 'Stores/User/Contact';
 import Remote from 'Remote/User/Fetch';
 
-export class ContactsUserSettings {
+export class UserSettingsContacts /*extends AbstractViewSettings*/ {
 	constructor() {
 		this.contactsAutosave = ko.observable(!!SettingsGet('ContactsAutosave'));
 
@@ -14,8 +15,7 @@ export class ContactsUserSettings {
 		this.contactsSyncUser = ContactUserStore.syncUser;
 		this.contactsSyncPass = ContactUserStore.syncPass;
 
-		this.saveTrigger = ko
-			.computed(() =>
+		this.saveTrigger = koComputable(() =>
 				[
 					ContactUserStore.enableSync() ? '1' : '0',
 					ContactUserStore.syncUrl(),
@@ -26,19 +26,16 @@ export class ContactsUserSettings {
 			.extend({ debounce: 500 });
 
 		this.contactsAutosave.subscribe(value =>
-			Remote.saveSettings(null, {
-				ContactsAutosave: value ? 1 : 0
-			})
+			Remote.saveSettings(null, { ContactsAutosave: value })
 		);
 
 		this.saveTrigger.subscribe(() =>
-			Remote.saveContactsSyncData(
-				null,
-				ContactUserStore.enableSync(),
-				ContactUserStore.syncUrl(),
-				ContactUserStore.syncUser(),
-				ContactUserStore.syncPass()
-			)
+			Remote.request('SaveContactsSyncData', null, {
+				Enable: ContactUserStore.enableSync() ? 1 : 0,
+				Url: ContactUserStore.syncUrl(),
+				User: ContactUserStore.syncUser(),
+				Password: ContactUserStore.syncPass()
+			})
 		);
 	}
 }

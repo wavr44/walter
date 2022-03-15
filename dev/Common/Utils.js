@@ -1,5 +1,5 @@
 import { SaveSettingsStep } from 'Common/Enums';
-import { doc, elementById } from 'Common/Globals';
+import { elementById } from 'Common/Globals';
 
 let __themeTimer = 0,
 	__themeJson = null;
@@ -9,6 +9,10 @@ export const
 	arrayLength = array => isArray(array) && array.length,
 	isFunction = v => typeof v === 'function',
 	pString = value => null != value ? '' + value : '',
+
+	forEachObjectValue = (obj, fn) => Object.values(obj).forEach(fn),
+
+	forEachObjectEntry = (obj, fn) => Object.entries(obj).forEach(([key, value]) => fn(key, value)),
 
 	pInt = (value, defaultValue = 0) => {
 		value = parseInt(value, 10);
@@ -25,72 +29,43 @@ export const
 		domItem && item && undefined !== item.disabled
 		&& domItem.classList.toggle('disabled', domItem.disabled = item.disabled),
 
-	addObservablesTo = (target, observables) =>
-		Object.entries(observables).forEach(([key, value]) =>
-			target[key] = /*isArray(value) ? ko.observableArray(value) :*/ ko.observable(value) ),
-
-	addComputablesTo = (target, computables) =>
-		Object.entries(computables).forEach(([key, fn]) => target[key] = ko.computed(fn)),
-
-	addSubscribablesTo = (target, subscribables) =>
-		Object.entries(subscribables).forEach(([key, fn]) => target[key].subscribe(fn)),
-
-	inFocus = () => {
-		try {
-			return doc.activeElement && doc.activeElement.matches(
-				'input,textarea,[contenteditable]'
-			);
-		} catch (e) {
-			return false;
-		}
-	},
-
-	settingsSaveHelperSimpleFunction = (koTrigger, context) =>
-		iError => {
-			koTrigger.call(context, iError ? SaveSettingsStep.FalseResult : SaveSettingsStep.TrueResult);
-			setTimeout(() => koTrigger.call(context, SaveSettingsStep.Idle), 1000);
-		},
+	// unescape(encodeURIComponent()) makes the UTF-16 DOMString to an UTF-8 string
+	b64EncodeJSON = data => btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
+/* 	// Without deprecated 'unescape':
+	b64EncodeJSON = data => btoa(encodeURIComponent(JSON.stringify(data)).replace(
+		/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)
+	)),
+*/
+	b64EncodeJSONSafe = data => b64EncodeJSON(data).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
 
 	changeTheme = (value, themeTrigger = ()=>0) => {
 		const themeStyle = elementById('app-theme-style'),
 			clearTimer = () => {
 				__themeTimer = setTimeout(() => themeTrigger(SaveSettingsStep.Idle), 1000);
 				__themeJson = null;
-			};
+			},
+			url = themeStyle.dataset.href.replace(/(Admin|User)\/-\/[^/]+\//, '$1/-/' + value + '/') + 'Json/';
 
-		let url = themeStyle.dataset.href;
+		clearTimeout(__themeTimer);
 
-		if (url) {
-			url = url.toString()
-				.replace(/\/-\/[^/]+\/-\//, '/-/' + value + '/-/')
-				.replace(/\/Css\/[^/]+\/User\//, '/Css/0/User/')
-				.replace(/\/Hash\/[^/]+\//, '/Hash/-/');
+		themeTrigger(SaveSettingsStep.Animate);
 
-			if ('Json/' !== url.substr(-5)) {
-				url += 'Json/';
-			}
-
-			clearTimeout(__themeTimer);
-
-			themeTrigger(SaveSettingsStep.Animate);
-
-			if (__themeJson) {
-				__themeJson.abort();
-			}
-			let init = {};
-			if (window.AbortController) {
-				__themeJson = new AbortController();
-				init.signal = __themeJson.signal;
-			}
-			rl.fetchJSON(url, init)
-				.then(data => {
-					if (2 === arrayLength(data)) {
-						themeStyle.textContent = data[1];
-						themeStyle.dataset.href = url;
-						themeStyle.dataset.theme = data[0];
-						themeTrigger(SaveSettingsStep.TrueResult);
-					}
-				})
-				.then(clearTimer, clearTimer);
+		if (__themeJson) {
+			__themeJson.abort();
 		}
-	};
+		let init = {};
+		if (window.AbortController) {
+			__themeJson = new AbortController();
+			init.signal = __themeJson.signal;
+		}
+		rl.fetchJSON(url, init)
+			.then(data => {
+				if (2 === arrayLength(data)) {
+					themeStyle.textContent = data[1];
+					themeTrigger(SaveSettingsStep.TrueResult);
+				}
+			})
+			.then(clearTimer, clearTimer);
+	},
+
+	getKeyByValue = (o, v) => Object.keys(o).find(key => o[key] === v);

@@ -9,6 +9,7 @@ const
 	msOffice = app+'vnd.openxmlformats-officedocument.',
 	openDoc = app+'vnd.oasis.opendocument.',
 	sizes = ['B', 'KiB', 'MiB', 'GiB', 'TiB'],
+	lowerCase = text => text.toLowerCase().trim(),
 
 	exts = {
 		eml: 'message/rfc822',
@@ -123,13 +124,13 @@ export const FileInfo = {
 	 * @returns {string}
 	 */
 	getExtension: fileName => {
-		fileName = fileName.toLowerCase().trim();
+		fileName = lowerCase(fileName);
 		const result = fileName.split('.').pop();
 		return result === fileName ? '' : result;
 	},
 
 	getContentType: fileName => {
-		fileName = fileName.toLowerCase().trim();
+		fileName = lowerCase(fileName);
 		if ('winmail.dat' === fileName) {
 			return app + 'ms-tnef';
 		}
@@ -158,8 +159,8 @@ export const FileInfo = {
 	 * @returns {string}
 	 */
 	getType: (ext, mimeType) => {
-		ext = ext.toLowerCase().trim();
-		mimeType = mimeType.toLowerCase().trim().replace('csv/plain', 'text/csv');
+		ext = lowerCase(ext);
+		mimeType = lowerCase(mimeType).replace('csv/plain', 'text/csv');
 
 		let key = ext + mimeType;
 		if (cache[key]) {
@@ -249,10 +250,10 @@ export const FileInfo = {
 	 * @param {string} sFileType
 	 * @returns {string}
 	 */
-	getCombinedIconClass: data => {
+	getAttachmentsIconClass: data => {
 		if (arrayLength(data)) {
 			let icons = data
-				.map(item => item ? FileInfo.getIconClass(FileInfo.getExtension(item[0]), item[1]) : '')
+				.map(item => item ? FileInfo.getIconClass(FileInfo.getExtension(item.fileName), item.mimeType) : '')
 				.validUnique();
 
 			return (icons && 1 === icons.length && 'icon-file' !== icons[0])

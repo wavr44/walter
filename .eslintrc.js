@@ -9,7 +9,7 @@ module.exports = {
 	env: {
 		node: true,
 		browser: true,
-		es6: true
+		es2020: true
 	},
 	globals: {
 		// SnappyMail
@@ -35,7 +35,9 @@ module.exports = {
 		// vendors/jua
 		'Jua': "readonly",
 		// vendors/bootstrap/bootstrap.native.js
-		'BSN': "readonly"
+		'BSN': "readonly",
+		// Mailvelope
+		'mailvelope': "readonly"
 	},
 	// http://eslint.org/docs/rules/
 	rules: {

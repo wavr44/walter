@@ -11,7 +11,7 @@ class Application extends \RainLoop\Config\AbstractConfig
 		parent::__construct('application.ini',
 			'; SnappyMail configuration file
 ; Please don\'t add custom parameters here, those will be overwritten',
-			defined('APP_ADDITIONAL_CONFIGURATION_NAME') ? APP_ADDITIONAL_CONFIGURATION_NAME : '');
+			APP_CONFIGURATION_NAME);
 	}
 
 	public function Load() : bool
@@ -19,11 +19,11 @@ class Application extends \RainLoop\Config\AbstractConfig
 		$bResult = parent::Load();
 
 		$this->aReplaceEnv = null;
-		if ((isset($_ENV) && \is_array($_ENV) && 0 < \count($_ENV)) ||
-			(isset($_SERVER) && \is_array($_SERVER) && 0 < \count($_SERVER)))
+		if ((isset($_ENV) && \is_array($_ENV) && \count($_ENV)) ||
+			(isset($_SERVER) && \is_array($_SERVER) && \count($_SERVER)))
 		{
 			$sEnvNames = $this->Get('labs', 'replace_env_in_configuration', '');
-			if (0 < \strlen($sEnvNames))
+			if (\strlen($sEnvNames))
 			{
 				$this->aReplaceEnv = \explode(',', $sEnvNames);
 				if (\is_array($this->aReplaceEnv))
@@ -93,7 +93,7 @@ class Application extends \RainLoop\Config\AbstractConfig
 			$this->SetPassword($sPassword);
 			return true;
 		}
-		return 0 < \strlen($sPassword) && \password_verify($sPassword, $sConfigPassword);
+		return \strlen($sPassword) && \password_verify($sPassword, $sConfigPassword);
 	}
 
 	public function Save() : bool
@@ -114,6 +114,12 @@ class Application extends \RainLoop\Config\AbstractConfig
 			case 'K': $upload_max_filesize *= 1024;
 		}
 		$upload_max_filesize = $upload_max_filesize / 1024 / 1024;
+
+		$sCipher = 'aes-256-cbc-hmac-sha1';
+		$aCiphers = \SnappyMail\Crypt::listCiphers();
+		if (!\in_array($sCipher, $aCiphers)) {
+			$sCipher = $aCiphers[\array_rand($aCiphers)];
+		}
 
 		return array(
 
@@ -174,7 +180,9 @@ class Application extends \RainLoop\Config\AbstractConfig
 				'hide_x_mailer_header'       => array(true),
 				'admin_panel_host'           => array(''),
 				'admin_panel_key'            => array('admin'),
-				'content_security_policy'    => array('')
+				'content_security_policy'    => array(''),
+				'csp_report'                 => array(false),
+				'encrypt_cipher'             => array($sCipher)
 			),
 
 			'ssl' => array(
@@ -186,18 +194,13 @@ class Application extends \RainLoop\Config\AbstractConfig
 			),
 
 			'capa' => array(
-				'composer' => array(true),
 				'contacts' => array(true),
-				'settings' => array(true),
 				'quota' => array(true),
-				'help' => array(true),
-				'reload' => array(true),
 				'search' => array(true),
 				'search_adv' => array(true),
 				'x-templates' => array(false),
 				'dangerous_actions' => array(true),
 				'message_actions' => array(true),
-				'messagelist_actions' => array(true),
 				'attachments_actions' => array(true)
 			),
 
@@ -235,6 +238,7 @@ Values:
 				'view_layout'            => array(1, 'layout: 0 - no preview, 1 - side preview, 2 - bottom preview'),
 				'view_use_checkboxes'    => array(true),
 				'autologout'             => array(30),
+				'view_html'              => array(true),
 				'show_images'            => array(false),
 				'contacts_autosave'      => array(true),
 				'mail_use_threads'       => array(false),
@@ -246,7 +250,17 @@ Values:
 
 				'enable' => array(false, 'Enable logging'),
 
-				'write_on_error_only' => array(false, 'Logs entire request only if error occured (php requred)'),
+				'level' => array(4, 'Log messages of set RFC 5424 section 6.2.1 Severity level and higher (0 = highest, 7 = lowest).
+0 = Emergency
+1 = Alert
+2 = Critical
+3 = Error
+4 = Warning
+5 = Notice
+6 = Informational
+7 = Debug'),
+
+				'write_on_error_only' => array(false, 'Logs entire request only if error occured (php required)'),
 				'write_on_php_error_only' => array(false, 'Logs entire request only if php error occured'),
 				'write_on_timeout_only' => array(0, 'Logs entire request only if request timeout (in seconds) occured.'),
 
@@ -287,7 +301,8 @@ Examples:
 
 				'auth_logging' => array(false, 'Enable auth logging in a separate file (for fail2ban)'),
 				'auth_logging_filename' => array('fail2ban/auth-{date:Y-m-d}.txt'),
-				'auth_logging_format' => array('[{date:Y-m-d H:i:s}] Auth failed: ip={request:ip} user={imap:login} host={imap:host} port={imap:port}')
+				'auth_logging_format' => array('[{date:Y-m-d H:i:s}] Auth failed: ip={request:ip} user={imap:login} host={imap:host} port={imap:port}'),
+				'auth_syslog' => array(false, 'Enable auth logging to syslog for fail2ban')
 			),
 
 			'debug' => array(
@@ -312,13 +327,10 @@ Enables caching in the system'),
 			),
 
 			'labs' => array(
-//				'ignore_folders_subscription' => array(false),
-				'update_channel' => array('stable'),
-				'allow_prefetch' => array(true),
-				'allow_smart_html_links' => array(true),
+				'allow_prefetch' => array(false),
 				'cache_system_data' => array(true),
 				'date_from_headers' => array(true),
-				'autocreate_system_folders' => array(true),
+				'autocreate_system_folders' => array(false),
 				'allow_message_append' => array(false),
 				'login_fault_delay' => array(1),
 				'log_ajax_response_write_limit' => array(300),
@@ -330,7 +342,6 @@ Enables caching in the system'),
 				'use_app_debug_css' => array(false),
 				'use_imap_sort' => array(true),
 				'use_imap_force_selection' => array(false),
-				'use_imap_list_subscribe' => array(true),
 				'use_imap_thread' => array(true),
 				'use_imap_move' => array(false),
 				'use_imap_expunge_all_on_delete' => array(false),
@@ -345,18 +356,16 @@ Enables caching in the system'),
 				'imap_large_thread_limit' => array(50),
 				'imap_folder_list_limit' => array(200),
 				'imap_show_login_alert' => array(true),
-				'imap_use_auth_plain' => array(true),
-				'imap_use_auth_cram_md5' => array(false),
+				'imap_use_list_status' => array(true),
+				'imap_timeout' => array(300),
 				'smtp_show_server_errors' => array(false),
-				'smtp_use_auth_plain' => array(true),
-				'smtp_use_auth_cram_md5' => array(false),
-				'sieve_utf8_folder_name' => array(true),
+				'smtp_timeout' => array(60),
 				'sieve_auth_plain_initial' => array(true),
 				'sieve_allow_fileinto_inbox' => array(false),
-				'imap_timeout' => array(300),
-				'smtp_timeout' => array(60),
 				'sieve_timeout' => array(10),
-				'domain_list_limit' => array(99),
+				'sasl_allow_plain' => array(true),
+				'sasl_allow_scram_sha' => array(false),
+				'sasl_allow_cram_md5' => array(false),
 				'mail_func_clear_headers' => array(true),
 				'mail_func_additional_parameters' => array(false),
 				'favicon_status' => array(true),
@@ -365,6 +374,8 @@ Enables caching in the system'),
 				'curl_proxy_auth' => array(''),
 				'in_iframe' => array(false),
 				'force_https' => array(false),
+				'custom_login_link' => array(''),
+				'custom_logout_link' => array(''),
 				'http_client_ip_check_proxy' => array(false),
 				'fast_cache_memcache_host' => array('127.0.0.1'),
 				'fast_cache_memcache_port' => array(11211),
@@ -376,9 +387,8 @@ Enables caching in the system'),
 				'cookie_default_secure' => array(false),
 				'check_new_messages' => array(true),
 				'replace_env_in_configuration' => array(''),
-				'startup_url' => array(''),
-				'strict_html_parser' => array(false),
 				'boundary_prefix' => array(''),
+				'kolab_enabled' => array(false),
 				'dev_email' => array(''),
 				'dev_password' => array('')
 			),

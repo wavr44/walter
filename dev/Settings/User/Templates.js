@@ -10,7 +10,7 @@ import { showScreenPopup } from 'Knoin/Knoin';
 import { TemplatePopupView } from 'View/Popup/Template';
 import { addComputablesTo } from 'Common/Utils';
 
-export class TemplatesUserSettings {
+export class UserSettingsTemplates {
 	constructor() {
 		this.templates = TemplateUserStore.templates;
 

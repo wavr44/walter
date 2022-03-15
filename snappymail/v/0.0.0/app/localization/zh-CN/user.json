@@ -57,7 +57,11 @@
 		"LABEL_ADV_DATE_MONTH": "1个月以内",
 		"LABEL_ADV_DATE_3_MONTHS": "3个月以内",
 		"LABEL_ADV_DATE_6_MONTHS": "半年以内",
-		"LABEL_ADV_DATE_YEAR": "1年以内"
+		"LABEL_ADV_DATE_YEAR": "1年以内",
+		"LABEL_ADV_SUBFOLDERS": "Subfolders",
+		"LABEL_ADV_SUBFOLDERS_NONE": "None",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE": "All",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE_ONE": "One level"
 	},
 	"PREVIEW_POPUP": {
 		"FULLSCREEN": "切换全屏",
@@ -132,6 +136,8 @@
 		"BUTTON_THREAD_MORE": "更多信息",
 		"MENU_HEADERS": "显示详细信息",
 		"MENU_VIEW_ORIGINAL": "显示原始内容",
+		"HTML_VIEW": "View HTML message",
+		"PLAIN_VIEW": "View plain text message",
 		"MENU_DOWNLOAD_ORIGINAL": "作为 .eml 文件下载",
 		"MENU_FILTER_SIMILAR": "筛选类似邮件",
 		"MENU_PRINT": "打印邮件",
@@ -142,8 +148,6 @@
 		"PRINT_LABEL_ATTACHMENTS": "附件",
 		"MESSAGE_VIEW_DESC": "在此查看列表中选中的邮件。",
 		"MESSAGE_VIEW_MOVE_DESC": "点击左侧面板的文件夹作为目的地",
-		"PGP_SIGNED_MESSAGE_DESC": "由 OpenPGP 签名 (点击验证)",
-		"PGP_ENCRYPTED_MESSAGE_DESC": "由 OpenPGP 加密 (点击解密)",
 		"LINK_DOWNLOAD_AS_ZIP": "下载为zip压缩包",
 		"SPAM_SCORE": "垃圾邮件分数",
 		"HAS_VIRUS_WARNING": "警告：检测到病毒"
@@ -208,7 +212,6 @@
 		"ATTACHMENTS_UPLOAD_ERROR_DESC": "还有附件正在上传。",
 		"BUTTON_REQUEST_READ_RECEIPT": "要求已读回执",
 		"BUTTON_MARK_AS_IMPORTANT": "标记为“重要”",
-		"BUTTON_OPEN_PGP": "OpenPGP (仅限纯文本)",
 		"BUTTON_REQUEST_DSN": "要求送达回执"
 	},
 	"POPUPS_ASK": {
@@ -246,31 +249,24 @@
 		"DANGER_DESC_HTML_2": "一旦操作执行，将不可中断和撤销！",
 		"TITLE_CLEARING_PROCESS": "文件夹清理中..."
 	},
-	"POPUPS_IMPORT_OPEN_PGP_KEY": {
-		"TITLE_IMPORT_OPEN_PGP_KEY": "导入 OpenPGP 密钥",
-		"BUTTON_IMPORT_OPEN_PGP_KEY": "导入"
-	},
-	"POPUPS_VIEW_OPEN_PGP_KEY": {
-		"TITLE_VIEW_OPEN_PGP_KEY": "查看 OpenPGP 密钥",
-		"BUTTON_SELECT": "选择"
-	},
-	"POPUPS_GENERATE_OPEN_PGP_KEYS": {
-		"TITLE_GENERATE_OPEN_PGP_KEYS": "生成 OpenPGP 密钥",
-		"LABEL_KEY_BIT_LENGTH": "密钥长度",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "生成"
-	},
-	"POPUPS_COMPOSE_OPEN_PGP": {
-		"TITLE_COMPOSE_OPEN_PGP": "OpenPGP 签名\/加密",
+	"OPENPGP": {
+		"POPUP_IMPORT_TITLE": "导入 OpenPGP 密钥",
+		"POPUP_IMPORT_BUTTON": "导入",
+		"POPUP_VIEW_TITLE": "查看 OpenPGP 密钥",
+		"POPUP_VIEW_BUTTON": "选择",
+		"POPUP_GENERATE_TITLE": "生成 OpenPGP 密钥",
+		"POPUP_GENERATE_BUTTON": "生成",
+		"LABEL_KEY_TYPE": "Type",
 		"LABEL_SIGN": "签名",
 		"LABEL_ENCRYPT": "加密",
-		"BUTTON_SIGN": "签名",
-		"BUTTON_ENCRYPT": "加密",
-		"BUTTON_SIGN_AND_ENCRYPT": "签名并加密"
-	},
-	"POPUPS_MESSAGE_OPEN_PGP": {
-		"TITLE_MESSAGE_OPEN_PGP": "OpenPGP 解密",
-		"LABEL_KEY": "私钥",
-		"BUTTON_DECRYPT": "解密"
+		"BUTTON_DECRYPT": "解密",
+		"BUTTON_VERIFY": "Verify",
+		"SIGNED_MESSAGE": "由 OpenPGP 签名",
+		"ENCRYPTED_MESSAGE": "由 OpenPGP 加密",
+		"STORE_IN_GNUPG": "Store on server in GnuPG",
+		"BACKUP_ON_SERVER": "Store (encrypted) on server",
+		"GOOD_SIGNATURE": "来自 %USER% 的可用签名",
+		"ERROR": "OpenPGP 错误： %ERROR%"
 	},
 	"POPUPS_FILTER": {
 		"TITLE_CREATE_FILTER": "创建筛选条件？",
@@ -330,10 +326,8 @@
 		"NOTIFICATION_ARCHIVE": "您没有选择“已归档邮件”文件夹来存储归档邮件。"
 	},
 	"TITLES": {
-		"LOGIN": "登录",
 		"MAILBOX": "邮箱",
-		"SETTINGS": "设置",
-		"COMPOSE": "写邮件"
+		"SETTINGS": "设置"
 	},
 	"UPLOAD": {
 		"ERROR_FILE_IS_TOO_BIG": "文件太大",
@@ -353,7 +347,6 @@
 		"LABEL_CONTACTS_NAME": "联系人",
 		"LABEL_FOLDERS_NAME": "文件夹",
 		"LABEL_ACCOUNTS_NAME": "账户",
-		"LABEL_IDENTITIES_NAME": "身份",
 		"LABEL_FILTERS_NAME": "筛选条件",
 		"LABEL_TEMPLATES_NAME": "模版",
 		"LABEL_SECURITY_NAME": "安全",
@@ -395,6 +388,8 @@
 		"LABEL_USE_THREADS": "使用对话",
 		"LABEL_REPLY_SAME_FOLDER": "将回复的邮件置于被回复的邮件所在的文件夹",
 		"LABEL_SHOW_IMAGES": "总是显示外部图片信息",
+		"LABEL_PREFER_HTML": "Prefer HTML to plain text",
+		"LABEL_PREFER_HTML_INFO": "Messages sometimes come in both formats. This option controls whether you want the HTML part or the plain text part to be displayed.",
 		"LABEL_REMOVE_COLORS": "从消息中删除背景和文本颜色",
 		"LABEL_MESSAGE_PER_PAGE": "封邮件每页",
 		"LABEL_MARK_MESSAGE_READ_AFTER": "将消息标记为已读",
@@ -439,7 +434,14 @@
 		"HELP_DELETE_FOLDER": "删除文件夹",
 		"HELP_SHOW_HIDE_FOLDER": "显示\/隐藏文件夹",
 		"HELP_CHECK_FOR_NEW_MESSAGES": "检查\/不检查新邮件",
-		"HIDE_UNSUBSCRIBED": "隐藏未订阅的文件夹"
+		"HIDE_UNSUBSCRIBED": "隐藏未订阅的文件夹",
+		"TYPE_CALENDAR": "日历",
+		"TYPE_CONFIGURATION": "配置",
+		"TYPE_CONTACTS": "联系人",
+		"TYPE_FILES": "文件",
+		"TYPE_JOURNAL": "日志",
+		"TYPE_NOTES": "笔记",
+		"TYPE_TASKS": "任务"
 	},
 	"SETTINGS_ACCOUNTS": {
 		"LEGEND_ACCOUNTS": "账户列表",
@@ -450,13 +452,13 @@
 		"LOADING_PROCESS": "更新账户列表中",
 		"DEFAULT_IDENTITY_LABEL": "默认"
 	},
-	"SETTINGS_OPEN_PGP": {
-		"BUTTON_ADD_OPEN_PGP_KEY": "导入 OpenPGP 密钥",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "生成 OpenPGP 密钥",
+	"SETTINGS_OPENPGP": {
+		"BUTTON_IMPORT_KEY": "导入 密钥",
+		"BUTTON_GENERATE_KEY_PAIR": "生成 密钥",
 		"TITLE_PRIVATE": "私有",
 		"TITLE_PUBLIC": "公开",
-		"GENERATE_ONLY_HTTPS": "仅限HTTPS",
-		"LABEL_ALLOW_DRAFT_AUTOSAVE": "自动保存草稿"
+		"LABEL_ALLOW_DRAFT_AUTOSAVE": "自动保存草稿",
+		"GET_MAILVELOPE": "Get Mailvelope browser add-on."
 	},
 	"SHORTCUTS_HELP": {
 		"LEGEND_SHORTCUTS_HELP": "快捷键说明",
@@ -497,25 +499,11 @@
 		"LABEL_SEND_MESSAGE": "发送邮件",
 		"LABEL_CLOSE_COMPOSE": "退出新邮件"
 	},
-	"PGP_NOTIFICATIONS": {
-		"NO_PUBLIC_KEYS_FOUND": "无法找到公钥",
-		"NO_PUBLIC_KEYS_FOUND_FOR": "无法找到 \"%EMAIL%\" 的公钥",
-		"NO_PRIVATE_KEY_FOUND": "无法找到私钥",
-		"NO_PRIVATE_KEY_FOUND_FOR": "无法找到 \"%EMAIL%\" 的私钥",
-		"ADD_A_PUBLICK_KEY": "添加公钥",
-		"SELECT_A_PRIVATE_KEY": "选择一个私钥",
-		"UNVERIFIRED_SIGNATURE": "未验证的签名",
-		"DECRYPTION_ERROR": "OpenPGP 解密出错",
-		"GOOD_SIGNATURE": "来自 %USER% 的可用签名",
-		"PGP_ERROR": "OpenPGP 错误： %ERROR%",
-		"SPECIFY_FROM_EMAIL": "请指定发件人邮箱地址",
-		"SPECIFY_AT_LEAST_ONE_RECIPIENT": "请指定至少一个收件人地址"
-	},
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "无效标记",
 		"AUTH_ERROR": "认证失败",
-		"ACCESS_ERROR": "访问错误",
 		"CONNECTION_ERROR": "无法连接至服务器",
+		"DOMAIN_ALREADY_EXISTS": "域已经存在",
 		"DOMAIN_NOT_ALLOWED": "不允许此域名",
 		"ACCOUNT_NOT_ALLOWED": "不允许此账户",
 		"CONTACTS_SYNC_ERROR": "联系人同步错误",
@@ -538,17 +526,11 @@
 		"CANT_DELETE_NON_EMPTY_FOLDER": "无法删除非空文件夹",
 		"CANT_SUBSCRIBE_FOLDER": "无法订阅文件夹",
 		"CANT_UNSUBSCRIBE_FOLDER": "无法取消订阅文件夹",
-		"CANT_SAVE_SETTINGS": "无法保存设置",
-		"CANT_SAVE_PLUGIN_SETTINGS": "无法保存设置",
-		"DOMAIN_ALREADY_EXISTS": "域已经存在",
-		"CANT_INSTALL_PACKAGE": "安装包失败",
-		"CANT_DELETE_PACKAGE": "移除包失败",
-		"INVALID_PLUGIN_PACKAGE": "无效插件",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "不支持的插件",
 		"DEMO_SEND_MESSAGE_ERROR": "出于安全考虑，测试账号无法发送外部邮件。",
 		"DEMO_ACCOUNT_ERROR": "出于安全考虑，测试账号无法进行此操作！",
 		"ACCOUNT_ALREADY_EXISTS": "账户已存在",
 		"ACCOUNT_DOES_NOT_EXIST": "账户不存在",
+		"ACCOUNT_SWITCH_FAILED": "Switch to account \"%EMAIL%\" failed",
 		"MAIL_SERVER_ERROR": "访问邮件服务器遇到错误。",
 		"INVALID_INPUT_ARGUMENT": "无效的参数输入",
 		"UNKNOWN_ERROR": "未知错误"

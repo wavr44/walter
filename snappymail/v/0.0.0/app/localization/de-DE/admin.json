@@ -1,4 +1,7 @@
 {
+	"GLOBAL": {
+		"SAVE": "Speichern"
+	},
 	"LOGIN": {
 		"LABEL_LOGIN": "Benutzer",
 		"LABEL_PASSWORD": "Passwort",
@@ -8,7 +11,7 @@
 	"TOP_PANEL": {
 		"LABEL_ADMIN_PANEL": "Adminpanel"
 	},
-	"TABS_LABELS": {
+	"SETTINGS_LABELS": {
 		"LABEL_GENERAL_NAME": "Allgemein",
 		"LABEL_LOGIN_NAME": "Anmeldung",
 		"LABEL_BRANDING_NAME": "Branding",
@@ -16,6 +19,7 @@
 		"LABEL_DOMAINS_NAME": "Domains",
 		"LABEL_SECURITY_NAME": "Sicherheit",
 		"LABEL_PACKAGES_NAME": "Erweiterungen",
+		"LABEL_CONFIG_NAME": "Config",
 		"LABEL_ABOUT_NAME": "Über"
 	},
 	"TAB_GENERAL": {
@@ -35,7 +39,7 @@
 		"LABEL_ALLOW_TEMPLATES": "Vorlagen erlauben",
 		"ALERT_DATA_ACCESS": "Data folder is accessible. Please configure your web server to hide the data folder from external access. Read more here:",
 		"ALERT_WARNING": "Warnung!",
-		"HTML_ALERT_WEAK_PASSWORD": "Sie verwenden das Standard-Admin-Passwort.\n<br \/>\nBitte <strong><a href=\"#\/security\">ändern<\/a><\/strong> Sie\naus Sicherheitsgründen das Passwort jetzt.\n"
+		"HTML_ALERT_WEAK_PASSWORD": "Sie verwenden das Standard-Admin-Passwort.\n<br>\nBitte <strong><a href=\"#\/security\">ändern<\/a><\/strong> Sie\naus Sicherheitsgründen das Passwort jetzt.\n"
 	},
 	"TAB_LOGIN": {
 		"LEGEND_LOGIN_SCREEN": "Anmeldebildschirm",
@@ -63,14 +67,14 @@
 		"BUTTON_TEST": "Testen",
 		"ALERT_NOTICE": "Hinweis!",
 		"HTML_ALERT_DO_NOT_USE_THIS_DATABASE": "Verwenden Sie diesen Datenbanktyp nicht bei einer hohen Anzahl aktiver Benutzer.",
-		"HTML_ALERT_DOES_NOT_SUPPORTED": "Ihr System unterstützt keine Kontakte.\n<br \/>\nSie müssen die <strong>PDO-Erweiterung (SQLite \/ MySQL \/ PostgreSQL)<\/strong> auf Ihrem Server installieren oder aktivieren.\n"
+		"HTML_ALERT_DOES_NOT_SUPPORTED": "Ihr System unterstützt keine Kontakte.\n<br>\nSie müssen die <strong>PDO-Erweiterung (SQLite \/ MySQL \/ PostgreSQL)<\/strong> auf Ihrem Server installieren oder aktivieren.\n"
 	},
 	"TAB_DOMAINS": {
 		"LEGEND_DOMAINS": "Domains",
 		"BUTTON_ADD_DOMAIN": "Domain hinzufügen",
 		"BUTTON_ADD_ALIAS": "Alias hinzufügen",
 		"DELETE_ARE_YOU_SURE": "Sind Sie sicher?",
-		"HTML_DOMAINS_HELPER": "Liste der Domains, die Webmail abrufen darf.\n<br \/>\nKlicken Sie auf den Namen, um die Domain zu konfigurieren.\n"
+		"HTML_DOMAINS_HELPER": "Liste der Domains, die Webmail abrufen darf.\n<br>\nKlicken Sie auf den Namen, um die Domain zu konfigurieren.\n"
 	},
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Sicherheit",
@@ -135,14 +139,13 @@
 		"BUTTON_CLOSE": "Schließen",
 		"BUTTON_ADD": "Hinzufügen",
 		"BUTTON_UPDATE": "Aktualisieren",
-		"NEW_DOMAIN_DESC": "Diese Domain Konfiguration wird es dir möglich machen <br \/>mit <i>%NAME%<\/i> Mailadressen zu arbeiten.",
+		"NEW_DOMAIN_DESC": "Diese Domain Konfiguration wird es dir möglich machen <br>mit <i>%NAME%<\/i> Mailadressen zu arbeiten.",
 		"WHITE_LIST_ALERT": "Liste der User, die Webmail abrufen darf.\nVerwenden Sie Leerzeichen als Trenner.\n"
 	},
 	"POPUPS_PLUGIN": {
 		"TITLE_PLUGIN": "Erweiterung",
 		"DESC_NOTHING_TO_CONFIGURE": "Nichts zu konfigurieren",
-		"BUTTON_CLOSE": "Schließen",
-		"BUTTON_SAVE": "Speichern"
+		"BUTTON_CLOSE": "Schließen"
 	},
 	"POPUPS_ASK": {
 		"BUTTON_YES": "Ja",
@@ -164,44 +167,12 @@
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Ungültiger Token",
 		"AUTH_ERROR": "Authentifizierung fehlgeschlagen",
-		"ACCESS_ERROR": "Zugriffsfehler",
-		"CONNECTION_ERROR": "Serververbindung kann nicht hergestellt werden",
-		"DOMAIN_NOT_ALLOWED": "Diese Domain ist nicht zugelassen.",
-		"ACCOUNT_NOT_ALLOWED": "Konto ist nicht zugelassen.",
-		"CURRENT_PASSWORD_INCORRECT": "Aktuelles Passwort falsch",
-		"NEW_PASSWORD_SHORT": "Passwort ist zu kurz",
-		"NEW_PASSWORD_WEAK": "Passwort ist zu einfach",
-		"CONTACTS_SYNC_ERROR": "Fehler bei Kontakte-Synchronisierung",
-		"CANT_GET_MESSAGE_LIST": "Die Nachrichtenliste ist nicht verfügbar",
-		"CANT_GET_MESSAGE": "Diese Nachricht ist nicht verfügbar",
-		"CANT_DELETE_MESSAGE": "Diese Nachricht kann nicht gelöscht werden",
-		"CANT_COPY_MESSAGE": "Diese Nachricht kann nicht kopiert werden",
-		"CANT_MOVE_MESSAGE": "Diese Nachricht kann nicht verschoben werden",
-		"CANT_SAVE_MESSAGE": "Diese Nachricht kann nicht gespeichert werden",
-		"CANT_SEND_MESSAGE": "Diese Nachricht kann nicht gesendet werden",
-		"INVALID_RECIPIENTS": "Ungültige Empfängeradressen",
-		"CANT_SAVE_FILTERS": "Die Filter können nicht gespeichert werden",
-		"CANT_GET_FILTERS": "Die Filter sind nicht verfügbar",
-		"FILTERS_ARE_NOT_CORRECT": "Die Filter sind fehlerhaft",
-		"CANT_CREATE_FOLDER": "Dieser Ordner kann nicht angelegt werden",
-		"CANT_RENAME_FOLDER": "Dieser Ordner kann nicht umbenannt werden",
-		"CANT_DELETE_FOLDER": "Dieser Ordner kann nicht gelöscht werden",
-		"CANT_DELETE_NON_EMPTY_FOLDER": "Der Ordner kann nicht gelöscht werden; er ist nicht leer",
-		"CANT_SUBSCRIBE_FOLDER": "Dieser Ordner kann nicht abonniert werden",
-		"CANT_UNSUBSCRIBE_FOLDER": "Das Abonnement dieses Ordners kann nicht gelöscht werden",
-		"CANT_SAVE_SETTINGS": "Einstellungen können nicht gespeichert werden",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Einstellungen können nicht gespeichert werden",
 		"DOMAIN_ALREADY_EXISTS": "Diese Domain existiert bereits",
+		"CANT_SAVE_PLUGIN_SETTINGS": "Einstellungen können nicht gespeichert werden",
 		"CANT_INSTALL_PACKAGE": "Fehler beim Installieren der Erweiterung",
 		"CANT_DELETE_PACKAGE": "Fehler beim entfernen der Erweiterung",
 		"INVALID_PLUGIN_PACKAGE": "Erweiterungspaket ist ungültig",
 		"UNSUPPORTED_PLUGIN_PACKAGE": "Erweiterungspaket wird nicht unterstützt",
-		"DEMO_SEND_MESSAGE_ERROR": "Dieses Demokonto darf aus Sicherheitsgründen keine Nachrichten an externe E-Mail-Adressen versenden!",
-		"DEMO_ACCOUNT_ERROR": "Aus Sicherheitsgründen ist dieses Konto nicht zu dieser Aktion berechtigt!",
-		"ACCOUNT_ALREADY_EXISTS": "Dieses Konto existiert bereits",
-		"ACCOUNT_DOES_NOT_EXIST": "Dieser Account existiert nicht.",
-		"MAIL_SERVER_ERROR": "Beim Zugriff auf den E-Mail-Server trat ein Fehler auf.",
-		"INVALID_INPUT_ARGUMENT": "Ungültige Eingabe",
 		"UNKNOWN_ERROR": "Unbekannter Fehler"
 	}
 }

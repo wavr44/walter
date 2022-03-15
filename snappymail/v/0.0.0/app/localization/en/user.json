@@ -57,7 +57,11 @@
 		"LABEL_ADV_DATE_MONTH": "Up to 1 month old",
 		"LABEL_ADV_DATE_3_MONTHS": "Up to 3 months old",
 		"LABEL_ADV_DATE_6_MONTHS": "Up to 6 months old",
-		"LABEL_ADV_DATE_YEAR": "Up to 1 year old"
+		"LABEL_ADV_DATE_YEAR": "Up to 1 year old",
+		"LABEL_ADV_SUBFOLDERS": "Subfolders",
+		"LABEL_ADV_SUBFOLDERS_NONE" : "None",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE" : "All",
+		"LABEL_ADV_SUBFOLDERS_SUBTREE_ONE" : "One level"
 	},
 	"PREVIEW_POPUP": {
 		"FULLSCREEN": "Toggle fullscreen",
@@ -132,6 +136,8 @@
 		"BUTTON_THREAD_MORE": "More messages",
 		"MENU_HEADERS": "Show message headers",
 		"MENU_VIEW_ORIGINAL": "Show Source",
+		"HTML_VIEW": "View HTML message",
+		"PLAIN_VIEW": "View plain text message",
 		"MENU_DOWNLOAD_ORIGINAL": "Download as .eml file",
 		"MENU_FILTER_SIMILAR": "Filter messages like this",
 		"MENU_PRINT": "Print",
@@ -142,8 +148,6 @@
 		"PRINT_LABEL_ATTACHMENTS": "Attachments",
 		"MESSAGE_VIEW_DESC": "Select any message in the list to view it here.",
 		"MESSAGE_VIEW_MOVE_DESC": "Click folder name in the left panel to select the destination.",
-		"PGP_SIGNED_MESSAGE_DESC": "OpenPGP signed message (click to verify)",
-		"PGP_ENCRYPTED_MESSAGE_DESC": "OpenPGP encrypted message (click to decrypt)",
 		"LINK_DOWNLOAD_AS_ZIP": "Download as zip",
 		"SPAM_SCORE": "Spam Score",
 		"HAS_VIRUS_WARNING": "WARNING: virus detected"
@@ -208,7 +212,6 @@
 		"ATTACHMENTS_UPLOAD_ERROR_DESC": "Not all attachments have been uploaded yet.",
 		"BUTTON_REQUEST_READ_RECEIPT": "Request a read receipt",
 		"BUTTON_MARK_AS_IMPORTANT": "Mark as important",
-		"BUTTON_OPEN_PGP": "OpenPGP (Plain Text Only)",
 		"BUTTON_REQUEST_DSN": "Request a delivery receipt"
 	},
 	"POPUPS_ASK": {
@@ -246,31 +249,24 @@
 		"DANGER_DESC_HTML_2": "Once started, the process cannot be aborted or cancelled.",
 		"TITLE_CLEARING_PROCESS": "Purging the folder..."
 	},
-	"POPUPS_IMPORT_OPEN_PGP_KEY": {
-		"TITLE_IMPORT_OPEN_PGP_KEY": "Import OpenPGP key",
-		"BUTTON_IMPORT_OPEN_PGP_KEY": "Import"
-	},
-	"POPUPS_VIEW_OPEN_PGP_KEY": {
-		"TITLE_VIEW_OPEN_PGP_KEY": "View OpenPGP key",
-		"BUTTON_SELECT": "Select"
-	},
-	"POPUPS_GENERATE_OPEN_PGP_KEYS": {
-		"TITLE_GENERATE_OPEN_PGP_KEYS": "Generate OpenPGP keys",
-		"LABEL_KEY_BIT_LENGTH": "Key length",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generate"
-	},
-	"POPUPS_COMPOSE_OPEN_PGP": {
-		"TITLE_COMPOSE_OPEN_PGP": "OpenPGP Sign\/Encrypt",
+	"OPENPGP": {
+		"POPUP_IMPORT_TITLE": "Import OpenPGP key",
+		"POPUP_IMPORT_BUTTON": "Import",
+		"POPUP_VIEW_TITLE": "View OpenPGP key",
+		"POPUP_VIEW_BUTTON": "Select",
+		"POPUP_GENERATE_TITLE": "Generate OpenPGP key pair",
+		"POPUP_GENERATE_BUTTON": "Generate",
+		"LABEL_KEY_TYPE": "Type",
 		"LABEL_SIGN": "Sign",
 		"LABEL_ENCRYPT": "Encrypt",
-		"BUTTON_SIGN": "Sign",
-		"BUTTON_ENCRYPT": "Encrypt",
-		"BUTTON_SIGN_AND_ENCRYPT": "Sign and encrypt"
-	},
-	"POPUPS_MESSAGE_OPEN_PGP": {
-		"TITLE_MESSAGE_OPEN_PGP": "OpenPGP Decrypt",
-		"LABEL_KEY": "Private Key",
-		"BUTTON_DECRYPT": "Decrypt"
+		"BUTTON_DECRYPT": "Decrypt",
+		"BUTTON_VERIFY": "Verify",
+		"SIGNED_MESSAGE": "OpenPGP signed message",
+		"ENCRYPTED_MESSAGE": "OpenPGP encrypted message",
+		"STORE_IN_GNUPG": "Store on server in GnuPG",
+		"BACKUP_ON_SERVER": "Store (encrypted) on server",
+		"GOOD_SIGNATURE": "Good signature from %USER%",
+		"ERROR": "OpenPGP error: %ERROR%"
 	},
 	"POPUPS_FILTER": {
 		"TITLE_CREATE_FILTER": "Create a filter?",
@@ -330,10 +326,8 @@
 		"NOTIFICATION_ARCHIVE": "You haven't selected \"Archive\" system folder achived messages are placed to."
 	},
 	"TITLES": {
-		"LOGIN": "Login",
 		"MAILBOX": "MailBox",
-		"SETTINGS": "Settings",
-		"COMPOSE": "Compose"
+		"SETTINGS": "Settings"
 	},
 	"UPLOAD": {
 		"ERROR_FILE_IS_TOO_BIG": "File is too big",
@@ -353,7 +347,6 @@
 		"LABEL_CONTACTS_NAME": "Contacts",
 		"LABEL_FOLDERS_NAME": "Folders",
 		"LABEL_ACCOUNTS_NAME": "Accounts",
-		"LABEL_IDENTITIES_NAME": "Identities",
 		"LABEL_FILTERS_NAME": "Filters",
 		"LABEL_TEMPLATES_NAME": "Templates",
 		"LABEL_SECURITY_NAME": "Security",
@@ -395,6 +388,8 @@
 		"LABEL_USE_THREADS": "Use threads",
 		"LABEL_REPLY_SAME_FOLDER": "Place replies in the folder of the message being replied to",
 		"LABEL_SHOW_IMAGES": "Always display external images in message body",
+		"LABEL_PREFER_HTML": "Prefer HTML to plain text",
+		"LABEL_PREFER_HTML_INFO": "Messages sometimes come in both formats. This option controls whether you want the HTML part or the plain text part to be displayed.",
 		"LABEL_REMOVE_COLORS": "Remove background and text colors from message body",
 		"LABEL_MESSAGE_PER_PAGE": "Messages on page",
 		"LABEL_MARK_MESSAGE_READ_AFTER": "Mark message as read after",
@@ -439,7 +434,14 @@
 		"HELP_DELETE_FOLDER": "Delete folder",
 		"HELP_SHOW_HIDE_FOLDER": "Show\/hide folder",
 		"HELP_CHECK_FOR_NEW_MESSAGES": "Check\/don't check for new messages",
-		"HIDE_UNSUBSCRIBED": "Hide unsubscribed folders"
+		"HIDE_UNSUBSCRIBED": "Hide unsubscribed folders",
+		"TYPE_CALENDAR": "Calendar",
+		"TYPE_CONFIGURATION": "Configuration",
+		"TYPE_CONTACTS": "Contacts",
+		"TYPE_FILES": "Files",
+		"TYPE_JOURNAL": "Journal",
+		"TYPE_NOTES": "Notes",
+		"TYPE_TASKS": "Tasks"
 	},
 	"SETTINGS_ACCOUNTS": {
 		"LEGEND_ACCOUNTS": "Accounts",
@@ -450,13 +452,13 @@
 		"LOADING_PROCESS": "Updating...",
 		"DEFAULT_IDENTITY_LABEL": "default"
 	},
-	"SETTINGS_OPEN_PGP": {
-		"BUTTON_ADD_OPEN_PGP_KEY": "Import OpenPGP Key",
-		"BUTTON_GENERATE_OPEN_PGP_KEYS": "Generate OpenPGP Keys",
+	"SETTINGS_OPENPGP": {
+		"BUTTON_IMPORT_KEY": "Import Key",
+		"BUTTON_GENERATE_KEY_PAIR": "Generate Key Pair",
 		"TITLE_PRIVATE": "Private",
 		"TITLE_PUBLIC": "Public",
-		"GENERATE_ONLY_HTTPS": "HTTPS only",
-		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft"
+		"LABEL_ALLOW_DRAFT_AUTOSAVE": "Automatically save draft",
+		"GET_MAILVELOPE": "Get Mailvelope browser add-on."
 	},
 	"SHORTCUTS_HELP": {
 		"LEGEND_SHORTCUTS_HELP": "Keyboard shortcuts help",
@@ -497,25 +499,11 @@
 		"LABEL_SEND_MESSAGE": "Send message",
 		"LABEL_CLOSE_COMPOSE": "Close compose"
 	},
-	"PGP_NOTIFICATIONS": {
-		"NO_PUBLIC_KEYS_FOUND": "No public keys found",
-		"NO_PUBLIC_KEYS_FOUND_FOR": "No public keys found for \"%EMAIL%\" email",
-		"NO_PRIVATE_KEY_FOUND": "No private key found",
-		"NO_PRIVATE_KEY_FOUND_FOR": "No private key found for \"%EMAIL%\" email",
-		"ADD_A_PUBLICK_KEY": "Add a public key",
-		"SELECT_A_PRIVATE_KEY": "Select a private key",
-		"UNVERIFIRED_SIGNATURE": "Unverified signature",
-		"DECRYPTION_ERROR": "OpenPGP decryption error",
-		"GOOD_SIGNATURE": "Good signature from %USER%",
-		"PGP_ERROR": "OpenPGP error: %ERROR%",
-		"SPECIFY_FROM_EMAIL": "Please specify FROM email address",
-		"SPECIFY_AT_LEAST_ONE_RECIPIENT": "Please specify at least one recipient"
-	},
 	"NOTIFICATIONS": {
 		"INVALID_TOKEN": "Invalid token",
 		"AUTH_ERROR": "Authentication failed",
-		"ACCESS_ERROR": "Access error",
 		"CONNECTION_ERROR": "Can't connect to server",
+		"DOMAIN_ALREADY_EXISTS": "Domain already exists",
 		"DOMAIN_NOT_ALLOWED": "Domain is not allowed",
 		"ACCOUNT_NOT_ALLOWED": "Account is not allowed",
 		"CONTACTS_SYNC_ERROR": "Contacts synchronization error",
@@ -538,17 +526,11 @@
 		"CANT_DELETE_NON_EMPTY_FOLDER": "Can't delete non-empty directory",
 		"CANT_SUBSCRIBE_FOLDER": "Can't subscribe folder",
 		"CANT_UNSUBSCRIBE_FOLDER": "Can't unsubscribe folder",
-		"CANT_SAVE_SETTINGS": "Can't save settings",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Can't save settings",
-		"DOMAIN_ALREADY_EXISTS": "Domain already exists",
-		"CANT_INSTALL_PACKAGE": "Failed to install package",
-		"CANT_DELETE_PACKAGE": "Failed to remove package",
-		"INVALID_PLUGIN_PACKAGE": "Invalid plugin package",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Unsupported plugin package",
 		"DEMO_SEND_MESSAGE_ERROR": "For security purposes, this account is not allowed to send messages to external e-mail addresses!",
 		"DEMO_ACCOUNT_ERROR": "For security purposes, this account is not allowed for this action!",
 		"ACCOUNT_ALREADY_EXISTS": "Account already exists",
 		"ACCOUNT_DOES_NOT_EXIST": "Account doesn't exist",
+		"ACCOUNT_SWITCH_FAILED": "Switch to account \"%EMAIL%\" failed",
 		"MAIL_SERVER_ERROR": "An error has occured while accessing mail server",
 		"INVALID_INPUT_ARGUMENT": "Invalid input argument",
 		"UNKNOWN_ERROR": "Unknown error"

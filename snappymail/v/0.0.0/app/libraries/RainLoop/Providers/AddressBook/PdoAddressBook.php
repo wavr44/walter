@@ -2,7 +2,7 @@
 
 namespace RainLoop\Providers\AddressBook;
 
-use \RainLoop\Providers\AddressBook\Enumerations\PropertyType;
+use RainLoop\Providers\AddressBook\Enumerations\PropertyType;
 
 class PdoAddressBook
 	extends \RainLoop\Common\PdoAbstract
@@ -40,6 +40,12 @@ class PdoAddressBook
 		$this->bExplain = false; // debug
 	}
 
+	public static function validPdoType(string $sType): string
+	{
+		$sType = \trim($sType);
+		return \in_array($sType, static::getAvailableDrivers()) ? $sType : 'sqlite';
+	}
+
 	public function IsSupported() : bool
 	{
 		$aDrivers = static::getAvailableDrivers();
@@ -70,7 +76,7 @@ class PdoAddressBook
 		);
 	}
 
-	private function prepearDatabaseSyncData(int $iUserID) : array
+	private function prepareDatabaseSyncData(int $iUserID) : array
 	{
 		$aResult = array();
 		$oStmt = $this->prepareAndExecute('SELECT id_contact, id_contact_str, changed, deleted, etag FROM rainloop_ab_contacts WHERE id_user = :id_user', array(
@@ -80,7 +86,7 @@ class PdoAddressBook
 		if ($oStmt)
 		{
 			$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-			if (\is_array($aFetch) && 0 < \count($aFetch))
+			if (\is_array($aFetch) && \count($aFetch))
 			{
 				foreach ($aFetch as $aItem)
 				{
@@ -113,12 +119,14 @@ class PdoAddressBook
 		$iUserID = $this->getUserId($sEmail);
 		if (0 >= $iUserID)
 		{
+			\SnappyMail\Log::warning('PdoAddressBook', 'Sync() invalid $iUserID');
 			return false;
 		}
 
 		$oClient = $this->getDavClient($sUrl, $sUser, $sPassword, $sProxy);
 		if (!$oClient)
 		{
+			\SnappyMail\Log::warning('PdoAddressBook', 'Sync() invalid DavClient');
 			return false;
 		}
 
@@ -127,10 +135,11 @@ class PdoAddressBook
 		$aRemoteSyncData = $this->prepareDavSyncData($oClient, $sPath);
 		if (false === $aRemoteSyncData)
 		{
+			\SnappyMail\Log::info('PdoAddressBook', 'Sync() no data to sync');
 			return false;
 		}
 
-		$aDatabaseSyncData = $this->prepearDatabaseSyncData($iUserID);
+		$aDatabaseSyncData = $this->prepareDatabaseSyncData($iUserID);
 
 //		$this->oLogger->WriteDump($aRemoteSyncData);
 //		$this->oLogger->WriteDump($aDatabaseSyncData);
@@ -156,7 +165,7 @@ class PdoAddressBook
 			}
 		}
 
-		if (0 < \count($aIdsForDeletedion))
+		if (\count($aIdsForDeletedion))
 		{
 			$this->DeleteContacts($sEmail, $aIdsForDeletedion, false);
 		}
@@ -182,7 +191,7 @@ class PdoAddressBook
 				{
 					$sExsistensBody = '';
 					$mExsistenRemoteID = isset($aRemoteSyncData[$sKey]['vcf']) && !empty($aData['etag']) ? $aRemoteSyncData[$sKey]['vcf'] : '';
-					if (0 < \strlen($mExsistenRemoteID))
+					if (\strlen($mExsistenRemoteID))
 					{
 						$oResponse = $this->davClientRequest($oClient, 'GET', $sPath.$mExsistenRemoteID);
 						if ($oResponse)
@@ -194,7 +203,7 @@ class PdoAddressBook
 					}
 
 					$oResponse = $this->davClientRequest($oClient, 'PUT',
-						$sPath.(0 < \strlen($mExsistenRemoteID) ? $mExsistenRemoteID : $oContact->CardDavNameUri()),
+						$sPath.(\strlen($mExsistenRemoteID) ? $mExsistenRemoteID : $oContact->CardDavNameUri()),
 						$oContact->ToVCard($sExsistensBody, $this->oLogger)."\r\n\r\n");
 					if ($oResponse)
 					{
@@ -297,8 +306,8 @@ class PdoAddressBook
 		$bVcf = 'vcf' === $sType;
 		$bCsvHeader = true;
 
-		$aDatabaseSyncData = $this->prepearDatabaseSyncData($iUserID);
-		if (\is_array($aDatabaseSyncData) && 0 < \count($aDatabaseSyncData))
+		$aDatabaseSyncData = $this->prepareDatabaseSyncData($iUserID);
+		if (\is_array($aDatabaseSyncData) && \count($aDatabaseSyncData))
 		{
 			foreach ($aDatabaseSyncData as $mData)
 			{
@@ -333,7 +342,7 @@ class PdoAddressBook
 
 		$iUserID = $this->getUserId($sEmail);
 
-		$iIdContact = 0 < \strlen($oContact->IdContact) && \is_numeric($oContact->IdContact) ? (int) $oContact->IdContact : 0;
+		$iIdContact = \strlen($oContact->IdContact) && \is_numeric($oContact->IdContact) ? (int) $oContact->IdContact : 0;
 
 		$bUpdate = 0 < $iIdContact;
 
@@ -418,7 +427,7 @@ class PdoAddressBook
 					);
 				}
 
-				if (0 < \count($aParams))
+				if (\count($aParams))
 				{
 					$sSql = 'INSERT INTO rainloop_ab_properties '.
 						'( id_contact,  id_user,  prop_type,  prop_type_str,  prop_value,  prop_value_lower, prop_value_custom,  prop_frec)'.
@@ -500,7 +509,7 @@ class PdoAddressBook
 		$aSearchIds = array();
 		$aPropertyFromSearchIds = array();
 
-		if (0 < \strlen($sSearch))
+		if (\strlen($sSearch))
 		{
 			$sCustomSearch = $this->specialConvertSearchValueCustomPhone($sSearch);
 			$sLowerSearch = $this->specialConvertSearchValueLower($sSearch, '=');
@@ -513,8 +522,8 @@ class PdoAddressBook
 			$sSql = 'SELECT id_user, id_prop, id_contact FROM rainloop_ab_properties '.
 				'WHERE (id_user = :id_user) AND prop_type IN ('.$sSearchTypes.') AND ('.
 				'prop_value LIKE :search ESCAPE \'=\''.
-(0 < \strlen($sLowerSearch) ? ' OR (prop_value_lower <> \'\' AND prop_value_lower LIKE :search_lower ESCAPE \'=\')' : '').
-(0 < \strlen($sCustomSearch) ? ' OR (prop_type = '.PropertyType::PHONE.' AND prop_value_custom <> \'\' AND prop_value_custom LIKE :search_custom_phone)' : '').
+(\strlen($sLowerSearch) ? ' OR (prop_value_lower <> \'\' AND prop_value_lower LIKE :search_lower ESCAPE \'=\')' : '').
+(\strlen($sCustomSearch) ? ' OR (prop_type = '.PropertyType::PHONE.' AND prop_value_custom <> \'\' AND prop_value_custom LIKE :search_custom_phone)' : '').
 				') GROUP BY id_contact, id_prop';
 
 			$aParams = array(
@@ -522,12 +531,12 @@ class PdoAddressBook
 				':search' => array($this->specialConvertSearchValue($sSearch, '='), \PDO::PARAM_STR)
 			);
 
-			if (0 < \strlen($sLowerSearch))
+			if (\strlen($sLowerSearch))
 			{
 				$aParams[':search_lower'] = array($sLowerSearch, \PDO::PARAM_STR);
 			}
 
-			if (0 < \strlen($sCustomSearch))
+			if (\strlen($sCustomSearch))
 			{
 				$aParams[':search_custom_phone'] = array($sCustomSearch, \PDO::PARAM_STR);
 			}
@@ -536,7 +545,7 @@ class PdoAddressBook
 			if ($oStmt)
 			{
 				$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-				if (\is_array($aFetch) && 0 < \count($aFetch))
+				if (\is_array($aFetch) && \count($aFetch))
 				{
 					foreach ($aFetch as $aItem)
 					{
@@ -584,7 +593,7 @@ class PdoAddressBook
 				':id_user' => array($iUserID, \PDO::PARAM_INT)
 			);
 
-			if (0 < \count($aSearchIds))
+			if (\count($aSearchIds))
 			{
 				$sSql .= ' AND id_contact IN ('.implode(',', $aSearchIds).')';
 			}
@@ -600,7 +609,7 @@ class PdoAddressBook
 
 				$aContacts = array();
 				$aIdContacts = array();
-				if (\is_array($aFetch) && 0 < \count($aFetch))
+				if (\is_array($aFetch) && \count($aFetch))
 				{
 					foreach ($aFetch as $aItem)
 					{
@@ -626,7 +635,7 @@ class PdoAddressBook
 
 				unset($aFetch);
 
-				if (0 < count($aIdContacts))
+				if (\count($aIdContacts))
 				{
 					$oStmt->closeCursor();
 
@@ -636,7 +645,7 @@ class PdoAddressBook
 					if ($oStmt)
 					{
 						$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-						if (\is_array($aFetch) && 0 < \count($aFetch))
+						if (\is_array($aFetch) && \count($aFetch))
 						{
 							foreach ($aFetch as $aItem)
 							{
@@ -712,7 +721,7 @@ class PdoAddressBook
 		{
 			$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
 
-			if (\is_array($aFetch) && 0 < \count($aFetch))
+			if (\is_array($aFetch) && \count($aFetch))
 			{
 				foreach ($aFetch as $aItem)
 				{
@@ -743,7 +752,7 @@ class PdoAddressBook
 				if ($oStmt)
 				{
 					$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-					if (\is_array($aFetch) && 0 < \count($aFetch))
+					if (\is_array($aFetch) && \count($aFetch))
 					{
 						foreach ($aFetch as $aItem)
 						{
@@ -800,7 +809,7 @@ class PdoAddressBook
 		$sSql = 'SELECT id_contact, id_prop, prop_type, prop_value FROM rainloop_ab_properties '.
 			'WHERE (id_user = :id_user) AND prop_type IN ('.$sTypes.') AND ('.
 			'prop_value LIKE :search ESCAPE \'=\''.
-(0 < \strlen($sLowerSearch) ? ' OR (prop_value_lower <> \'\' AND prop_value_lower LIKE :search_lower ESCAPE \'=\')' : '').
+(\strlen($sLowerSearch) ? ' OR (prop_value_lower <> \'\' AND prop_value_lower LIKE :search_lower ESCAPE \'=\')' : '').
 			')'
 		;
 
@@ -810,7 +819,7 @@ class PdoAddressBook
 			':search' => array($this->specialConvertSearchValue($sSearch, '='), \PDO::PARAM_STR)
 		);
 
-		if (0 < \strlen($sLowerSearch))
+		if (\strlen($sLowerSearch))
 		{
 			$aParams[':search_lower'] = array($sLowerSearch, \PDO::PARAM_STR);
 		}
@@ -828,7 +837,7 @@ class PdoAddressBook
 			$aContactAllAccess = array();
 
 			$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-			if (\is_array($aFetch) && 0 < \count($aFetch))
+			if (\is_array($aFetch) && \count($aFetch))
 			{
 				foreach ($aFetch as $aItem)
 				{
@@ -857,7 +866,7 @@ class PdoAddressBook
 			unset($aFetch);
 
 			$aIdContacts = \array_values($aIdContacts);
-			if (0 < count($aIdContacts))
+			if (\count($aIdContacts))
 			{
 				$oStmt->closeCursor();
 
@@ -872,7 +881,7 @@ class PdoAddressBook
 				if ($oStmt)
 				{
 					$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-					if (\is_array($aFetch) && 0 < \count($aFetch))
+					if (\is_array($aFetch) && \count($aFetch))
 					{
 						$aNames = array();
 						$aEmails = array();
@@ -1014,13 +1023,13 @@ class PdoAddressBook
 			if ($oStmt)
 			{
 				$aFetch = $oStmt->fetchAll(\PDO::FETCH_ASSOC);
-				if (\is_array($aFetch) && 0 < \count($aFetch))
+				if (\is_array($aFetch) && \count($aFetch))
 				{
 					foreach ($aFetch as $aItem)
 					{
 						if ($aItem && !empty($aItem['prop_value']))
 						{
-							$aExists[] = \MailSo\Base\Utils::StrToLowerIfAscii(\trim($aItem['prop_value']));
+							$aExists[] = \mb_strtolower(\trim($aItem['prop_value']));
 						}
 					}
 				}
@@ -1030,7 +1039,7 @@ class PdoAddressBook
 				if ($oItem)
 				{
 					$sEmail = \trim($oItem->GetEmail(true));
-					if (0 < \strlen($sEmail))
+					if (\strlen($sEmail))
 					{
 						$aEmailsToUpdate[] = $sEmail;
 						return !\in_array($sEmail, $aExists);
@@ -1047,7 +1056,7 @@ class PdoAddressBook
 				if ($oItem)
 				{
 					$sEmailUpdate = \trim($oItem->GetEmail(true));
-					if (0 < \strlen($sEmailUpdate))
+					if (\strlen($sEmailUpdate))
 					{
 						$aEmailsToUpdate[] = $sEmailUpdate;
 					}
@@ -1057,7 +1066,7 @@ class PdoAddressBook
 
 		unset($aEmails, $aEmailsObjects);
 
-		if (0 < \count($aEmailsToCreate))
+		if (\count($aEmailsToCreate))
 		{
 			$oContact = new Classes\Contact();
 			foreach ($aEmailsToCreate as $oEmail)
@@ -1086,7 +1095,7 @@ class PdoAddressBook
 						$sFirst = $sFullName;
 					}
 
-					if (0 < \strlen($sFirst))
+					if (\strlen($sFirst))
 					{
 						$oPropName = new Classes\Property();
 						$oPropName->Type = Enumerations\PropertyType::FIRST_NAME;
@@ -1095,7 +1104,7 @@ class PdoAddressBook
 						$oContact->Properties[] = $oPropName;
 					}
 
-					if (0 < \strlen($sLast))
+					if (\strlen($sLast))
 					{
 						$oPropName = new Classes\Property();
 						$oPropName->Type = Enumerations\PropertyType::LAST_NAME;
@@ -1105,7 +1114,7 @@ class PdoAddressBook
 					}
 				}
 
-				if (0 < \count($oContact->Properties))
+				if (\count($oContact->Properties))
 				{
 					$this->ContactSave($sEmail, $oContact);
 				}
@@ -1272,13 +1281,13 @@ SQLITEINITIAL;
 		}
 
 		$aResult = array();
-		if (0 < \strlen($sInitial))
+		if (\strlen($sInitial))
 		{
 			$aList = \explode(';', \trim($sInitial));
 			foreach ($aList as $sV)
 			{
 				$sV = \trim($sV);
-				if (0 < \strlen($sV))
+				if (\strlen($sV))
 				{
 					$aResult[] = $sV;
 				}
@@ -1373,11 +1382,6 @@ SQLITEINITIAL;
 
 	private function specialConvertSearchValueLower(string $sSearch, string $sEscapeSign = '=') : string
 	{
-		if (!\MailSo\Base\Utils::FunctionExistsAndEnabled('mb_strtolower'))
-		{
-			return '';
-		}
-
 		return '%'.\str_replace(array($sEscapeSign, '_', '%'),
 			array($sEscapeSign.$sEscapeSign, $sEscapeSign.'_', $sEscapeSign.'%'),
 				(string) \mb_strtolower($sSearch, 'UTF-8')).'%';
