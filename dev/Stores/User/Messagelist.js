@@ -169,7 +169,7 @@ MessagelistUserStore.canAutoSelect = () =>
  * @param {boolean=} bDropPagePosition = false
  * @param {boolean=} bDropCurrentFolderCache = false
  */
-MessagelistUserStore.reload = (bDropPagePosition = false, bDropCurrentFolderCache = false) => {
+MessagelistUserStore.reload = (bDropPagePosition = false, bDropCurrentFolderCache = false, bAppend = false) => {
 	let iOffset = (MessagelistUserStore.page() - 1) * SettingsUserStore.messagesPerPage();
 
 	if (bDropCurrentFolderCache) {
@@ -264,7 +264,11 @@ MessagelistUserStore.reload = (bDropPagePosition = false, bDropCurrentFolderCach
 
 					disableAutoSelect(true);
 
-					MessagelistUserStore(collection);
+					if (bAppend) {
+						collection.forEach(item => MessagelistUserStore.push(item));
+					} else {
+						MessagelistUserStore(collection);
+					}
 					MessagelistUserStore.isIncomplete(false);
 
 					if (folder && (bCached || unreadCountChange || SettingsUserStore.useThreads())) {

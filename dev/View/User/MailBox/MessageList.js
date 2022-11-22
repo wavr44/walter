@@ -254,10 +254,11 @@ export class MailMessageList extends AbstractViewRight {
 			}
 		});
 
+/*
 		MessagelistUserStore.endHash.subscribe((() =>
 			this.selector.scrollToFocused()
 		).throttle(50));
-
+*/
 		decorateKoCommands(this, {
 			downloadCommand: canBeMovedHelper,
 			forwardCommand: canBeMovedHelper,
@@ -534,6 +535,21 @@ export class MailMessageList extends AbstractViewRight {
 				el && this.gotoThread(ko.dataFor(el));
 			}
 		});
+
+		b_content.addEventListener(
+			'scroll',
+			(() => {
+				if (b_content.scrollTop >= (b_content.scrollTopMax || (b_content.scrollHeight - b_content.clientTop))) {
+					// Load more messages in the MessageList
+					let page = MessagelistUserStore.page();
+					if (page < MessagelistUserStore.pageCount()) {
+						MessagelistUserStore.page(1 + page);
+						MessagelistUserStore.reload(false, false, true);
+					}
+				}
+			}).debounce(1000),
+			{passive:true}
+		);
 
 		// initUploaderForAppend
 
