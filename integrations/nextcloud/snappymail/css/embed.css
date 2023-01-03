@@ -98,8 +98,8 @@ body > header ul {
 
 a.selectable {
 	margin: 2px;
-	height: 38px !important;
-	line-height: 38px !important;
+	height: 24px !important;
+	line-height: 24px !important;
 	border-radius: var(--border-radius-pill);
 }
 
