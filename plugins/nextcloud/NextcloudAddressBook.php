@@ -1,9 +1,5 @@
 <?php
-use Sabre\VObject\Reader;
-use OCA\DAV\CardDAV\CardDavBackend;
 use RainLoop\Providers\AddressBook\Classes\Contact;
-
-
 
 class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBookInterface
 {
