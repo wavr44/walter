@@ -4,15 +4,20 @@ use Sabre\VObject\Component\VCard;
 
 class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBookInterface
 {
+	use Rainloop\Providers\AddressBook\CardDAV;
 	private const URI = 'webmail';
 	private $contactsManager;
+	private $key;
 
 	function __construct()
 	{
 		$this->contactsManager = \OC::$server->getContactsManager();
-		foreach ($this->contactsManager->getAddressBooks() as $addressbook) {
-			if ($addressbook->getKey() !== self::URI) {
+		foreach ($this->contactsManager->getUserAddressBooks() as $addressbook) {
+			if ($addressbook->getUri() !== self::URI) {
 				$this->contactsManager->unregisterAddressBook($addressbook);
+			}
+			else {
+				$this->key = $addressbook->getKey();
 			}
 		}
 	}
@@ -36,9 +41,6 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	}
 
 	public function ContactSave(Contact $oContact) : bool {
-		if ($this->contactsManager->createOrUpdate($oContact->vCard->jsonSerialize(), self::URI)) {
-			return true;
-		}
 		return false;
 	}
 
@@ -51,14 +53,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	}
 
 	public function GetContacts(int $iOffset = 0, int $iLimit = 20, string $sSearch = '', int &$iResultCount = 0) : array {
-		$options = [
-			'offset' => $iOffset,
-			'limit' => $iLimit
-		];
-		$results = $this->contactsManager->search($sSearch, [], $options);
-		$iResultCount = count($results);
-		return $this->convertResultsToSnappymailContacts($results);
-
+		return [];
 	}
 
 	public function GetContactByEmail(string $sEmail) : ?Contact {
@@ -70,11 +65,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	}
 
 	public function GetSuggestions(string $sSearch, int $iLimit = 20) : array {
-		$options = [
-			'limit' => $iLimit
-		];
-		$results = $this->contactsManager->search($sSearch, [], $options);
-		return $this->convertResultsToSnappymailContacts($results);
+		return [];
 	}
 
 	/**
@@ -83,26 +74,14 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	 */
 	public function IncFrec(array $aEmails, bool $bCreateAuto = true) : bool {
 		if ($bCreateAuto) {
+			$properties = [];
 			foreach ($aEmails as $sEmail => $sAddress) {
-				$oVCard = new VCard;
-				$oVCard->add('EMAIL', $sEmail);
+				$properties['EMAIL'] = $sAddress;
 				$sFullName = \trim(\MailSo\Mime\Email::Parse(\trim($sAddress))->GetDisplayName());
 				if ('' !== $sFullName) {
-					$sFirst = $sLast = '';
-					if (false !== \strpos($sFullName, ' ')) {
-						$aNames = \explode(' ', $sFullName, 2);
-						$sFirst = isset($aNames[0]) ? $aNames[0] : '';
-						$sLast = isset($aNames[1]) ? $aNames[1] : '';
-					} else {
-						$sFirst = $sFullName;
-					}
-					if (\strlen($sFirst) || \strlen($sLast)) {
-						$oVCard->N = array($sLast, $sFirst, '', '', '');
-					}
+					$properties['FN'] = $sFullName;
 				}
-				$oContact = new Contact();
-				$oContact->setVCard($oVCard);
-				$this->ContactSave($oContact);
+				$this->contactsManager->createOrUpdate($properties, $this->key);
 			}
 			return true;
 		}
@@ -113,15 +92,5 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 		return '';
 	}
 
-	private function convertResultsToSnappymailContacts(array $results = []) {
-		$contacts = [];
-		foreach($results as $result) {
-			$vCard = \Sabre\VObject\Reader::readJson($result);
-			$contact = new Contact();
-			$contact->setVCard($vCard);
-			$contacts[] = $contact;
-		}
 
-		return $contacts;
-	}
 }
