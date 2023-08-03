@@ -260,6 +260,9 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				);
 			}
 			if ('address-book' === $sName) {
+				if (!\is_array($mResult)) {
+					$mResult = array();
+				}
 				include_once __DIR__ . '/NextcloudAddressBook.php';
 				$mResult = new NextcloudAddressBook();
 			}
