@@ -56,7 +56,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 		];
 		$results = $this->contactsManager->search($sSearch, [], $options);
 		$iResultCount = count($results);
-		return $results;
+		return $this->convertResultsToSnappymailContacts($results);
 
 	}
 
@@ -72,7 +72,8 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 		$options = [
 			'limit' => $iLimit
 		];
-		return $this->contactsManager->search($sSearch, [], $options);
+		$results = $this->contactsManager->search($sSearch, [], $options);
+		return $this->convertResultsToSnappymailContacts($results);
 	}
 
 	/**
@@ -85,5 +86,17 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 
 	public function Test() : string {
 		return '';
+	}
+
+	private function convertResultsToSnappymailContacts(array $results = []) {
+		$contacts = [];
+		foreach($results as $result) {
+			$vCard = \Sabre\VObject\Reader::readJson($result);
+			$contact = new Contact();
+			$contact->setVCard($vCard);
+			$contacts[] = $contact;
+		}
+
+		return $contacts;
 	}
 }
