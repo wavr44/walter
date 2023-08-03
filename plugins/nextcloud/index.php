@@ -259,6 +259,10 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 					$this->Config()->Get('plugin', 'ignoreSystemAddressbook', true)
 				);
 			}
+			if ('address-book' === $sName) {
+				include_once __DIR__ . '/NextcloudAddressBook.php';
+				$mResult = new NextcloudAddressBook();
+			}
 		}
 	}
 
