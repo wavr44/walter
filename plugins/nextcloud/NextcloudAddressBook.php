@@ -1,5 +1,6 @@
 <?php
 use RainLoop\Providers\AddressBook\Classes\Contact;
+use Sabre\VObject\Component\VCard;
 
 class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBookInterface
 {
@@ -81,6 +82,30 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	 * Handy for "most used" sorting suggestions in PdoAddressBook
 	 */
 	public function IncFrec(array $aEmails, bool $bCreateAuto = true) : bool {
+		if ($bCreateAuto) {
+			foreach ($aEmails as $sEmail => $sAddress) {
+				$oVCard = new VCard;
+				$oVCard->add('EMAIL', $sEmail);
+				$sFullName = \trim(\MailSo\Mime\Email::Parse(\trim($sAddress))->GetDisplayName());
+				if ('' !== $sFullName) {
+					$sFirst = $sLast = '';
+					if (false !== \strpos($sFullName, ' ')) {
+						$aNames = \explode(' ', $sFullName, 2);
+						$sFirst = isset($aNames[0]) ? $aNames[0] : '';
+						$sLast = isset($aNames[1]) ? $aNames[1] : '';
+					} else {
+						$sFirst = $sFullName;
+					}
+					if (\strlen($sFirst) || \strlen($sLast)) {
+						$oVCard->N = array($sLast, $sFirst, '', '', '');
+					}
+				}
+				$oContact = new Contact();
+				$oContact->setVCard($oVCard);
+				$this->ContactSave($oContact);
+			}
+			return true;
+		}
 		return false;
 	}
 
