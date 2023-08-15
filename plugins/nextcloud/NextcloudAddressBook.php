@@ -12,14 +12,17 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	function __construct()
 	{
 		$this->contactsManager = \OC::$server->getContactsManager();
-		foreach ($this->contactsManager->getUserAddressBooks() as $addressbook) {
-			if ($addressbook->getUri() !== self::URI) {
-				$this->contactsManager->unregisterAddressBook($addressbook);
-			}
-			else {
-				$this->key = $addressbook->getKey();
-			}
+		$uid = \OC::$server->getUserSession()->getUser()->getUID();
+		$cardDavBackend = \OC::$server->get(\OCA\DAV\CardDAV\CardDavBackend::class);
+		$principalUri = 'principals/users/'. $uid;
+		$addressBookId = $cardDavBackend->getAddressBooksByUri($principalUri, self::URI)->id;
+		if (empty($addressBookId)) {
+			$addressBookId = $cardDavBackend->createAddressBook($principalUri, self::URI, array_filter([
+                '{DAV:}displayname' => 'Webmail',
+                '{urn:ietf:params:xml:ns:carddav}addressbook-description' => 'Recipients from snappymail',
+            ]));
 		}
+		$this->key = $addressBookId;
 	}
 
 	public function IsSupported() : bool {
