@@ -82,7 +82,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 			$properties = [];
 			foreach ($aEmails as $sEmail => $sAddress) {
 				$properties['EMAIL'] = $sAddress;
-				$sFullName = \trim(\MailSo\Mime\Email::Parse(\trim($sAddress))->GetDisplayName());
+				$sFullName = ucfirst(strstr($sAddress, '@', true));
 				if ('' !== $sFullName) {
 					$properties['FN'] = $sFullName;
 				}
