@@ -78,18 +78,44 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 		return [];
 	}
 
+	private function GetEmailObjects(array $aEmails) : array {
+		$aEmailsObjects = \array_map(function ($mItem) {
+			$oResult = null;
+			try {
+				$oResult = \MailSo\Mime\Email::Parse(\trim($mItem));
+			}
+			catch (\Throwable $oException) {
+				unset($oException);
+			}
+			return $oResult;
+		}, $aEmails);
+
+		$aEmailsObjects = \array_filter($aEmailsObjects, function ($oItem) {
+			return !!$oItem;
+		});
+		return $aEmailsObjects;
+	}
+
 	/**
 	 * Add/increment email address usage
 	 * Handy for "most used" sorting suggestions in PdoAddressBook
 	 */
 	public function IncFrec(array $aEmails, bool $bCreateAuto = true) : bool {
 		if ($bCreateAuto) {
-			$properties = [];
-			foreach ($aEmails as $sEmail => $sAddress) {
-				$properties['EMAIL'] = $sAddress;
-				$sFullName = ucfirst(strstr($sAddress, '@', true));
-				if ('' !== $sFullName) {
-					$properties['FN'] = $sFullName;
+			$aEmailsObjects = $this->GetEmailObjects($aEmails);
+			foreach ($aEmailsObjects as $oEmail) {		
+				$properties = [];
+				if ('' === \trim($oEmail->GetEmail())) {
+					continue;
+				}
+				$sEmail = \trim($oEmail->GetEmail(true));
+				$existingResults = $this->contactsManager->search($sEmail, ['EMAIL'], ['strict_search' => true]);
+				if (!empty($existingResults)) {
+					$properties['URI'] = $existingResults[0]['UID'] . '.vcf';
+				}
+				$properties['EMAIL'] = \trim($oEmail->GetEmail(true));
+				if ('' !== \trim($oEmail->GetDisplayName())) {
+					$properties['FN'] = $oEmail->GetDisplayName();
 				}
 				$this->contactsManager->createOrUpdate($properties, $this->key);
 			}
