@@ -12,6 +12,12 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	function __construct()
 	{
 		$this->contactsManager = \OC::$server->getContactsManager();
+
+		foreach($this->contactsManager->getUserAddressBooks() as $addressBook) {
+			if($addressBook->isSystemAddressBook()) {
+				 $this->contactsManager->unregisterAddressBook($addressBook);
+			}
+		}
 		$uid = \OC::$server->getUserSession()->getUser()->getUID();
 		$cardDavBackend = \OC::$server->get(\OCA\DAV\CardDAV\CardDavBackend::class);
 		$principalUri = 'principals/users/'. $uid;
@@ -103,6 +109,10 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	public function IncFrec(array $aEmails, bool $bCreateAuto = true) : bool {
 		if ($bCreateAuto) {
 			$aEmailsObjects = $this->GetEmailObjects($aEmails);
+
+			if (!count($aEmailsObjects)) {
+				return false;
+			}
 			foreach ($aEmailsObjects as $oEmail) {		
 				$properties = [];
 				if ('' === \trim($oEmail->GetEmail())) {
@@ -113,7 +123,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 				if (!empty($existingResults)) {
 					$properties['URI'] = $existingResults[0]['UID'] . '.vcf';
 				}
-				$properties['EMAIL'] = \trim($oEmail->GetEmail(true));
+				$properties['EMAIL'] = \trim($sEmail);
 				if ('' !== \trim($oEmail->GetDisplayName())) {
 					$properties['FN'] = $oEmail->GetDisplayName();
 				}
