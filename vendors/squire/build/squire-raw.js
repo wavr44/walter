@@ -220,52 +220,36 @@ const
 	},
 
 	fixCursor = (node, root) => {
-		// In Webkit and Gecko, block level elements are collapsed and
-		// unfocusable if they have no content (:empty). To remedy this, a <BR> must be
-		// inserted. In Opera and IE, we just need a textnode in order for the
-		// cursor to appear.
-		let self = root.__squire__;
-		let originalNode = node;
-		let fixer, child;
-
-		if (node === root) {
-			if (!(child = node.firstChild) || child.nodeName === 'BR') {
-				fixer = self.createDefaultBlock();
-				if (child) {
-					child.replaceWith(fixer);
-				}
-				else {
-					node.append(fixer);
-				}
-				node = fixer;
-				fixer = null;
-			}
+		let fixer = null;
+		if (node instanceof Text) {
+			return node;
 		}
-
-		if (node.nodeType === TEXT_NODE) {
-			return originalNode;
-		}
-
 		if (isInline(node)) {
-			child = node.firstChild;
-			while (isWebKit && child?.nodeType === TEXT_NODE && !child.data) {
-				child.remove();
-				child = node.firstChild;
+			let child = node.firstChild;
+			if (cantFocusEmptyTextNodes) {
+				while (child && child instanceof Text && !child.data) {
+					node.removeChild(child);
+					child = node.firstChild;
+				}
 			}
 			if (!child) {
-				fixer = self._addZWS();
+				if (cantFocusEmptyTextNodes) {
+					fixer = document.createTextNode(ZWS);
+				} else {
+					fixer = document.createTextNode("");
+				}
 			}
-//		} else if (!node.querySelector('BR')) {
-//		} else if (!node.innerText.trim().length) {
-		} else if (node.matches(':empty')) {
-			fixer = createElement('BR');
-			while ((child = node.lastElementChild) && !isInline(child)) {
-				node = child;
+		} else if (node instanceof Element && !node.querySelector("BR")) {
+			fixer = createElement("BR");
+			let parent = node;
+			let child;
+			while ((child = parent.lastElementChild) && !isInline(child)) {
+				parent = child;
 			}
 		}
 		if (fixer) {
 			try {
-				node.append(fixer);
+				node.appendChild(fixer);
 			} catch (error) {
 				didError({
 					name: 'Squire: fixCursor – ' + error,
@@ -274,8 +258,7 @@ const
 				});
 			}
 		}
-
-		return originalNode;
+		return node;
 	},
 
 	// Recursively examine container nodes and wrap any inline children.
@@ -959,36 +942,30 @@ const
 		let startBlock = getStartBlockOfRange(range, root);
 		let nodeAfterCursor;
 
-		if (!startBlock) {
-			return false;
-		}
-
-		// If in the middle or end of a text node, we're not at the boundary.
-		if (startContainer.nodeType === TEXT_NODE) {
-			if (startOffset) {
-				return false;
-			}
-			nodeAfterCursor = startContainer;
-		} else {
-			nodeAfterCursor = getNodeAfter(startContainer, startOffset);
-			if (nodeAfterCursor && !root.contains(nodeAfterCursor)) {
-				nodeAfterCursor = null;
-			}
-			// The cursor was right at the end of the document
-			if (!nodeAfterCursor) {
-				nodeAfterCursor = getNodeBefore(startContainer, startOffset);
-				if (nodeAfterCursor.nodeType === TEXT_NODE &&
-						nodeAfterCursor.length) {
+		if (startBlock) {
+			// If in the middle or end of a text node, we're not at the boundary.
+			if (startContainer.nodeType === TEXT_NODE) {
+				if (startOffset) {
 					return false;
 				}
+				nodeAfterCursor = startContainer;
+			} else {
+				nodeAfterCursor = getNodeAfter(startContainer, startOffset);
+				// The cursor was right at the end of the document
+				if (!nodeAfterCursor || !root.contains(nodeAfterCursor)) {
+					nodeAfterCursor = getNodeBefore(startContainer, startOffset);
+					if (nodeAfterCursor.nodeType === TEXT_NODE && nodeAfterCursor.length) {
+						return false;
+					}
+				}
 			}
+
+			// Otherwise, look for any previous content in the same block.
+			contentWalker = newContentWalker(getStartBlockOfRange(range, root));
+			contentWalker.currentNode = nodeAfterCursor;
+
+			return !contentWalker.previousNode();
 		}
-
-		// Otherwise, look for any previous content in the same block.
-		contentWalker = newContentWalker(getStartBlockOfRange(range, root));
-		contentWalker.currentNode = nodeAfterCursor;
-
-		return !contentWalker.previousNode();
 	},
 
 	rangeDoesEndAtBlockBoundary = (range, root) => {
@@ -1823,7 +1800,8 @@ function onKey(event) {
 
 	let key = event.key.toLowerCase(),
 		modifiers = '',
-		range = this.getSelection();
+		range = this.getSelection(),
+		root = this._root;
 
 	// We need to apply the backspace/delete handlers regardless of
 	// control key modifiers.
@@ -1842,10 +1820,37 @@ function onKey(event) {
 		// Record undo checkpoint.
 		this.saveUndoState(range);
 		// Delete the selection
-		deleteContentsOfRange(range, this._root);
+		deleteContentsOfRange(range, root);
 		this._ensureBottomLine();
 		this.setSelection(range);
 		this._updatePath(range, true);
+	} else if (range.collapsed
+		&& range.startContainer === root
+		&& root.children.length > 0) {
+
+		// Under certain conditions, cursor/range can be positioned directly
+		// under this._root (not wrapped) and when this happens, an inline(TEXT)
+		// element is attached directly to this._root. There might be other
+		// issues, but squire.makeUnorderedList(), squire.makeOrderedList() and
+		// maybe other functions that call squire.modifyBlocks() do NOT work
+		// on inline(TEXT) nodes that are direct children of this._root.
+		// Therefor, we try to detect this case here and wrap the cursor/range
+		// before the text is inserted.
+
+		const nextElement = root.children[range.startOffset];
+		if (nextElement && !isBlock(nextElement)) {
+			// create a new wrapper
+			range = createRange(root.insertBefore(
+				this.createDefaultBlock(), nextElement
+			), 0);
+			if (nextElement.tagName === 'BR') {
+				// delete it because a new <br> is created by createDefaultBlock()
+				root.removeChild(nextElement);
+			}
+			const restore = this._restoreSelection;
+			this.setSelection(range);
+			this._restoreSelection = restore;
+		}
 	}
 }
 
