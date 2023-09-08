@@ -1,10 +1,9 @@
 <?php
 use RainLoop\Providers\AddressBook\Classes\Contact;
-use Sabre\VObject\Component\VCard;
 
 class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBookInterface
 {
-	use Rainloop\Providers\AddressBook\CardDAV;
+	use RainLoop\Providers\AddressBook\CardDAV;
 	private const URI = 'webmail';
 	private $contactsManager;
 	private $key;
@@ -126,6 +125,8 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 				$properties['EMAIL'] = \trim($sEmail);
 				if ('' !== \trim($oEmail->GetDisplayName())) {
 					$properties['FN'] = $oEmail->GetDisplayName();
+				} else {
+					$properties['FN'] = \trim($sEmail);
 				}
 				$this->contactsManager->createOrUpdate($properties, $this->key);
 			}
