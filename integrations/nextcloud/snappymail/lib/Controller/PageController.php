@@ -12,11 +12,71 @@ use OCP\IRequest;
 
 class PageController extends Controller
 {
-//	private IL10N $l;
+	private IL10N $l;
+	// Nextcloud lang to locale mapping array
+public const LANGUAGE_TO_LOCALE_MAP = [
+	'af' => 'af-ZA', // Afrikaans (South Africa)
+    'ar' => 'ar-SA', // Arabic (Saudi Arabia)
+    'az' => 'az-AZ', // Azerbaijani (Azerbaijan)
+    'be' => 'be-BY', // Belarusian (Belarus)
+    'bg' => 'bg-BG', // Bulgarian (Bulgaria)
+    'bn' => 'bn-BD', // Bengali (Bangladesh)
+    'bs' => 'bs-BA', // Bosnian (Bosnia and Herzegovina)
+    'ca' => 'ca-ES', // Catalan (Spain)
+    'cs' => 'cs-CZ', // Czech (Czech Republic)
+    'cy' => 'cy-GB', // Welsh (United Kingdom)
+    'da' => 'da-DK', // Danish (Denmark)
+    'de' => 'de-DE', // German (Germany)
+    'el' => 'el-GR', // Greek (Greece)
+    'en' => 'en-US', // English (United States)
+    'es' => 'es-ES', // Spanish (Spain)
+    'et' => 'et-EE', // Estonian (Estonia)
+    'eu' => 'eu-ES', // Basque (Spain)
+    'fa' => 'fa-IR', // Persian (Iran)
+    'fi' => 'fi-FI', // Finnish (Finland)
+    'fr' => 'fr-FR', // French (France)
+    'gl' => 'gl-ES', // Galician (Spain)
+    'he' => 'he-IL', // Hebrew (Israel)
+    'hi' => 'hi-IN', // Hindi (India)
+    'hr' => 'hr-HR', // Croatian (Croatia)
+    'hu' => 'hu-HU', // Hungarian (Hungary)
+    'id' => 'id-ID', // Indonesian (Indonesia)
+    'is' => 'is-IS', // Icelandic (Iceland)
+    'it' => 'it-IT', // Italian (Italy)
+    'ja' => 'ja-JP', // Japanese (Japan)
+    'ka' => 'ka-GE', // Georgian (Georgia)
+    'km' => 'km-KH', // Khmer (Cambodia)
+    'ko' => 'ko-KR', // Korean (South Korea)
+    'lt' => 'lt-LT', // Lithuanian (Lithuania)
+    'lv' => 'lv-LV', // Latvian (Latvia)
+    'mk' => 'mk-MK', // Macedonian (North Macedonia)
+    'mn' => 'mn-MN', // Mongolian (Mongolia)
+    'ms' => 'ms-MY', // Malay (Malaysia)
+    'nb' => 'nb-NO', // Norwegian Bokmål (Norway)
+    'nl' => 'nl-NL', // Dutch (Netherlands)
+    'nn' => 'nn-NO', // Norwegian Nynorsk (Norway)
+    'pl' => 'pl-PL', // Polish (Poland)
+    'pt' => 'pt-PT', // Portuguese (Portugal)
+    'pt-br' => 'pt-BR', // Portuguese (Brazil)
+    'ro' => 'ro-RO', // Romanian (Romania)
+    'ru' => 'ru-RU', // Russian (Russia)
+    'sk' => 'sk-SK', // Slovak (Slovakia)
+    'sl' => 'sl-SI', // Slovenian (Slovenia)
+    'sq' => 'sq-AL', // Albanian (Albania)
+    'sr' => 'sr-RS', // Serbian (Serbia)
+    'sv' => 'sv-SE', // Swedish (Sweden)
+    'th' => 'th-TH', // Thai (Thailand)
+    'tr' => 'tr-TR', // Turkish (Turkey)
+    'uk' => 'uk-UA', // Ukrainian (Ukraine)
+    'vi' => 'vi-VN', // Vietnamese (Vietnam)
+    'zh-cn' => 'zh-CN', // Chinese (China)
+    'zh-tw' => 'zh-TW'  // Chinese (Taiwan)
+];
+
 
 	public function __construct(string $appName, IRequest $request, IL10N $l) {
 		parent::__construct($appName, $request);
-//		$this->l = $l;
+		$this->l = $l;
 		$lang = \strtolower(\str_replace('_', '-', $l->getLocaleCode()));
 		if (empty($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
 			$_SERVER['HTTP_ACCEPT_LANGUAGE'] = $lang;
@@ -69,8 +129,27 @@ class PageController extends Controller
 		$oServiceActions = new \RainLoop\ServiceActions($oHttp, $oActions);
 		$sAppJsMin = $oConfig->Get('debug', 'javascript', false) ? '' : '.min';
 		$sAppCssMin = $oConfig->Get('debug', 'css', false) ? '' : '.min';
-		$sLanguage = $oActions->GetLanguage(false);
-
+		$languageSetting = (bool) $oConfig->Get('webmail', 'allow_languages_on_settings', true);
+		if (!$languageSetting) {
+			$aResultLang = \json_decode(\file_get_contents(APP_VERSION_ROOT_PATH . 'app/localization/langs.json'), true);
+			if ($aResultLang === null) {
+				throw new \Exception('Error decoding JSON content.');
+			}
+			$user = \OC::$server->getUserSession()->getUser();
+			$userId = $user->getUID();
+			$langCode = $config->getUserValue($userId, 'core', 'lang');
+			$userLang = \OC::$server->getConfig()->getUserValue($userId, 'core', 'lang');
+			$localeCode = self::LANGUAGE_TO_LOCALE_MAP[$langCode];
+			if (!strpos($localeCode, '_') && !strpos($localeCode, '-')) {
+				$localeCode = $localeCode . '-' . strtoupper($localeCode);
+			}
+			$sLanguage = 'en';
+			if(isset($aResultLang['LANGS_NAMES_EN'][$localeCode])) {
+				$sLanguage = $localeCode;
+			}
+		}else {
+			$sLanguage = $oActions->GetLanguage(false);
+		}
 		$csp = new ContentSecurityPolicy();
 		$sNonce = $csp->getSnappyMailNonce();
 
