@@ -289,7 +289,7 @@ class ImapClient extends \MailSo\Net\NetClient
 /*
 		$this->aCapa[] = 'X-DOVECOT';
 */
-		return $this->aCapa;
+		return $this->aCapaRaw;
 	}
 
 	public function Capabilities() : ?array
