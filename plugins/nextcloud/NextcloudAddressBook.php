@@ -117,6 +117,11 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 					continue;
 				}
 				$sEmail = \trim($oEmail->GetEmail(true));
+				$existingResults = $this->contactsManager->search($sEmail, ['EMAIL'], ['strict_search' => true]);
+				
+				if (!empty($existingResults)) {
+					continue;
+				}
 
 				$properties = [
 					'EMAIL' => $sEmail,
@@ -125,14 +130,6 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 				
 				if ('' !== \trim($oEmail->GetDisplayName())) {
 					$properties['FN'] = $oEmail->GetDisplayName();
-				}
-				$existingResults = $this->contactsManager->search($sEmail, ['EMAIL'], ['strict_search' => true]);
-
-				foreach ($existingResults as $contact) {
-					if ($contact['addressbook-key'] === $this->key) {
-						$properties['URI'] = $contact['UID'] . '.vcf';
-						break;
-					} 
 				}
 				$this->contactsManager->createOrUpdate($properties, $this->key);
 			}
