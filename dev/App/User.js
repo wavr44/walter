@@ -48,6 +48,7 @@ import { IdentityModel } from 'Model/Identity';
 
 import { LoginUserScreen } from 'Screen/User/Login';
 import { MailBoxUserScreen } from 'Screen/User/MailBox';
+import { ContactsUserScreen } from 'Screen/User/Contacts';
 import { SettingsUserScreen } from 'Screen/User/Settings';
 
 import { startScreens, showScreenPopup, arePopupsVisible } from 'Knoin/Knoin';
@@ -211,6 +212,7 @@ export class AppUser extends AbstractApp {
 					if (value) {
 						startScreens([
 							MailBoxUserScreen,
+							ContactsUserScreen,
 							SettingsUserScreen
 						]);
 
