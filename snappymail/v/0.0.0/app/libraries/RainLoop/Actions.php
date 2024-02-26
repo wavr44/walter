@@ -702,7 +702,7 @@ class Actions
 					'SoundNotification' => true,
 					'NotificationSound' => 'new-mail',
 					'DesktopNotifications' => true,
-					'Layout' => (int) $oConfig->Get('defaults', 'view_layout', Enumerations\Layout::SIDE_PREVIEW),
+					'Layout' => (int) $oConfig->Get('defaults', 'view_layout', Enumerations\Layout::SIDE_PREVIEW->value),
 					'EditorDefaultType' => \str_replace('Forced', '', $oConfig->Get('defaults', 'view_editor_type', '')),
 					'editorWysiwyg' => 'Squire',
 					'UseCheckboxesInList' => (bool) $oConfig->Get('defaults', 'view_use_checkboxes', true),
@@ -834,7 +834,7 @@ class Actions
 					$aResult['DevPassword'] = '';
 				}
 
-				$aResult['signMe'] = (string) $oConfig->Get('login', 'sign_me_auto', Enumerations\SignMeType::DEFAULT_OFF);
+				$aResult['signMe'] = (string) $oConfig->Get('login', 'sign_me_auto', Enumerations\SignMeType::DEFAULT_OFF->value);
 			}
 		}
 
