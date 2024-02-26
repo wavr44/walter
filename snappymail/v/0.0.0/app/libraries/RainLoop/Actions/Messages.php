@@ -903,7 +903,7 @@ trait Messages
 		}
 
 		if (!empty($this->GetActionParam('markAsImportant', 0))) {
-			$oMessage->SetPriority(\MailSo\Mime\Enumerations\MessagePriority::HIGHEST);
+			$oMessage->SetPriority(\MailSo\Mime\Enumerations\MessagePriority::Highest);
 		}
 
 		$oMessage->SetSubject($this->GetActionParam('subject', ''));

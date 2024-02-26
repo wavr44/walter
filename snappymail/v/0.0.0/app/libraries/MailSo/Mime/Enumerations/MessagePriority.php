@@ -18,12 +18,12 @@ namespace MailSo\Mime\Enumerations;
  */
 enum MessagePriority: int
 {
-	case LOWEST = 5;
-	case NORMAL = 3;
-	case HIGHEST = 1;
+	case Lowest = 5;
+	case Normal = 3;
+	case Highest = 1;
 
 	public function toMIME() : string
 	{
-		return $this->value . ' (' . \ucfirst(\strtolower($this->name)) . ')';
+		return $this->value . ' (' . $this->name . ')';
 	}
 }
