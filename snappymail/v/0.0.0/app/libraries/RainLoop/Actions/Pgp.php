@@ -24,7 +24,7 @@ trait Pgp
 
 		$GPG = $this->GnuPG();
 		if ($GPG) {
-			$keys = $GPG->keyInfo('');
+			$keys = $GPG->allKeysInfo('');
 			foreach ($keys['public'] as $key) {
 				$key = $GPG->export($key['subkeys'][0]['fingerprint'] ?: $key['subkeys'][0]['keyid']);
 				if ($key) {
@@ -47,7 +47,7 @@ trait Pgp
 	/**
 	 * @throws \MailSo\RuntimeException
 	 */
-	public function GnuPG() : ?GnuPG
+	public function GnuPG() : ?\SnappyMail\PGP\PGPInterface
 	{
 		$oAccount = $this->getMainAccountFromToken();
 		if (!$oAccount) {
@@ -81,7 +81,7 @@ trait Pgp
 				if (\is_link($link) || \symlink($homedir, $link)) {
 					$homedir = $link;
 				} else {
-					\error_log("symlink('{$homedir}', '{$link}') failed");
+					$this->logWrite("symlink('{$homedir}', '{$link}') failed", \LOG_WARNING, 'GnuPG');
 				}
 			}
 			// Else try ~/.gnupg/ + hash(email address)
@@ -97,10 +97,6 @@ trait Pgp
 					$homedir = $tmpdir;
 				}
 			}
-
-			if (104 <= \strlen($homedir . '/S.gpg-agent.extra')) {
-				throw new \Exception("socket name for '{$homedir}/S.gpg-agent.extra' is too long");
-			}
 		}
 
 		return GnuPG::getInstance($homedir);
@@ -113,15 +109,14 @@ trait Pgp
 			return $this->FalseResponse();
 		}
 
-		$sPassphrase = $this->GetActionParam('passphrase', '');
-		$this->logMask($sPassphrase);
+		$oPassphrase = new \SnappyMail\SensitiveString($this->GetActionParam('passphrase', ''));
 
-		$GPG->addDecryptKey($this->GetActionParam('keyId', ''), $sPassphrase);
+		$GPG->addDecryptKey($this->GetActionParam('keyId', ''), $oPassphrase);
 
 		$sData = $this->GetActionParam('data', '');
 		$oPart = null;
 		$result = [
-			'data' => '',
+			'data' => null,
 			'signatures' => []
 		];
 		if ($sData) {
@@ -131,11 +126,13 @@ trait Pgp
 			$this->initMailClientConnection();
 			$this->MailClient()->MessageMimeStream(
 				function ($rResource) use ($GPG, &$result, &$oPart) {
-					if (\is_resource($rResource)) {
+					if (\is_resource($rResource)) try {
 						$result['data'] = $GPG->decryptStream($rResource);
 //						$oPart = \MailSo\Mime\Part::FromString($result);
 //						$GPG->decryptStream($rResource, $rStreamHandle);
 //						$oPart = \MailSo\Mime\Part::FromStream($rStreamHandle);
+					} catch (\Throwable $e) {
+						$result = $e;
 					}
 				},
 				$this->GetActionParam('folder', ''),
@@ -149,23 +146,28 @@ trait Pgp
 //			$result['signatures'] = $oPart->SubParts[0];
 		}
 
+		if ($result instanceof \Throwable) {
+			throw $result;
+		}
+
 		return $this->DefaultResponse($result);
 	}
 
 	public function DoGnupgGetKeys() : array
 	{
 		$GPG = $this->GnuPG();
-		return $this->DefaultResponse($GPG ? $GPG->keyInfo('') : false);
+		return $this->DefaultResponse($GPG ? $GPG->allKeysInfo('') : false);
 	}
 
 	public function DoGnupgExportKey() : array
 	{
-		$sPassphrase = $this->GetActionParam('passphrase', '');
-		$this->logMask($sPassphrase);
+		$oPassphrase = $this->GetActionParam('isPrivate', '')
+			? new \SnappyMail\SensitiveString($this->GetActionParam('passphrase', ''))
+			: null;
 		$GPG = $this->GnuPG();
 		return $this->DefaultResponse($GPG ? $GPG->export(
 			$this->GetActionParam('keyId', ''),
-			$sPassphrase
+			$oPassphrase
 		) : false);
 	}
 
@@ -176,11 +178,10 @@ trait Pgp
 		if ($GPG) {
 			$sName = $this->GetActionParam('name', '');
 			$sEmail = $this->GetActionParam('email', '');
-			$sPassphrase = $this->GetActionParam('passphrase', '');
-			$this->logMask($sPassphrase);
+			$oPassphrase = new \SnappyMail\SensitiveString($this->GetActionParam('passphrase', ''));
 			$fingerprint = $GPG->generateKey(
 				$sName ? "{$sName} <{$sEmail}>" : $sEmail,
-				$sPassphrase
+				$oPassphrase
 			);
 		}
 		return $this->DefaultResponse($fingerprint);

@@ -112,24 +112,16 @@ class ServiceActions
 
 			$this->oActions->logWrite('Action: '.$sMethodName, \LOG_INFO, 'JSON');
 
-			$aPost = $_POST ?? null;
-			if ($aPost) {
-				$this->oActions->SetActionParams($aPost, $sMethodName);
+			if ($_POST) {
+				$this->oActions->SetActionParams($_POST, $sMethodName);
+				$aPost = $_POST;
 				foreach ($aPost as $key => $value) {
-					if (false !== \stripos($key, 'Password')) {
+					// password & passphrase
+					if (false !== \stripos($key, 'pass')) {
 						$aPost[$key] = '*******';
+//						$this->oActions->logMask($value);
 					}
 				}
-/*
-				switch ($sMethodName)
-				{
-					case 'DoLogin':
-					case 'DoAdminLogin':
-					case 'DoAccountAdd':
-						$this->oActions->logMask($this->oActions->GetActionParam('Password', ''));
-						break;
-				}
-*/
 				$this->oActions->logWrite(Utils::jsonEncode($aPost), \LOG_INFO, 'POST');
 			} else if (3 < \count($this->aPaths) && $this->oHttp->IsGet()) {
 				$this->oActions->SetActionParams(array(
@@ -561,14 +553,14 @@ class ServiceActions
 					(0 === $aData['Time'] || \time() - 10 < $aData['Time']))
 				{
 					$sEmail = \trim($aData['Email']);
-					$sPassword = $aData['Password'];
+					$oPassword = new \SnappyMail\SensitiveString($aData['Password']);
 
 					$aAdditionalOptions = (isset($aData['AdditionalOptions']) && \is_array($aData['AdditionalOptions']))
 						? $aData['AdditionalOptions'] : [];
 
 					try
 					{
-						$oAccount = $this->oActions->LoginProcess($sEmail, $sPassword);
+						$oAccount = $this->oActions->LoginProcess($sEmail, $oPassword);
 
 						if ($aAdditionalOptions) {
 							$bNeedToSettings = false;
