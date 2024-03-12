@@ -6,7 +6,6 @@ import { ScopeFolderList, ScopeMessageList, ScopeMessageView } from 'Common/Enum
 import {
 	ComposeType,
 	ClientSideKeyNameMessageHeaderFullInfo,
-	ClientSideKeyNameMessageAttachmentControls,
 	FolderType,
 	MessageSetAction
 } from 'Common/EnumsUser';
@@ -105,7 +104,7 @@ export class MailMessageView extends AbstractViewRight {
 		this.simpleAttachmentsList = SettingsUserStore.simpleAttachmentsList;
 
 		addObservablesTo(this, {
-			showAttachmentControls: !!Local.get(ClientSideKeyNameMessageAttachmentControls),
+			showAttachmentControls: true,
 			downloadAsZipLoading: false,
 			showFullInfo: '1' === Local.get(ClientSideKeyNameMessageHeaderFullInfo),
 			// bootstrap dropdown
@@ -482,7 +481,6 @@ export class MailMessageView extends AbstractViewRight {
 	toggleAttachmentControls() {
 		const b = !this.showAttachmentControls();
 		this.showAttachmentControls(b);
-		Local.set(ClientSideKeyNameMessageAttachmentControls, b);
 	}
 
 	downloadAsZip() {
