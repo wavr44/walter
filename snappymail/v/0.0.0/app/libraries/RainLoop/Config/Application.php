@@ -95,6 +95,18 @@ class Application extends \RainLoop\Config\AbstractConfig
 	public function Set(string $sSectionKey, string $sParamKey, $mParamValue) : void
 	{
 		// Workarounds for the changed application structure
+		if ('webmail' === $sSectionKey) {
+			if ('language_admin' === $sSectionKey) {
+				$sSectionKey = 'admin_panel';
+				$sParamKey = 'language';
+			}
+		}
+		if ('security' === $sSectionKey) {
+			if (\str_starts_with($sParamKey, 'admin_panel_')) {
+				$sSectionKey = 'admin_panel';
+				$sParamKey = \str_replace('admin_panel_', '', $sParamKey);
+			}
+		}
 		if ('labs' === $sSectionKey) {
 			if (\str_starts_with($sParamKey, 'imap_')) {
 				$sSectionKey = 'imap';
@@ -163,7 +175,6 @@ class Application extends \RainLoop\Config\AbstractConfig
 				'allow_user_background'       => array(false),
 
 				'language'                    => array('en', 'Language used by default'),
-				'language_admin'              => array('en', 'Admin Panel interface language'),
 				'allow_languages_on_settings' => array(true, 'Allow language selection on settings screen'),
 
 				'allow_additional_accounts'   => array(true),
@@ -202,14 +213,14 @@ Warning: only enable when server does not do this, else double compression error
 				'custom_server_signature' => array('SnappyMail'),
 				'x_xss_protection_header' => array('1; mode=block'),
 
+				'gnupg'                   => array(true),
 				'openpgp'                 => array(true),
+				'auto_verify_signatures'  => array(false),
 
 				'allow_admin_panel'       => array(true, 'Access settings'),
 				'admin_login'             => array('admin', 'Login and password for web admin panel'),
 				'admin_password'          => array(''),
 				'admin_totp'              => array(''),
-				'admin_panel_host'        => array(''),
-				'admin_panel_key'         => array('admin'),
 
 				'force_https'             => array(false),
 				'hide_x_mailer_header'    => array(true),
@@ -234,10 +245,11 @@ Default is "site=same-origin;site=none"')
 				'login'    => array('admin', 'Login and password for web admin panel'),
 				'password' => array(''),
 				'totp'     => array(''),
+*/
 				'host'     => array(''),
 				'key'      => array('admin'),
-*/
-				'allow_update' => array(false)
+				'allow_update' => array(false),
+				'language'     => array('en', 'Admin Panel interface language'),
 			),
 
 			'ssl' => array(
@@ -270,9 +282,7 @@ When this value is gethostname, the gethostname() value is used.
 				'determine_user_language' => array(true, 'Detect language from browser header `Accept-Language`'),
 				'determine_user_domain' => array(false, 'Like default_domain but then HTTP_HOST/SERVER_NAME without www.'),
 
-				'login_lowercase' => array(true),
-
-				'sign_me_auto' => array(\RainLoop\Enumerations\SignMeType::DEFAULT_OFF->value,
+				'sign_me_auto' => array(\RainLoop\Enumerations\SignMeType::DefaultOff->value,
 					'This option allows webmail to remember the logged in user
 once they closed the browser window.
 

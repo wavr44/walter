@@ -104,6 +104,20 @@ trait SMime
 		$SMIME->setCertificate($sCertificate);
 		$SMIME->setPrivateKey($sPrivateKey, $oPassphrase);
 		$result = $SMIME->decrypt($sBody);
+		if ($result) {
+			$result = ['data' => $result];
+			if (\str_contains($result['data'], 'multipart/signed')
+			  || \preg_match('/smime-type=["\']?signed-data/', $result['data'])
+			) {
+				$signed = $SMIME->verify($result['data'], null, true);
+				$result['signed'] = [
+					'success' => !empty($signed['success'])
+				];
+				if (!empty($signed['body'])) {
+					$result['data'] = $signed['body'];
+				}
+			}
+		}
 
 		return $this->DefaultResponse($result ?: false);
 	}

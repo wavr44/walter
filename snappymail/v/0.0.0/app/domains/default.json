@@ -1,11 +1,11 @@
 {
-    "name": "*",
     "IMAP": {
         "host": "localhost",
         "port": 143,
         "type": 0,
         "timeout": 300,
         "shortLogin": false,
+        "lowerLogin": true,
         "sasl": [
             "SCRAM-SHA3-512",
             "SCRAM-SHA-512",
@@ -40,6 +40,7 @@
         "type": 0,
         "timeout": 60,
         "shortLogin": false,
+        "lowerLogin": true,
         "sasl": [
             "SCRAM-SHA3-512",
             "SCRAM-SHA-512",
@@ -66,6 +67,7 @@
         "type": 0,
         "timeout": 10,
         "shortLogin": false,
+        "lowerLogin": true,
         "sasl": [
             "SCRAM-SHA3-512",
             "SCRAM-SHA-512",

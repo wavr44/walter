@@ -1,4 +1,4 @@
-<?php
+getEmailAddressDomain<?php
 
 class LdapContactsSuggestions implements \RainLoop\Providers\Suggestions\ISuggestions
 {
@@ -93,17 +93,17 @@ class LdapContactsSuggestions implements \RainLoop\Providers\Suggestions\ISugges
 				return $aResult;
 			}
 
-			$sDomain = \MailSo\Base\Utils::GetDomainFromEmail($oAccount->Email());
+			$sDomain = \MailSo\Base\Utils::getEmailAddressDomain($oAccount->Email());
 			$sBaseDn = \strtr($this->sBaseDn, array(
 				'{domain}' => $sDomain,
 				'{domain:dc}' => 'dc='.\strtr($sDomain, array('.' => ',dc=')),
 				'{email}' => $oAccount->Email(),
-				'{email:user}' => \MailSo\Base\Utils::GetAccountNameFromEmail($oAccount->Email()),
+				'{email:user}' => \MailSo\Base\Utils::getEmailAddressLocalPart($oAccount->Email()),
 				'{email:domain}' => $sDomain,
 				'{login}' => $oAccount->IncLogin(),
 				'{imap:login}' => $oAccount->IncLogin(),
-				'{imap:host}' => $oAccount->Domain()->IncHost(),
-				'{imap:port}' => $oAccount->Domain()->IncPort()
+				'{imap:host}' => $oAccount->Domain()->ImapSettings()->host,
+				'{imap:port}' => $oAccount->Domain()->ImapSettings()->port
 			));
 
 			$aObjectClasses = empty($this->sObjectClasses) ? array() : \explode(',', $this->sObjectClasses);

@@ -85,13 +85,14 @@
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Sicurezza",
 		"LABEL_USE_IMAGE_PROXY": "Use local proxy for external images",
-		"LABEL_ALLOW_OPENPGP": "Permetti OpenPGP",
+		"LABEL_AUTO_VERIFY": "Verify signatures automatically",
 		"LABEL_SHOW_PHP_INFO": "Mostra informazioni PHP",
 		"LEGEND_ADMIN_PANEL_ACCESS_CREDENTIALS": "Credenziali di Accesso Pannello Admin",
 		"LABEL_CURRENT_PASSWORD": "Password Corrente",
 		"LABEL_NEW_PASSWORD": "Nuova password",
 		"LABEL_REPEAT_PASSWORD": "Ripeti",
 		"LABEL_REQUIRE_VERIFICATION": "Richiesta verifica del certificato SSL utilizzato",
+		"CRYPTO": "Crypto",
 		"LABEL_ALLOW_SELF_SIGNED": "Permetti certificati auto-firmati"
 	},
 	"TAB_PACKAGES": {
@@ -135,6 +136,7 @@
 		"SECURE_OPTION_NONE": "None",
 		"LABEL_ALLOW_SIEVE_SCRIPTS": "Permetti scripts sieve",
 		"LABEL_USE_SHORT_LOGIN": "Usa login breve",
+		"LABEL_LOWERCASE_LOGIN": "Lowercase login (case-insensitive)",
 		"LABEL_USE_AUTH": "Usa autenticazione",
 		"LABEL_SET_SENDER": "Usa login come mittente",
 		"LABEL_AUTH_PLAIN_LINE": "Force login a comando singolo AUTH PLAIN",
@@ -168,17 +170,17 @@
 		"UNKNOWN_ERROR": "Errore sconosciuto"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Richiesta fallita",
-		"REQUEST_ABORTED": "Richiesta annullata",
-		"REQUEST_TIMEOUT": "Richiesta scaduta",
-		"INVALID_TOKEN": "Token non valido",
-		"AUTH_ERROR": "Autenticazione fallita",
-		"DOMAIN_ALREADY_EXISTS": "Il dominio esiste già",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Impossibile salvare le impostazioni",
-		"CANT_INSTALL_PACKAGE": "Installazione estensione fallita",
-		"CANT_DELETE_PACKAGE": "Rimozione estensione fallita",
-		"INVALID_PLUGIN_PACKAGE": "Pacchetto estensione non valido",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Pacchetto estensione non supportato",
-		"UNKNOWN_ERROR": "Errore sconosciuto"
+		"RequestError": "Richiesta fallita",
+		"RequestAborted": "Richiesta annullata",
+		"RequestTimeout": "Richiesta scaduta",
+		"InvalidToken": "Token non valido",
+		"AuthError": "Autenticazione fallita",
+		"DomainAlreadyExists": "Il dominio esiste già",
+		"CantSavePluginSettings": "Impossibile salvare le impostazioni",
+		"CantInstallPackage": "Installazione estensione fallita",
+		"CantDeletePackage": "Rimozione estensione fallita",
+		"InvalidPluginPackage": "Pacchetto estensione non valido",
+		"UnsupportedPluginPackage": "Pacchetto estensione non supportato",
+		"UnknownError": "Errore sconosciuto"
 	}
 }

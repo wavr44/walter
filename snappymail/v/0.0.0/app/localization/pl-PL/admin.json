@@ -85,14 +85,15 @@
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Bezpieczeństwo",
 		"LABEL_USE_IMAGE_PROXY": "Użyj lokalnego serwera proxy dla zewnętrznych obrazów",
-		"LABEL_ALLOW_OPENPGP": "Zezwól na używanie OpenPGP",
+		"LABEL_AUTO_VERIFY": "Weryfikuj podpisy automatycznie",
 		"LABEL_SHOW_PHP_INFO": "Pokaż informacje o wersji PHP",
 		"LEGEND_ADMIN_PANEL_ACCESS_CREDENTIALS": "Poświadczenia dostępu do panelu administracyjnego",
 		"LABEL_CURRENT_PASSWORD": "Bieżące hasło",
 		"LABEL_NEW_PASSWORD": "Nowe hasło",
 		"LABEL_REPEAT_PASSWORD": "Powtórz hasło",
 		"LABEL_REQUIRE_VERIFICATION": "Wymagaj weryfikacji używanego certyfikatu SSL",
-		"LABEL_ALLOW_SELF_SIGNED": "Zezwól na certyfikaty z podpisem własnym"
+		"CRYPTO": "Kryptografia",
+		"LABEL_ALLOW_SELF_SIGNED": "Zezwól na certyfikaty podpisane samodzielnie"
 	},
 	"TAB_PACKAGES": {
 		"LABEL_ENABLE_PLUGINS": "Włącz obsługę wtyczek",
@@ -135,6 +136,7 @@
 		"SECURE_OPTION_NONE": "Bez zabezpieczeń",
 		"LABEL_ALLOW_SIEVE_SCRIPTS": "Zezwól na skrypty sieve",
 		"LABEL_USE_SHORT_LOGIN": "Użyj krótkiego loginu",
+		"LABEL_LOWERCASE_LOGIN": "Lowercase login (case-insensitive)",
 		"LABEL_USE_AUTH": "Użyj uwierzytelnienia",
 		"LABEL_SET_SENDER": "Użyj loginu jako nadawcy",
 		"LABEL_AUTH_PLAIN_LINE": "Wymuś logowanie pojedynczą komendą AUTH PLAIN",
@@ -168,17 +170,17 @@
 		"UNKNOWN_ERROR": "Nieznany błąd"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Zapytanie zakończone niepowodzeniem",
-		"REQUEST_ABORTED": "Zapytanie przerwane",
-		"REQUEST_TIMEOUT": "Upłynął limit czasu",
-		"INVALID_TOKEN": "Nieprawidłowy token",
-		"AUTH_ERROR": "Uwierzytelnienie zakończone niepowodzeniem",
-		"DOMAIN_ALREADY_EXISTS": "Ta domena już istnieje",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Nie można zapisać ustawień wtyczki",
-		"CANT_INSTALL_PACKAGE": "Instalacja wtyczki zakończona niepowodzeniem",
-		"CANT_DELETE_PACKAGE": "Usunięcie wtyczki zakończone niepowodzeniem",
-		"INVALID_PLUGIN_PACKAGE": "Nieprawidłowa wtyczka",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Nieobsługiwana wtyczka",
-		"UNKNOWN_ERROR": "Nieznany błąd"
+		"RequestError": "Zapytanie zakończone niepowodzeniem",
+		"RequestAborted": "Zapytanie przerwane",
+		"RequestTimeout": "Upłynął limit czasu",
+		"InvalidToken": "Nieprawidłowy token",
+		"AuthError": "Uwierzytelnienie zakończone niepowodzeniem",
+		"DomainAlreadyExists": "Ta domena już istnieje",
+		"CantSavePluginSettings": "Nie można zapisać ustawień wtyczki",
+		"CantInstallPackage": "Instalacja wtyczki zakończona niepowodzeniem",
+		"CantDeletePackage": "Usunięcie wtyczki zakończone niepowodzeniem",
+		"InvalidPluginPackage": "Nieprawidłowa wtyczka",
+		"UnsupportedPluginPackage": "Nieobsługiwana wtyczka",
+		"UnknownError": "Nieznany błąd"
 	}
 }

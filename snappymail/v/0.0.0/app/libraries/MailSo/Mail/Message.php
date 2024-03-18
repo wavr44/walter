@@ -66,7 +66,7 @@ class Message implements \JsonSerializable
 
 	private ?array $DraftInfo = null;
 
-	private ?array $pgpSigned = null;
+	public ?array $pgpSigned = null;
 	private ?array $pgpEncrypted = null;
 
 	public ?array $smimeSigned = null;
@@ -110,6 +110,16 @@ class Message implements \JsonSerializable
 	public function Attachments() : ?AttachmentCollection
 	{
 		return $this->Attachments;
+	}
+
+	public function setPlain(string $value) : void
+	{
+		$this->sPlain = $value;
+	}
+
+	public function setHtml(string $value) : void
+	{
+		$this->sHtml = $value;
 	}
 
 	private function setSpamScore($value) : void
@@ -341,7 +351,7 @@ class Message implements \JsonSerializable
 					$oMessage->pgpSigned = [
 						// /?/Raw/&q[]=/0/Download/&q[]=/...
 						// /?/Raw/&q[]=/0/View/&q[]=/...
-						'bodyPartId' => $oPart->SubParts()[0]->PartID(),
+						'partId' => $oPart->SubParts()[0]->PartID(),
 						'sigPartId' => $oPart->SubParts()[1]->PartID(),
 						'micAlg' => $oHeaders ? (string) $oHeaders->ParameterValue(MimeHeader::CONTENT_TYPE, 'micalg') : ''
 					];
@@ -357,9 +367,9 @@ class Message implements \JsonSerializable
 				// An empty section specification refers to the entire message, including the header.
 				// But Dovecot does not return it with BODY.PEEK[1], so we also use BODY.PEEK[1.MIME].
 				$sPgpText = \trim(
-					\trim($oFetchResponse->GetFetchValue(FetchType::BODY.'['.$oMessage->pgpSigned['bodyPartId'].'.MIME]'))
+					\trim($oFetchResponse->GetFetchValue(FetchType::BODY.'['.$oMessage->pgpSigned['partId'].'.MIME]'))
 					. "\r\n\r\n"
-					. \trim($oFetchResponse->GetFetchValue(FetchType::BODY.'['.$oMessage->pgpSigned['bodyPartId'].']'))
+					. \trim($oFetchResponse->GetFetchValue(FetchType::BODY.'['.$oMessage->pgpSigned['partId'].']'))
 				);
 				if ($sPgpText) {
 					$oMessage->pgpSigned['body'] = $sPgpText;
@@ -387,7 +397,7 @@ class Message implements \JsonSerializable
 					}
 
 					if (\is_string($sText) && \strlen($sText)) {
-						$sText = Utils::DecodeEncodingValue($sText, $oPart->MailEncodingName());
+						$sText = Utils::DecodeEncodingValue($sText, $oPart->ContentTransferEncoding());
 						$sText = Utils::ConvertEncoding($sText,
 							Utils::NormalizeCharset($oPart->Charset() ?: $sCharset, true),
 							\MailSo\Base\Enumerations\Charset::UTF_8
@@ -398,7 +408,7 @@ class Message implements \JsonSerializable
 						// Cleartext Signature
 						if (!$oMessage->pgpSigned && \str_contains($sText, '-----BEGIN PGP SIGNED MESSAGE-----')) {
 							$oMessage->pgpSigned = [
-								'bodyPartId' => $oPart->PartID()
+								'partId' => $oPart->PartID()
 							];
 						}
 

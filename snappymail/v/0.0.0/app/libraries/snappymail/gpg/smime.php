@@ -97,8 +97,8 @@ class SMIME extends Base
 
 		$fclose = $this->setOutput($output);
 
-		if ($this->decryptKeys) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->decryptKeys);
+		if ($this->pinentries) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->pinentries);
 		}
 
 		$result = $this->exec(['--decrypt','--skip-verify']);
@@ -237,14 +237,18 @@ class SMIME extends Base
 		return false;
 	}
 
-	protected function _exportKey($keyId, bool $private = false)
+	/**
+	 * Exports a public or private key
+	 */
+	public function export(string $fingerprint, ?SensitiveString $passphrase = null) /*: string|false*/
 	{
-		$keys = $this->keyInfo($keyId, $private);
+		$private = null !== $passphrase;
+		$keys = $this->keyInfo($fingerprint, $private);
 		if (!$keys) {
-			throw new \Exception(($private ? 'Private' : 'Public') . ' key not found: ' . $keyId);
+			throw new \Exception(($private ? 'Private' : 'Public') . ' key not found: ' . $fingerprint);
 		}
-		if ($private && $this->passphrases) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->passphrases);
+		if ($private) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode([$fingerprint => \strval($passphrase)]);
 		}
 		$result = $this->exec([
 			$private ? '--export-secret-key-p12' : '--export',
@@ -254,25 +258,12 @@ class SMIME extends Base
 		return $result['output'];
 	}
 
-	/**
-	 * Exports a public or private key
-	 */
-	public function export(string $fingerprint, ?SensitiveString $passphrase = null) /*: string|false*/
-	{
-		if ($passphrase) {
-			return $this
-				->addPassphrase($fingerprint, $passphrase)
-				->_exportKey($fingerprint, true);
-		}
-		return $this->_exportKey($fingerprint);
-	}
-
 	protected function _importKey($input) /*: array|false*/
 	{
 		$arguments = ['--import'];
 
-		if ($this->passphrases) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->passphrases);
+		if ($this->pinentries) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->pinentries);
 		} else {
 			$arguments[] = '--batch';
 		}
@@ -482,7 +473,7 @@ class SMIME extends Base
 
 	protected function _sign(/*string|resource*/ $input, /*string|resource*/ $output = null) /*: string|false*/
 	{
-		if (empty($this->signKeys)) {
+		if (empty($this->pinentries)) {
 			throw new \Exception('No signing keys specified.');
 		}
 
@@ -498,11 +489,11 @@ class SMIME extends Base
 			$arguments[] = '--armor';
 		}
 
-		if ($this->signKeys) {
-			foreach ($this->signKeys as $fingerprint => $pass) {
+		if ($this->pinentries) {
+			foreach ($this->pinentries as $fingerprint => $pass) {
 				$arguments[] = '--local-user ' . \escapeshellarg($fingerprint);
 			}
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->signKeys);
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode($this->pinentries);
 		}
 
 		$result = $this->exec($arguments);
@@ -666,7 +657,7 @@ class SMIME extends Base
 		return $info['ENC_TO'];
 	}
 
-	private function exec(array $arguments) /*: array|false*/
+	private function exec(array $arguments, bool $throw = true) /*: array|false*/
 	{
 		if (\version_compare($this->version, '2.2.5', '<')) {
 			\SnappyMail\Log::error('GPG', "{$this->version} too old");

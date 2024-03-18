@@ -17,7 +17,7 @@ const
 		keys.find(key =>
 //			key[sign ? 'can_sign' : 'can_decrypt']
 			(key.can_sign || key.can_decrypt)
-			&& (key.emails.includes(query) || key.subkeys.find(key => query == key.keyid || query == key.fingerprint))
+			&& (key.for(query) || key.subkeys.find(key => query == key.keyid || query == key.fingerprint))
 		);
 
 export const GnuPGUserStore = new class {
@@ -46,6 +46,7 @@ export const GnuPGUserStore = new class {
 						key.fingerprint = key.subkeys[0].fingerprint;
 						key.uids.forEach(uid => uid.email && aEmails.push(uid.email));
 						key.emails = aEmails;
+						key.for = email => aEmails.includes(IDN.toASCII(email));
 						key.askDelete = ko.observable(false);
 						key.openForDeletion = ko.observable(null).askDeleteHelper();
 						key.remove = () => {
@@ -69,7 +70,7 @@ export const GnuPGUserStore = new class {
 							}
 						};
 						if (isPrivate) {
-							key.password = async (btnTxt = 'CRYPTO/SIGN') => {
+							key.password = async btnTxt => {
 								const pass = await Passphrases.ask(key,
 									'GnuPG key<br>' + key.id + ' ' + key.emails[0],
 									btnTxt
@@ -97,6 +98,7 @@ export const GnuPGUserStore = new class {
 									}
 								} catch (e) {
 									Passphrases.delete(key);
+									alert(e.message);
 								}
 							}
 							return key.armor;
@@ -148,7 +150,7 @@ export const GnuPGUserStore = new class {
 		const count = recipients.length,
 			length = count ? recipients.filter(email =>
 //				(key.can_verify || key.can_encrypt) &&
-				this.publicKeys.find(key => key.emails.includes(email))
+				this.publicKeys.find(key => key.for(email))
 			).length : 0;
 		return length && length === count;
 	}
@@ -156,7 +158,7 @@ export const GnuPGUserStore = new class {
 	getPublicKeyFingerprints(recipients) {
 		const fingerprints = [];
 		recipients.forEach(email => {
-			fingerprints.push(this.publicKeys.find(key => key.emails.includes(email)).fingerprint);
+			fingerprints.push(this.publicKeys.find(key => key.for(email)).fingerprint);
 		});
 		return fingerprints;
 	}
@@ -204,7 +206,7 @@ export const GnuPGUserStore = new class {
 	}
 
 	async verify(message) {
-		let data = message.pgpSigned(); // { bodyPartId: "1", sigPartId: "2", micAlg: "pgp-sha256" }
+		let data = message.pgpSigned(); // { partId: "1", sigPartId: "2", micAlg: "pgp-sha256" }
 		if (data) {
 			data = { ...data }; // clone
 //			const sender = message.from[0].email;
@@ -227,7 +229,7 @@ export const GnuPGUserStore = new class {
 	}
 
 	async sign(privateKey) {
-		return await privateKey.password();
+		return await privateKey.password('CRYPTO/SIGN');
 	}
 
 };

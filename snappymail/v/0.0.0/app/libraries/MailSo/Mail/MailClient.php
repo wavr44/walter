@@ -127,7 +127,6 @@ class MailClient
 		$this->oImapClient->FolderExamine($sFolderName);
 
 		$oBodyStructure = null;
-		$oMessage = null;
 
 		$aFetchItems = array(
 			FetchType::UID,
@@ -150,18 +149,6 @@ class MailClient
 					}
 					$aFetchItems[] = $sLine;
 				}
-/*
-				$gSignatureParts = $oBodyStructure->SearchByContentType('multipart/signed');
-				foreach ($gSignatureParts as $oPart) {
-					if ($oPart->isPgpSigned()) {
-						// An empty section specification refers to the entire message, including the header.
-						// But Dovecot does not return it with BODY.PEEK[1], so we also use BODY.PEEK[1.MIME].
-						$aFetchItems[] = FetchType::BODY_PEEK.'['.$oPart->SubParts()[0]->PartID().'.MIME]';
-						$aFetchItems[] = FetchType::BODY_PEEK.'['.$oPart->SubParts()[0]->PartID().']';
-						$aFetchItems[] = FetchType::BODY_PEEK.'['.$oPart->SubParts()[1]->PartID().']';
-					}
-				}
-*/
 			}
 		}
 
@@ -170,21 +157,10 @@ class MailClient
 		}
 
 		$aFetchResponse = $this->oImapClient->Fetch($aFetchItems, $iIndex, $bIndexIsUid);
-		if (\count($aFetchResponse)) {
-			$oMessage = Message::fromFetchResponse($sFolderName, $aFetchResponse[0], $oBodyStructure);
-			// S/MIME opaque signed. Verify it, so we have the raw mime body to show
-			if ($oMessage->smimeSigned && !$oMessage->smimeSigned['detached']) {
-				$sBody = $this->oImapClient->FetchMessagePart(
-					$oMessage->Uid,
-					$oMessage->smimeSigned['partId']
-				);
-				$result = (new \SnappyMail\SMime\OpenSSL(''))->verify($sBody, null, true);
-				$oMessage->smimeSigned['body'] = $result['body'];
-				$oMessage->smimeSigned['verified'] = true;
-			}
-		}
 
-		return $oMessage;
+		return \count($aFetchResponse)
+			? Message::fromFetchResponse($sFolderName, $aFetchResponse[0], $oBodyStructure)
+			: null;
 	}
 
 	/**
@@ -513,11 +489,11 @@ class MailClient
 			$aFetchIterator = $this->oImapClient->FetchIterate($aFetchItems, (string) $oRange, $oRange->UID);
 			// FETCH does not respond in the id order of the SequenceSet, so we prefill $aCollection for the right sort order.
 			$aCollection = \array_fill_keys($oRange->getArrayCopy(), null);
-			foreach ($aFetchIterator as $oFetchResponseItem) {
+			foreach ($aFetchIterator as $oFetchResponse) {
 				$id = $oRange->UID
-					? $oFetchResponseItem->GetFetchValue(FetchType::UID)
-					: $oFetchResponseItem->oImapResponse->ResponseList[1];
-				$oMessage = Message::fromFetchResponse($oMessageCollection->FolderName, $oFetchResponseItem);
+					? $oFetchResponse->GetFetchValue(FetchType::UID)
+					: $oFetchResponse->oImapResponse->ResponseList[1];
+				$oMessage = Message::fromFetchResponse($oMessageCollection->FolderName, $oFetchResponse);
 				if ($oMessage) {
 					if ($aAllThreads) {
 						$iUid = $oMessage->Uid;
@@ -958,7 +934,7 @@ class MailClient
 	/**
 	 * @throws \InvalidArgumentException
 	 */
-	public function FolderRename(string $sPrevFolderFullName, string $sNewFolderFullName, bool $bSubscribe = true) : self
+	public function FolderRename(string $sPrevFolderFullName, string $sNewFolderFullName) : self
 	{
 		if (!\strlen($sPrevFolderFullName) || !\strlen($sNewFolderFullName)) {
 			throw new \ValueError;
@@ -974,19 +950,21 @@ class MailClient
 			throw new \MailSo\RuntimeException('New folder name contains delimiter.');
 		}
 */
-		$oSubscribedFolders = array();
-		if ($bSubscribe) {
-			$oSubscribedFolders = $this->oImapClient->FolderSubscribeList($sPrevFolderFullName, '*');
-			foreach ($oSubscribedFolders as /* @var $oFolder \MailSo\Imap\Folder */ $oFolder) {
-				$this->oImapClient->FolderUnsubscribe($oFolder->FullName);
-			}
-		}
+
+		/**
+		 * https://datatracker.ietf.org/doc/html/rfc3501#section-6.3.5
+		 *   Does not mention subscriptions
+		 * https://datatracker.ietf.org/doc/html/rfc9051#section-6.3.6
+		 *   Mentions that a server doesn't automatically manage subscriptions
+		 */
+		$oSubscribedFolders = $this->oImapClient->FolderSubscribeList($sPrevFolderFullName, '*');
 
 		$this->oImapClient->FolderRename($sPrevFolderFullName, $sNewFolderFullName);
 
 		foreach ($oSubscribedFolders as /* @var $oFolder \MailSo\Imap\Folder */ $oFolder) {
 			$sFolderFullNameForResubscribe = $oFolder->FullName;
 			if (\str_starts_with($sFolderFullNameForResubscribe, $sPrevFolderFullName)) {
+				$this->oImapClient->FolderUnsubscribe($sFolderFullNameForResubscribe);
 				$this->oImapClient->FolderSubscribe(
 					$sNewFolderFullName . \substr($sFolderFullNameForResubscribe, \strlen($sPrevFolderFullName))
 				);

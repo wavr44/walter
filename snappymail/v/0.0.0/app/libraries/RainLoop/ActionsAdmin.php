@@ -56,7 +56,7 @@ class ActionsAdmin extends Actions
 			return $self->ValidateLanguage($sLanguage, '', false);
 		});
 
-		$this->setConfigFromParams($oConfig, 'languageAdmin', 'webmail', 'language_admin', 'string', function ($sLanguage) use ($self) {
+		$this->setConfigFromParams($oConfig, 'languageAdmin', 'admin_panel', 'language', 'string', function ($sLanguage) use ($self) {
 			return $self->ValidateLanguage($sLanguage, '', true);
 		});
 
@@ -65,6 +65,7 @@ class ActionsAdmin extends Actions
 		});
 
 		$this->setConfigFromParams($oConfig, 'useLocalProxyForExternalImages', 'labs', 'use_local_proxy_for_external_images', 'bool');
+		$this->setConfigFromParams($oConfig, 'autoVerifySignatures', 'security', 'auto_verify_signatures', 'bool');
 
 		$this->setConfigFromParams($oConfig, 'allowLanguagesOnSettings', 'webmail', 'allow_languages_on_settings', 'bool');
 		$this->setConfigFromParams($oConfig, 'allowLanguagesOnLogin', 'login', 'allow_languages_on_login', 'bool');
@@ -91,7 +92,8 @@ class ActionsAdmin extends Actions
 		$this->setConfigFromParams($oConfig, 'CapaAttachmentThumbnails', 'interface', 'show_attachment_thumbnail', 'bool');
 		$this->setConfigFromParams($oConfig, 'CapaThemes', 'webmail', 'allow_themes', 'bool');
 		$this->setConfigFromParams($oConfig, 'CapaUserBackground', 'webmail', 'allow_user_background', 'bool');
-		$this->setConfigFromParams($oConfig, 'CapaOpenPGP', 'security', 'openpgp', 'bool');
+		$this->setConfigFromParams($oConfig, 'capaGnuPG', 'security', 'gnupg', 'bool');
+		$this->setConfigFromParams($oConfig, 'capaOpenPGP', 'security', 'openpgp', 'bool');
 
 		$this->setConfigFromParams($oConfig, 'determineUserLanguage', 'login', 'determine_user_language', 'bool');
 		$this->setConfigFromParams($oConfig, 'determineUserDomain', 'login', 'determine_user_domain', 'bool');
@@ -122,7 +124,7 @@ class ActionsAdmin extends Actions
 			!$this->Config()->ValidatePassword($oPassword)
 			|| ($totp && !\SnappyMail\TOTP::Verify($totp, $this->GetActionParam('TOTP', ''))))
 		{
-			$this->LoggerAuthHelper(null, $this->getAdditionalLogParamsByUserLogin($sLogin, true), true);
+			$this->LoggerAuthHelper(null, $sLogin, true);
 			$this->loginErrorDelay();
 			throw new ClientException(Notifications::AuthError);
 		}
@@ -365,56 +367,6 @@ class ActionsAdmin extends Actions
 		return $this->DefaultResponse($QR->__toString());
 	}
 
-/*
-	public function AdminAppData(array &$aResult): void
-	{
-		$oConfig = $this->oConfig;
-		$aResult['Auth'] = $this->IsAdminLoggined(false);
-		if ($aResult['Auth']) {
-			$aResult['adminLogin'] = (string)$oConfig->Get('security', 'admin_login', '');
-			$aResult['adminTOTP'] = (string)$oConfig->Get('security', 'admin_totp', '');
-			$aResult['pluginsEnable'] = (bool)$oConfig->Get('plugins', 'enable', false);
-
-			$aResult['loginDefaultDomain'] = $oConfig->Get('login', 'default_domain', '');
-			$aResult['determineUserLanguage'] = (bool)$oConfig->Get('login', 'determine_user_language', true);
-			$aResult['determineUserDomain'] = (bool)$oConfig->Get('login', 'determine_user_domain', false);
-
-			$aResult['supportedPdoDrivers'] = \RainLoop\Pdo\Base::getAvailableDrivers();
-
-			$aResult['contactsEnable'] = (bool)$oConfig->Get('contacts', 'enable', false);
-			$aResult['contactsSync'] = (bool)$oConfig->Get('contacts', 'allow_sync', false);
-			$aResult['contactsPdoType'] = Providers\AddressBook\PdoAddressBook::validPdoType($oConfig->Get('contacts', 'type', 'sqlite'));
-			$aResult['contactsPdoDsn'] = (string)$oConfig->Get('contacts', 'pdo_dsn', '');
-			$aResult['contactsPdoType'] = (string)$oConfig->Get('contacts', 'type', '');
-			$aResult['contactsPdoUser'] = (string)$oConfig->Get('contacts', 'pdo_user', '');
-			$aResult['contactsPdoPassword'] = static::APP_DUMMY;
-			$aResult['contactsMySQLSSLCA'] = (string) $oConfig->Get('contacts', 'mysql_ssl_ca', '');
-			$aResult['contactsMySQLSSLVerify'] = !!$oConfig->Get('contacts', 'mysql_ssl_verify', true);
-			$aResult['contactsMySQLSSLCiphers'] = (string) $oConfig->Get('contacts', 'mysql_ssl_ciphers', '');
-			$aResult['contactsSQLiteGlobal'] = !!$oConfig->Get('contacts', 'sqlite_global', \is_file(APP_PRIVATE_DATA . '/AddressBook.sqlite'));
-			$aResult['contactsSuggestionsLimit'] = (int)$oConfig->Get('contacts', 'suggestions_limit', 20);
-
-			$aResult['faviconUrl'] = $oConfig->Get('webmail', 'favicon_url', '');
-
-			$aResult['weakPassword'] = \is_file(APP_PRIVATE_DATA.'admin_password.txt');
-
-			$aResult['System']['languagesAdmin'] = \SnappyMail\L10n::getLanguages(true);
-			$aResult['languageAdmin'] = $this->ValidateLanguage($oConfig->Get('webmail', 'language_admin', 'en'), '', true);
-			$aResult['languageUsers'] = $this->ValidateLanguage($this->detectUserLanguage(true), '', true, true);
-		} else {
-			$passfile = APP_PRIVATE_DATA.'admin_password.txt';
-			$sPassword = $oConfig->Get('security', 'admin_password', '');
-			if (!$sPassword) {
-				$sPassword = \substr(\base64_encode(\random_bytes(16)), 0, 12);
-				Utils::saveFile($passfile, $sPassword . "\n");
-//				\chmod($passfile, 0600);
-				$oConfig->SetPassword($sPassword);
-				$oConfig->Save();
-			}
-		}
-	}
-*/
-
 	private function setAdminAuthToken() : string
 	{
 		$sRand = \MailSo\Base\Utils::Sha1Rand();
@@ -463,4 +415,57 @@ class ActionsAdmin extends Actions
 		}
 	}
 
+	public static function AdminAppData(Actions $oActions, array &$aResult): void
+	{
+		$oConfig = $oActions->Config();
+		$aResult['Admin'] = [
+			'host' => '' !== $oConfig->Get('admin_panel', 'host', ''),
+			'path' => $oConfig->Get('admin_panel', 'key', '') ?: 'admin',
+			'allowed' => (bool)$oConfig->Get('security', 'allow_admin_panel', true)
+		];
+
+		$aResult['Auth'] = $oActions->IsAdminLoggined(false);
+		if ($aResult['Auth']) {
+			$aResult['adminLogin'] = (string)$oConfig->Get('security', 'admin_login', '');
+			$aResult['adminTOTP'] = (string)$oConfig->Get('security', 'admin_totp', '');
+			$aResult['pluginsEnable'] = (bool)$oConfig->Get('plugins', 'enable', false);
+
+			$aResult['loginDefaultDomain'] = $oConfig->Get('login', 'default_domain', '');
+			$aResult['determineUserLanguage'] = (bool)$oConfig->Get('login', 'determine_user_language', true);
+			$aResult['determineUserDomain'] = (bool)$oConfig->Get('login', 'determine_user_domain', false);
+
+			$aResult['supportedPdoDrivers'] = \RainLoop\Pdo\Base::getAvailableDrivers();
+
+			$aResult['contactsEnable'] = (bool)$oConfig->Get('contacts', 'enable', false);
+			$aResult['contactsSync'] = (bool)$oConfig->Get('contacts', 'allow_sync', false);
+			$aResult['contactsPdoType'] = Providers\AddressBook\PdoAddressBook::validPdoType($oConfig->Get('contacts', 'type', 'sqlite'));
+			$aResult['contactsPdoDsn'] = (string)$oConfig->Get('contacts', 'pdo_dsn', '');
+			$aResult['contactsPdoType'] = (string)$oConfig->Get('contacts', 'type', '');
+			$aResult['contactsPdoUser'] = (string)$oConfig->Get('contacts', 'pdo_user', '');
+			$aResult['contactsPdoPassword'] = static::APP_DUMMY;
+			$aResult['contactsMySQLSSLCA'] = (string) $oConfig->Get('contacts', 'mysql_ssl_ca', '');
+			$aResult['contactsMySQLSSLVerify'] = !!$oConfig->Get('contacts', 'mysql_ssl_verify', true);
+			$aResult['contactsMySQLSSLCiphers'] = (string) $oConfig->Get('contacts', 'mysql_ssl_ciphers', '');
+			$aResult['contactsSQLiteGlobal'] = !!$oConfig->Get('contacts', 'sqlite_global', \is_file(APP_PRIVATE_DATA . '/AddressBook.sqlite'));
+			$aResult['contactsSuggestionsLimit'] = (int)$oConfig->Get('contacts', 'suggestions_limit', 20);
+
+			$aResult['faviconUrl'] = $oConfig->Get('webmail', 'favicon_url', '');
+
+			$aResult['weakPassword'] = \is_file(APP_PRIVATE_DATA.'admin_password.txt');
+
+			$aResult['Admin']['language'] = $oActions->ValidateLanguage($oConfig->Get('admin_panel', 'language', 'en'), '', true);
+			$aResult['Admin']['languages'] = \SnappyMail\L10n::getLanguages(true);
+			$aResult['Admin']['clientLanguage'] = $oActions->ValidateLanguage($oActions->detectClientLanguage(true), '', true, true);
+		} else {
+			$passfile = APP_PRIVATE_DATA.'admin_password.txt';
+			$sPassword = $oConfig->Get('security', 'admin_password', '');
+			if (!$sPassword) {
+				$sPassword = \substr(\base64_encode(\random_bytes(16)), 0, 12);
+				Utils::saveFile($passfile, $sPassword . "\n");
+//				\chmod($passfile, 0600);
+				$oConfig->SetPassword(new \SnappyMail\SensitiveString($sPassword));
+				$oConfig->Save();
+			}
+		}
+	}
 }

@@ -2,11 +2,11 @@
 
 namespace RainLoop\Actions;
 
-use RainLoop\Enumerations\Capa;
 use RainLoop\Exceptions\ClientException;
 use RainLoop\Model\Account;
 use RainLoop\Notifications;
 use MailSo\Imap\SequenceSet;
+use MailSo\Imap\Enumerations\FetchType;
 use MailSo\Imap\Enumerations\MessageFlag;
 use MailSo\Mime\Part as MimePart;
 use MailSo\Mime\Enumerations\Header as MimeEnumHeader;
@@ -455,6 +455,92 @@ trait Messages
 		try
 		{
 			$oMessage = $this->MailClient()->Message($sFolder, $iUid, true, $this->Cacher($oAccount));
+
+			$bAutoVerify = $this->Config()->Get('security', 'auto_verify_signatures', false);
+
+			// S/MIME signed. Verify it, so we have the raw mime body to show
+			if ($oMessage->smimeSigned && ($bAutoVerify || !$oMessage->smimeSigned['detached'])) try {
+				$bOpaque = !$oMessage->smimeSigned['detached'];
+				$sBody = $this->ImapClient()->FetchMessagePart(
+					$oMessage->Uid,
+					$oMessage->smimeSigned['partId']
+				);
+				$result = (new \SnappyMail\SMime\OpenSSL(''))->verify($sBody, null, $bOpaque);
+				if ($result) {
+					if ($bOpaque) {
+						$oMessage->smimeSigned['body'] = $result['body'];
+					}
+					$oMessage->smimeSigned['success'] = $result['success'];
+				}
+			} catch (\Throwable $e) {
+				$this->logException($e);
+			}
+
+			if ($bAutoVerify && $oMessage->pgpSigned) try {
+				$GPG = $this->GnuPG();
+				if ($GPG) {
+					if ($oMessage->pgpSigned['sigPartId']) {
+						$sPartId = $oMessage->pgpSigned['partId'];
+						$sSigPartId = $oMessage->pgpSigned['sigPartId'];
+						$aParts = [
+							FetchType::BODY_PEEK.'['.$sPartId.']',
+							// An empty section specification refers to the entire message, including the header.
+							// But Dovecot does not return it with BODY.PEEK[1], so we also use BODY.PEEK[1.MIME].
+							FetchType::BODY_PEEK.'['.$sPartId.'.MIME]',
+							FetchType::BODY_PEEK.'['.$sSigPartId.']'
+						];
+						$oFetchResponse = $this->ImapClient()->Fetch($aParts, $oMessage->Uid, true)[0];
+						$sBodyMime = $oFetchResponse->GetFetchValue(FetchType::BODY.'['.$sPartId.'.MIME]');
+						$info = $this->GnuPG()->verify(
+							\preg_replace('/\\r?\\n/su', "\r\n",
+								$sBodyMime . $oFetchResponse->GetFetchValue(FetchType::BODY.'['.$sPartId.']')
+							),
+							\preg_replace('/[^\x00-\x7F]/', '',
+								$oFetchResponse->GetFetchValue(FetchType::BODY.'['.$sSigPartId.']')
+							)
+						);
+					} else {
+						// clearsigned text
+						$info = $this->GnuPG()->verify($oMessage->sPlain, '');
+					}
+					if (!empty($info[0]) && 0 == $info[0]['status']) {
+						$info = $info[0];
+						$oMessage->pgpSigned = [
+							'fingerprint' => $info['fingerprint'],
+							'success' => true
+						];
+					}
+				}
+			} catch (\Throwable $e) {
+				$this->logException($e);
+			}
+/*
+			if (!$oMessage->sPlain && !$oMessage->sHtml && !$oMessage->pgpEncrypted && !$oMessage->smimeEncrypted) {
+				$aAttachments = $oMessage->Attachments ?: [];
+				foreach ($aAttachments as $oAttachment) {
+//					\in_array($oAttachment->ContentType(), ['application/vnd.ms-tnef', 'application/ms-tnef'])
+					if ('winmail.dat' === \strtolower($oAttachment->FileName())) {
+						$sData = $this->ImapClient()->FetchMessagePart(
+							$oMessage->Uid,
+							$oAttachment->PartID()
+						);
+						$oTNEF = new \TNEFDecoder\TNEFAttachment;
+						$oTNEF->decodeTnef($sData);
+						foreach ($oTNEF->getFiles() as $oFile) {
+							if (\in_array($oFile->type, ['application/rtf', 'text/rtf'])) {
+								$rtf = new \SnappyMail\Rtf\Document($oFile->content);
+								$oMessage->setHtml($rtf->toHTML());
+							} else {
+								// List as attachment?
+								$oMapiAttachment = new \MailSo\Mail\Attachment($sFolder, $iUid, BodyStructure);
+								$oMessage->Attachments->append($oMapiAttachment);
+							}
+						}
+						break;
+					}
+				}
+			}
+*/
 		}
 		catch (\Throwable $oException)
 		{
@@ -612,7 +698,6 @@ trait Messages
 											?: \SnappyMail\File\MimeType::fromFilename($sFileName)
 											?: 'application/octet-stream'; // 'text/plain'
 
-//										$sFileName = $self->MainClearFileName($sFileName, $sContentType, $sMimeIndex);
 										$sTempName .= \SnappyMail\File\MimeType::toExtension($sContentType);
 
 										if ($self->FilesProvider()->PutFile($oAccount, $sTempName, $rResource)) {
@@ -631,7 +716,7 @@ trait Messages
 								?: \SnappyMail\File\MimeType::fromFilename($sTempName)
 								?: 'application/octet-stream'; // 'text/plain'
 							$aAttachments[$mIndex] = [
-//								'name' => $sFileName,
+//								'name' => '',
 								'tempName' => $sTempName,
 								'mimeType' => $sContentType
 //								'size' => $oFilesProvider->FileSize($oAccount, $sTempName)
@@ -677,8 +762,7 @@ trait Messages
 			$this->Plugins()->RunHook('filter.smtp-from', array($oAccount, $oMessage, &$sFrom));
 
 			$aHiddenRcpt = array();
-			if ($bAddHiddenRcpt)
-			{
+			if ($bAddHiddenRcpt) {
 				$this->Plugins()->RunHook('filter.smtp-hidden-rcpt', array($oAccount, $oMessage, &$aHiddenRcpt));
 			}
 
@@ -870,15 +954,16 @@ trait Messages
 			$oMessage->DoesNotAddDefaultXMailer();
 		}
 
-		$sFrom = $this->GetActionParam('from', '');
-		$oMessage->SetFrom(\MailSo\Mime\Email::Parse($sFrom));
+		$oMessage->SetFrom(\MailSo\Mime\Email::Parse($this->GetActionParam('from', '')));
+		$oFrom = $oMessage->GetFrom();
+
 /*
-		$oFromIdentity = $this->GetIdentityByID($oAccount, $this->GetActionParam('identityID', ''));
-		if ($oFromIdentity)
+		$oIdentity = $this->GetIdentityByID($oAccount, $this->GetActionParam('identityID', ''));
+		if ($oIdentity)
 		{
 			$oMessage->SetFrom(new \MailSo\Mime\Email(
-				$oFromIdentity->Email(), $oFromIdentity->Name()));
-			if ($oAccount->Domain()->OutSetSender()) {
+				$oIdentity->Email(), $oIdentity->Name()));
+			if ($oAccount->Domain()->SmtpSettings()->setSender) {
 				$oMessage->SetSender(\MailSo\Mime\Email::Parse($oAccount->Email()));
 			}
 		}
@@ -887,14 +972,13 @@ trait Messages
 			$oMessage->SetFrom(\MailSo\Mime\Email::Parse($oAccount->Email()));
 		}
 */
-		$oFrom = $oMessage->GetFrom();
 		$oMessage->RegenerateMessageId($oFrom ? $oFrom->GetDomain() : '');
 
 		$oMessage->SetReplyTo(new \MailSo\Mime\EmailCollection($this->GetActionParam('replyTo', '')));
 
 		if (!empty($this->GetActionParam('readReceiptRequest', 0))) {
 			// Read Receipts Reference Main Account Email, Not Identities #147
-//			$oMessage->SetReadReceipt(($oFromIdentity ?: $oAccount)->Email());
+//			$oMessage->SetReadReceipt(($oIdentity ?: $oAccount)->Email());
 			$oMessage->SetReadReceipt($oFrom->GetEmail());
 		}
 
@@ -1109,6 +1193,18 @@ trait Messages
 		} else {
 			$sCertificate = $this->GetActionParam('signCertificate', '');
 			$sPrivateKey = $this->GetActionParam('signPrivateKey', '');
+			if ('S/MIME' === $this->GetActionParam('sign', '')) {
+				$sID = $this->GetActionParam('identityID', '');
+				foreach ($this->GetIdentities($oAccount) as $oIdentity) {
+					if ($oIdentity && $oIdentity->smimeCertificate && $oIdentity->smimeKey
+					 && ($oIdentity->Id() === $sID || $oIdentity->Email() === $oFrom->GetEmail())
+					) {
+						$sCertificate = $oIdentity->smimeCertificate;
+						$sPrivateKey = $oIdentity->smimeKey;
+						break;
+					}
+				}
+			}
 			if ($sCertificate && $sPrivateKey) {
 				$oBody = $oMessage->GetRootPart();
 

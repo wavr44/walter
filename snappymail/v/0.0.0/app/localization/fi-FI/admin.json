@@ -85,13 +85,14 @@
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Tietoturva",
 		"LABEL_USE_IMAGE_PROXY": "Käytä paikallista proxya ulkoisille kuville.",
-		"LABEL_ALLOW_OPENPGP": "Salli OpenPGP",
+		"LABEL_AUTO_VERIFY": "Verify signatures automatically",
 		"LABEL_SHOW_PHP_INFO": "Näytä PHP tiedot",
 		"LEGEND_ADMIN_PANEL_ACCESS_CREDENTIALS": "Hallintapaneeli kirjautumistiedot",
 		"LABEL_CURRENT_PASSWORD": "Nykyinen salasana",
 		"LABEL_NEW_PASSWORD": "Uusi salasana",
 		"LABEL_REPEAT_PASSWORD": "Toista",
 		"LABEL_REQUIRE_VERIFICATION": "Vaadi SSL sertifikaatin varmistus",
+		"CRYPTO": "Crypto",
 		"LABEL_ALLOW_SELF_SIGNED": "Salli itse-allekirjoitetut sertifikaatit"
 	},
 	"TAB_PACKAGES": {
@@ -135,6 +136,7 @@
 		"SECURE_OPTION_NONE": "Ei mitään",
 		"LABEL_ALLOW_SIEVE_SCRIPTS": "Salli sieve skriptit",
 		"LABEL_USE_SHORT_LOGIN": "Käytä lyhyttä kirjautumista",
+		"LABEL_LOWERCASE_LOGIN": "Lowercase login (case-insensitive)",
 		"LABEL_USE_AUTH": "Käytä tunnistautumista",
 		"LABEL_SET_SENDER": "Use login as sender",
 		"LABEL_AUTH_PLAIN_LINE": "Force single command AUTH PLAIN login",
@@ -168,17 +170,17 @@
 		"UNKNOWN_ERROR": "Tuntematon virhe"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Request failed",
-		"REQUEST_ABORTED": "Request is aborted",
-		"REQUEST_TIMEOUT": "Request timed out",
-		"INVALID_TOKEN": "Väärä token",
-		"AUTH_ERROR": "Tunnistautuminen epäonnistui",
-		"DOMAIN_ALREADY_EXISTS": "Verkkotunnus on jo olemassa",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Asetuksia ei voida tallentaa",
-		"CANT_INSTALL_PACKAGE": "Paketin asennus epäonnistui",
-		"CANT_DELETE_PACKAGE": "Paketin poisto epäonnistui",
-		"INVALID_PLUGIN_PACKAGE": "Virheellinen lisäosa-paketti",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Ei tuettu lisäosa-paketti",
-		"UNKNOWN_ERROR": "Tuntematon virhe"
+		"RequestError": "Request failed",
+		"RequestAborted": "Request is aborted",
+		"RequestTimeout": "Request timed out",
+		"InvalidToken": "Väärä token",
+		"AuthError": "Tunnistautuminen epäonnistui",
+		"DomainAlreadyExists": "Verkkotunnus on jo olemassa",
+		"CantSavePluginSettings": "Asetuksia ei voida tallentaa",
+		"CantInstallPackage": "Paketin asennus epäonnistui",
+		"CantDeletePackage": "Paketin poisto epäonnistui",
+		"InvalidPluginPackage": "Virheellinen lisäosa-paketti",
+		"UnsupportedPluginPackage": "Ei tuettu lisäosa-paketti",
+		"UnknownError": "Tuntematon virhe"
 	}
 }

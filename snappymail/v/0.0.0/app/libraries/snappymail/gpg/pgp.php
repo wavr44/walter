@@ -96,8 +96,8 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 
 		$fclose = $this->setOutput($output);
 
-		if ($this->decryptKeys) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->decryptKeys));
+		if ($this->pinentries) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->pinentries));
 		}
 
 		$result = $this->exec(['--decrypt','--skip-verify']);
@@ -238,14 +238,19 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 		return false;
 	}
 
-	protected function _exportKey($keyId, bool $private = false)
+	/**
+	 * Exports a public or private key
+	 */
+	public function export(string $fingerprint, ?SensitiveString $passphrase = null) /*: string|false*/
 	{
-		$keys = $this->keyInfo($keyId, $private);
+//		\SnappyMail\Log::debug('GnuPG', "export({$fingerprint}, {$passphrase})");
+		$private = null !== $passphrase;
+		$keys = $this->keyInfo($fingerprint, $private);
 		if (!$keys) {
-			throw new \Exception(($private ? 'Private' : 'Public') . ' key not found: ' . $keyId);
+			throw new \Exception(($private ? 'Private' : 'Public') . ' key not found: ' . $fingerprint);
 		}
-		if ($private && $this->passphrases) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->passphrases));
+		if ($private) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode([$fingerprint => \strval($passphrase)]);
 		}
 		$result = $this->exec([
 			$private ? '--export-secret-keys' : '--export',
@@ -253,20 +258,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			\escapeshellarg($keys[0]['subkeys'][0]['fingerprint']),
 		]);
 		return $result['output'];
-	}
-
-	/**
-	 * Exports a public or private key
-	 */
-	public function export(string $fingerprint, ?SensitiveString $passphrase = null) /*: string|false*/
-	{
-//		\SnappyMail\Log::debug('GnuPG', "export({$fingerprint}, {$passphrase})");
-		if (null !== $passphrase) {
-			return $this
-				->addPassphrase($fingerprint, $passphrase)
-				->_exportKey($fingerprint, true);
-		}
-		return $this->_exportKey($fingerprint);
 	}
 
 	/**
@@ -333,9 +324,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			}
 		}
 		if (!$fingerprint) {
-			if (!empty($result['errors'])) {
-				\SnappyMail\Log::error('GPG', \implode("\n\t", $result['errors']));
-			}
 			return false;
 		}
 
@@ -368,8 +356,8 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 	{
 		$arguments = ['--import'];
 
-		if ($this->passphrases) {
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->passphrases));
+		if ($this->pinentries) {
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->pinentries));
 		} else {
 			$arguments[] = '--batch';
 		}
@@ -392,10 +380,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 					'fingerprint' => ''
 				];
 			}
-		}
-
-		if (!empty($result['errors'][0])) {
-			\SnappyMail\Log::warning('GPG', $result['errors'][0]);
 		}
 
 		return false;
@@ -625,7 +609,7 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 
 	protected function _sign(/*string|resource*/ $input, /*string|resource*/ $output = null, bool $textmode = true) /*: string|false*/
 	{
-		if (empty($this->signKeys)) {
+		if (empty($this->pinentries)) {
 			throw new \Exception('No signing keys specified.');
 		}
 
@@ -656,11 +640,11 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			$arguments[] = '--textmode';
 		}
 
-		if ($this->signKeys) {
-			foreach ($this->signKeys as $fingerprint => $pass) {
+		if ($this->pinentries) {
+			foreach ($this->pinentries as $fingerprint => $pass) {
 				$arguments[] = '--local-user ' . \escapeshellarg($fingerprint);
 			}
-			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->signKeys));
+			$_ENV['PINENTRY_USER_DATA'] = \json_encode(\array_map('strval', $this->pinentries));
 		}
 
 		$result = $this->exec($arguments);
@@ -809,12 +793,11 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 		$this->_debug('BEGIN DETECT MESSAGE KEY IDs');
 		$this->setInput($data);
 //		$_ENV['PINENTRY_USER_DATA'] = null;
-		$result = $this->exec(['--decrypt','--skip-verify']);
+		$result = $this->exec(['--decrypt','--skip-verify'], false);
 		$info = [
 			'ENC_TO' => [],
 //			'KEY_CONSIDERED' => [],
 //			'NO_SECKEY' => [],
-//			'errors' => $result['errors']
 		];
 		foreach ($result['status'] as $line) {
 			$tokens = \explode(' ', $line);
@@ -826,7 +809,7 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 		return $info['ENC_TO'];
 	}
 
-	private function exec(array $arguments) /*: array|false*/
+	private function exec(array $arguments, bool $throw = true) /*: array|false*/
 	{
 		if (\version_compare($this->version, '2.2.5', '<')) {
 			\SnappyMail\Log::error('GPG', "{$this->version} too old");
@@ -948,12 +931,7 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			// Timeout after 5 seconds
 			if (5 < \microtime(1) - $start) {
 				$errors[] = 'timeout';
-				return [
-					'output' => '',
-					'status' => $status,
-					'errors' => $errors
-				];
-				exit;
+				throw new \RuntimeException(\implode("\n", $errors));
 			}
 
 			$inputStreams     = [];
@@ -1076,7 +1054,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			// to use too much memory
 			if (\in_array($this->_input, $inputStreams, true) && \strlen($inputBuffer) < self::CHUNK_SIZE) {
 				$this->_debug('input stream is ready for reading');
-				$this->_debug('=> about to read ' . self::CHUNK_SIZE . ' bytes from input stream');
 				$chunk        = \fread($this->_input, self::CHUNK_SIZE);
 				$length       = \strlen($chunk);
 				$inputBuffer .= $chunk;
@@ -1099,7 +1076,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			// read message (from PHP stream)
 			if (\in_array($this->_message, $inputStreams, true)) {
 				$this->_debug('message stream is ready for reading');
-				$this->_debug('=> about to read ' . self::CHUNK_SIZE . ' bytes from message stream');
 				$chunk          = \fread($this->_message, self::CHUNK_SIZE);
 				$length         = \strlen($chunk);
 				$messageBuffer .= $chunk;
@@ -1109,7 +1085,6 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			// read output (from GPG)
 			if (\in_array($fdOutput, $inputStreams, true)) {
 				$this->_debug('output stream ready for reading');
-				$this->_debug('=> about to read ' . self::CHUNK_SIZE . ' bytes from output');
 				$chunk         = \fread($fdOutput, self::CHUNK_SIZE);
 				$length        = \strlen($chunk);
 				$outputBuffer .= $chunk;
@@ -1136,17 +1111,18 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 			// read error (from GPG)
 			if (\in_array($fdError, $inputStreams, true)) {
 				$this->_debug('error stream ready for reading');
-				$this->_debug('=> about to read ' . self::CHUNK_SIZE . ' bytes from error');
 				foreach ($this->_openPipes->readPipeLines(self::FD_ERROR) as $line) {
-					$errors[] = $line;
 					$this->_debug("\t{$line}");
+					$errors[] = \preg_replace('/^gpg: /', '', $line);
+					if ($throw && (\str_contains($line, 'error') || \str_contains($line, 'failed'))) {
+						break 2;
+					}
 				}
 			}
 
 			// read status (from GPG)
 			if (\in_array($fdStatus, $inputStreams, true)) {
 				$this->_debug('status stream ready for reading');
-				$this->_debug('=> about to read ' . self::CHUNK_SIZE . ' bytes from status');
 				// pass lines to status handlers
 				foreach ($this->_openPipes->readPipeLines(self::FD_STATUS) as $line) {
 					// only pass lines beginning with magic prefix
@@ -1199,11 +1175,15 @@ class PGP extends Base implements \SnappyMail\PGP\PGPInterface
 
 		$this->_debug('END PROCESSING');
 
-		$this->proc_close();
+		$exitCode = $this->proc_close();
 
 		$this->_message = null;
 		$this->_input   = null;
 		$this->_output  = null;
+
+		if ($throw && $exitCode && $errors) {
+			throw new \RuntimeException(\implode(".\n", $errors), $exitCode);
+		}
 
 		return [
 			'output' => $outputBuffer,

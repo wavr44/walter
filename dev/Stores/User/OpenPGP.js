@@ -16,7 +16,7 @@ import { Passphrases } from 'Storage/Passphrases';
 const
 	findOpenPGPKey = (keys, query/*, sign*/) =>
 		keys.find(key =>
-			key.emails.includes(query) || query == key.id || query == key.fingerprint
+			key.for(query) || query == key.id || query == key.fingerprint
 		),
 
 	decryptKey = async (privateKey, btnTxt = 'SIGN') => {
@@ -59,9 +59,11 @@ const
 		let keys = [], key,
 			armoredKeys = JSON.parse(storage.getItem(itemname)),
 			i = arrayLength(armoredKeys);
-		while (i--) {
+		while (i--) try {
 			key = await openpgp.readKey({armoredKey:armoredKeys[i]});
 			key.err || keys.push(new OpenPgpKeyModel(armoredKeys[i], key));
+		} catch (e) {
+			console.error(e);
 		}
 		return keys;
 	},
@@ -77,20 +79,28 @@ const
 class OpenPgpKeyModel {
 	constructor(armor, key) {
 		this.key = key;
-		const aEmails = [];
-		if (key.users) {
-			key.users.forEach(user => user.userID.email && aEmails.push(user.userID.email));
-		}
 		this.id = key.getKeyID().toHex().toUpperCase();
 		this.fingerprint = key.getFingerprint();
 		this.can_encrypt = !!key.getEncryptionKey();
 		this.can_sign = !!key.getSigningKey();
-		this.emails = aEmails;
+		this.emails = key.users.map(user => IDN.toASCII(user.userID.email)).filter(email => email);
 		this.armor = armor;
 		this.askDelete = ko.observable(false);
 		this.openForDeletion = ko.observable(null).askDeleteHelper();
 //		key.getUserIDs()
 //		key.getPrimaryUser()
+	}
+
+/*
+	get id() { return this.key.getKeyID().toHex().toUpperCase(); }
+	get fingerprint() { return this.key.getFingerprint(); }
+	get can_encrypt() { return !!this.key.getEncryptionKey(); }
+	get can_sign() { return !!this.key.getSigningKey(); }
+	get emails() { return this.key.users.map(user => IDN.toASCII(user.userID.email)).filter(email => email); }
+	get armor() { return this.key.armor(); }
+*/
+	for(email) {
+		return this.emails.includes(IDN.toASCII(email));
 	}
 
 	view() {
@@ -142,18 +152,29 @@ export const OpenPGPUserStore = new class {
 	}
 
 	importKey(armoredKey) {
-		window.openpgp && openpgp.readKey({armoredKey:armoredKey}).then(key => {
-			if (!key.err) {
-				key = new OpenPgpKeyModel(armoredKey, key);
-				const isPrivate = key.key.isPrivate(),
-					keys = isPrivate ? this.privateKeys : this.publicKeys;
-				if (!keys.find(entry => entry.fingerprint == key.fingerprint)) {
-					keys.push(key);
-					keys(sort(keys));
-					storeOpenPgpKeys(keys, isPrivate ? privateKeysItem : publicKeysItem);
+		this.importKeys([armoredKey]);
+	}
+
+	async importKeys(keys) {
+		if (window.openpgp) {
+			const privateKeys = this.privateKeys(),
+				publicKeys = this.publicKeys();
+			for (const armoredKey of keys) try {
+				let key = await openpgp.readKey({armoredKey:armoredKey});
+				if (!key.err) {
+					key = new OpenPgpKeyModel(armoredKey, key);
+					const keys = key.key.isPrivate() ? privateKeys : publicKeys;
+					keys.find(entry => entry.fingerprint == key.fingerprint)
+					|| keys.push(key);
 				}
+			} catch (e) {
+				console.error(e, armoredKey);
 			}
-		});
+			this.privateKeys(sort(privateKeys));
+			this.publicKeys(sort(publicKeys));
+			storeOpenPgpKeys(privateKeys, privateKeysItem);
+			storeOpenPgpKeys(publicKeys, publicKeysItem);
+		}
 	}
 
 	/**
@@ -180,7 +201,7 @@ export const OpenPGPUserStore = new class {
 	hasPublicKeyForEmails(recipients) {
 		const count = recipients.length,
 			length = count ? recipients.filter(email =>
-				this.publicKeys().find(key => key.emails.includes(email))
+				this.publicKeys().find(key => key.for(email))
 			).length : 0;
 		return length && length === count;
 	}
@@ -229,8 +250,8 @@ export const OpenPGPUserStore = new class {
 	 * https://docs.openpgpjs.org/#sign-and-verify-cleartext-messages
 	 */
 	async verify(message) {
-		const data = message.pgpSigned(), // { bodyPartId: "1", sigPartId: "2", micAlg: "pgp-sha256" }
-			publicKey = this.publicKeys().find(key => key.emails.includes(message.from[0].email));
+		const data = message.pgpSigned(), // { partId: "1", sigPartId: "2", micAlg: "pgp-sha256" }
+			publicKey = this.publicKeys().find(key => key.for(message.from[0].email));
 		if (data && publicKey) {
 			data.folder = message.folder;
 			data.uid = message.uid;
@@ -289,7 +310,7 @@ export const OpenPGPUserStore = new class {
 	 */
 	async encrypt(text, recipients, signPrivateKey) {
 		const count = recipients.length;
-		recipients = recipients.map(email => this.publicKeys().find(key => key.emails.includes(email))).filter(key => key);
+		recipients = recipients.map(email => this.publicKeys().find(key => key.for(email))).filter(key => key);
 		if (count === recipients.length) {
 			if (signPrivateKey) {
 				signPrivateKey = await decryptKey(signPrivateKey);

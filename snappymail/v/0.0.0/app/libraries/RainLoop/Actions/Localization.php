@@ -8,19 +8,19 @@ trait Localization
 	{
 		$oConfig = $this->Config();
 		if ($bAdmin) {
-			$sLanguage = $oConfig->Get('webmail', 'language_admin', 'en');
+			$sLanguage = $oConfig->Get('admin_panel', 'language', 'en');
 		} else {
 			$sLanguage = $oConfig->Get('webmail', 'language', 'en');
 			if ($oAccount = $this->getAccountFromToken(false)) {
 				if ($oConfig->Get('login', 'determine_user_language', true)) {
-					$sLanguage = $this->ValidateLanguage($this->detectUserLanguage($bAdmin), $sLanguage, false);
+					$sLanguage = $this->ValidateLanguage($this->detectClientLanguage($bAdmin), $sLanguage, false);
 				}
 				if ($oConfig->Get('webmail', 'allow_languages_on_settings', true)
 				 && ($oSettings = $this->SettingsProvider()->Load($oAccount))) {
 					$sLanguage = $oSettings->GetConf('language', $sLanguage);
 				}
 			} else if ($oConfig->Get('login', 'allow_languages_on_login', true) && $oConfig->Get('login', 'determine_user_language', true)) {
-				$sLanguage = $this->ValidateLanguage($this->detectUserLanguage($bAdmin), $sLanguage, false);
+				$sLanguage = $this->ValidateLanguage($this->detectClientLanguage($bAdmin), $sLanguage, false);
 			}
 		}
 		$sHookLanguage = $sLanguage = $this->ValidateLanguage($sLanguage, '', $bAdmin) ?: 'en';
@@ -77,13 +77,12 @@ trait Localization
 			return '';
 		}
 
-		$sResult = $this->Config()->Get('webmail', $bAdmin ? 'language_admin' : 'language', 'en');
+		$sResult = $this->Config()->Get($bAdmin ? 'admin_panel' : 'webmail', 'language', 'en');
 		return \in_array($sResult, $aLang) ? $sResult : 'en';
 	}
 
-	public function detectUserLanguage(bool $bAdmin): string
+	public function detectClientLanguage(bool $bAdmin): string
 	{
-		$sResult = '';
 		$aLangs = $aList = array();
 
 		$sAcceptLang = \strtolower(\MailSo\Base\Http::GetServer('HTTP_ACCEPT_LANGUAGE', 'en'));
@@ -99,12 +98,11 @@ trait Localization
 		foreach (\array_keys($aLangs) as $sLang) {
 			$sLang = $this->ValidateLanguage($sLang, '', $bAdmin, true);
 			if (!empty($sLang)) {
-				$sResult = $sLang;
-				break;
+				return $sLang;
 			}
 		}
 
-		return $sResult;
+		return '';
 	}
 
 	public function StaticI18N(string $sKey): string

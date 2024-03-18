@@ -85,13 +85,14 @@
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Beveiliging",
 		"LABEL_USE_IMAGE_PROXY": "Gebruik de server als proxy voor externe afbeeldingen",
-		"LABEL_ALLOW_OPENPGP": "OpenPGP toestaan",
+		"LABEL_AUTO_VERIFY": "Ondertekening automatisch verifiëren",
 		"LABEL_SHOW_PHP_INFO": "PHP informatie tonen",
 		"LEGEND_ADMIN_PANEL_ACCESS_CREDENTIALS": "Toegangsgegevens beheer paneel",
 		"LABEL_CURRENT_PASSWORD": "Huidig wachtwoord",
 		"LABEL_NEW_PASSWORD": "Nieuw wachtwoord",
 		"LABEL_REPEAT_PASSWORD": "Herhaal nieuw wachtwoord",
 		"LABEL_REQUIRE_VERIFICATION": "Verificatie van SSL certificaten",
+		"CRYPTO": "Crypto",
 		"LABEL_ALLOW_SELF_SIGNED": "Sta zelf ondertekende certificaten toe"
 	},
 	"TAB_PACKAGES": {
@@ -135,6 +136,7 @@
 		"SECURE_OPTION_NONE": "Geen",
 		"LABEL_ALLOW_SIEVE_SCRIPTS": "Sta Sieve scripts toe",
 		"LABEL_USE_SHORT_LOGIN": "Gebruik verkorte login",
+		"LABEL_LOWERCASE_LOGIN": "Lowercase login (case-insensitive)",
 		"LABEL_USE_AUTH": "Gebruik authenticatie",
 		"LABEL_SET_SENDER": "Gebruik login als verzender",
 		"LABEL_AUTH_PLAIN_LINE": "Forceer een enkele opdracht AUTH PLAIN-aanmelding",
@@ -168,17 +170,17 @@
 		"UNKNOWN_ERROR": "Onbekende fout"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Aanvraag mislukt",
-		"REQUEST_ABORTED": "Aanvraag is afgebroken",
-		"REQUEST_TIMEOUT": "Aanvraag verlopen",
-		"INVALID_TOKEN": "Onjuiste token",
-		"AUTH_ERROR": "Authenticatie mislukt",
-		"DOMAIN_ALREADY_EXISTS": "Domein bestaat al",
-		"CANT_SAVE_PLUGIN_SETTINGS": "Kan instellingen niet opslaan",
-		"CANT_INSTALL_PACKAGE": "Extensie installeren mislukt",
-		"CANT_DELETE_PACKAGE": "Extensie verwijderen mislukt",
-		"INVALID_PLUGIN_PACKAGE": "Onjuist extensie pakket",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "Niet ondersteund extensie pakket",
-		"UNKNOWN_ERROR": "Onbekende fout"
+		"RequestError": "Aanvraag mislukt",
+		"RequestAborted": "Aanvraag is afgebroken",
+		"RequestTimeout": "Aanvraag verlopen",
+		"InvalidToken": "Onjuiste token",
+		"AuthError": "Authenticatie mislukt",
+		"DomainAlreadyExists": "Domein bestaat al",
+		"CantSavePluginSettings": "Kan instellingen niet opslaan",
+		"CantInstallPackage": "Extensie installeren mislukt",
+		"CantDeletePackage": "Extensie verwijderen mislukt",
+		"InvalidPluginPackage": "Onjuist extensie pakket",
+		"UnsupportedPluginPackage": "Niet ondersteund extensie pakket",
+		"UnknownError": "Onbekende fout"
 	}
 }

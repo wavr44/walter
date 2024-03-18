@@ -19,11 +19,7 @@ abstract class Account implements \JsonSerializable
 
 	private string $sSmtpLogin = '';
 
-	private ?SensitiveString $sSmtpPassword = null;
-
-	private string $sProxyAuthUser = '';
-
-	private ?SensitiveString $sProxyAuthPassword = null;
+	private ?SensitiveString $oSmtpPassword = null;
 
 	private Domain $oDomain;
 
@@ -39,9 +35,7 @@ abstract class Account implements \JsonSerializable
 
 	public function IncLogin() : string
 	{
-		return $this->oDomain->IncShortLogin()
-			? \MailSo\Base\Utils::GetAccountNameFromEmail($this->sLogin)
-			: $this->sLogin;
+		return $this->sLogin;
 	}
 
 	public function IncPassword() : string
@@ -51,8 +45,7 @@ abstract class Account implements \JsonSerializable
 
 	public function OutLogin() : string
 	{
-		$sSmtpLogin = $this->sSmtpLogin ?: $this->sLogin;
-		return $this->oDomain->OutShortLogin() ? \MailSo\Base\Utils::GetAccountNameFromEmail($sSmtpLogin) : $sSmtpLogin;
+		return $this->sSmtpLogin ?: $this->sLogin;
 	}
 
 	public function Domain() : Domain
@@ -80,20 +73,7 @@ abstract class Account implements \JsonSerializable
 		string $sPassword
 	) : void
 	{
-		$this->sSmtpPassword = new SensitiveString($sPassword);
-	}
-
-	public function SetProxyAuthUser(string $sProxyAuthUser) : void
-	{
-		$this->sProxyAuthUser = $sProxyAuthUser;
-	}
-
-	public function SetProxyAuthPassword(
-		#[\SensitiveParameter]
-		string $sProxyAuthPassword
-	) : void
-	{
-		$this->sProxyAuthPassword = new SensitiveString($sProxyAuthPassword);
+		$this->oSmtpPassword = new SensitiveString($sPassword);
 	}
 
 	#[\ReturnTypeWillChange]
@@ -105,16 +85,10 @@ abstract class Account implements \JsonSerializable
 			'pass'  => $this->IncPassword(),
 			'name' => $this->sName
 		];
-		if ($this->sSmtpLogin && $this->sSmtpPassword) {
+		if ($this->sSmtpLogin && $this->oSmtpPassword) {
 			$result['smtp'] = [
 				'user' => $this->sSmtpLogin,
-				'pass' => $this->sSmtpPassword->getValue()
-			];
-		}
-		if ($this->sProxyAuthUser && $this->sProxyAuthPassword) {
-			$result['proxy'] = [
-				'user' => $this->sProxyAuthUser,
-				'pass' => $this->sProxyAuthPassword->getValue()
+				'pass' => $this->oSmtpPassword->getValue()
 			];
 		}
 		return $result;
@@ -127,13 +101,13 @@ abstract class Account implements \JsonSerializable
 	{
 		$oAccount = null;
 		if ($sEmail && $sLogin && \strlen($oPassword)) {
-			$oDomain = $oActions->DomainProvider()->Load(\MailSo\Base\Utils::GetDomainFromEmail($sEmail), true);
+			$oDomain = $oActions->DomainProvider()->Load(\MailSo\Base\Utils::getEmailAddressDomain($sEmail), true);
 			if ($oDomain) {
 				if ($oDomain->ValidateWhiteList($sEmail, $sLogin)) {
 					$oAccount = new static;
 
-					$oAccount->sEmail = \MailSo\Base\Utils::IdnToAscii($sEmail, true);
-					$oAccount->sLogin = \MailSo\Base\Utils::IdnToAscii($sLogin);
+					$oAccount->sEmail = \SnappyMail\IDN::emailToAscii($sEmail);
+					$oAccount->sLogin = \SnappyMail\IDN::emailToAscii($sLogin);
 					$oAccount->SetPassword($oPassword);
 					$oAccount->oDomain = $oDomain;
 
@@ -164,18 +138,11 @@ abstract class Account implements \JsonSerializable
 		if (empty($aAccount[0]) || 'account' != $aAccount[0] || 7 > \count($aAccount)) {
 			return [];
 		}
-		$aResult = [
+		return [
 			'email' => $aAccount[1] ?: '',
 			'login' => $aAccount[2] ?: '',
 			'pass'  => $aAccount[3] ?: ''
 		];
-		if ($aAccount[5] && $aAccount[6]) {
-			$aResult['proxy'] = [
-				'user' => $aAccount[5],
-				'pass' => $aAccount[6]
-			];
-		}
-		return $aResult;
 	}
 
 	public static function NewInstanceFromTokenArray(
@@ -202,11 +169,6 @@ abstract class Account implements \JsonSerializable
 					$oAccount->sSmtpLogin = $aAccountHash['smtp']['user'];
 					$oAccount->SetSmtpPassword($aAccountHash['smtp']['pass']);
 				}
-				// init proxy user/password
-				if (isset($aAccountHash['proxy'])) {
-					$oAccount->sProxyAuthUser = $aAccountHash['proxy']['user'];
-					$oAccount->SetProxyAuthPassword($aAccountHash['proxy']['pass']);
-				}
 			}
 		}
 		return $oAccount;
@@ -216,7 +178,7 @@ abstract class Account implements \JsonSerializable
 	{
 		$oSettings = $this->Domain()->ImapSettings();
 		$oSettings->timeout = \max($oSettings->timeout, (int) $oConfig->Get('imap', 'timeout', $oSettings->timeout));
-		$oSettings->Login = $this->IncLogin();
+		$oSettings->username = $this->IncLogin();
 
 		$oSettings->expunge_all_on_delete |= !!$oConfig->Get('imap', 'use_expunge_all_on_delete', false);
 		$oSettings->fast_simple_search = !(!$oSettings->fast_simple_search || !$oConfig->Get('imap', 'message_list_fast_simple_search', true));
@@ -233,14 +195,14 @@ abstract class Account implements \JsonSerializable
 		$oImapClient->Connect($oSettings);
 		$oPlugins->RunHook('imap.after-connect', array($this, $oImapClient, $oSettings));
 
-		$oSettings->Password = $this->oPassword;
+		$oSettings->passphrase = $this->oPassword;
 		return $this->netClientLogin($oImapClient, $oPlugins);
 	}
 
 	public function SmtpConnectAndLogin(\RainLoop\Plugins\Manager $oPlugins, \MailSo\Smtp\SmtpClient $oSmtpClient) : bool
 	{
 		$oSettings = $this->Domain()->SmtpSettings();
-		$oSettings->Login = $this->OutLogin();
+		$oSettings->username = $this->OutLogin();
 		$oSettings->Ehlo = \MailSo\Smtp\SmtpClient::EhloHelper();
 
 		$oSmtpClient->Settings = $oSettings;
@@ -253,18 +215,18 @@ abstract class Account implements \JsonSerializable
 		$oSmtpClient->Connect($oSettings);
 		$oPlugins->RunHook('smtp.after-connect', array($this, $oSmtpClient, $oSettings));
 /*
-		if ($this->oDomain->OutAskCredentials() && !($this->sSmtpPassword && $this->sSmtpLogin)) {
+		if ($this->oDomain->OutAskCredentials() && !($this->oSmtpPassword && $this->sSmtpLogin)) {
 			throw new RequireCredentialsException
 		}
 */
-		$oSettings->Password = $this->sSmtpPassword ?: $this->oPassword;
+		$oSettings->passphrase = $this->oSmtpPassword ?: $this->oPassword;
 		return $this->netClientLogin($oSmtpClient, $oPlugins);
 	}
 
 	public function SieveConnectAndLogin(\RainLoop\Plugins\Manager $oPlugins, \MailSo\Sieve\SieveClient $oSieveClient, \RainLoop\Config\Application $oConfig)
 	{
 		$oSettings = $this->Domain()->SieveSettings();
-		$oSettings->Login = $this->IncLogin();
+		$oSettings->username = $this->IncLogin();
 
 		$oSieveClient->Settings = $oSettings;
 
@@ -272,7 +234,7 @@ abstract class Account implements \JsonSerializable
 		$oSieveClient->Connect($oSettings);
 		$oPlugins->RunHook('sieve.after-connect', array($this, $oSieveClient, $oSettings));
 
-		$oSettings->Password = $this->oPassword;
+		$oSettings->passphrase = $this->oPassword;
 		return $this->netClientLogin($oSieveClient, $oPlugins);
 	}
 
@@ -288,8 +250,6 @@ abstract class Account implements \JsonSerializable
 		)
 */
 		$oSettings = $oClient->Settings;
-		$oSettings->ProxyAuthUser = $this->sProxyAuthUser;
-		$oSettings->ProxyAuthPassword = $this->sProxyAuthPassword;
 
 		$client_name = \strtolower($oClient->getLogName());
 

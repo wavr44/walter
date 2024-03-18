@@ -218,7 +218,7 @@ class ServiceActions
 			} else if (empty($_FILES)) {
 				$iError = UPLOAD_ERR_INI_SIZE;
 			} else {
-				$iError = Enumerations\UploadError::EMPTY_FILES_DATA;
+				$iError = Enumerations\UploadError::EMPTY_FILE;
 			}
 
 			if (\method_exists($this->oActions, $sAction) && \is_callable(array($this->oActions, $sAction))) {
@@ -389,7 +389,7 @@ class ServiceActions
 				$sResult = $this->Cacher()->Get($sCacheFileName);
 			}
 
-			if (!\strlen($sResult)) {
+			if (!$sResult) {
 				$sResult = $this->oActions->compileLanguage($sLanguage, $bAdmin);
 				if ($sCacheFileName) {
 					$this->Cacher()->Set($sCacheFileName, $sResult);
@@ -458,7 +458,7 @@ class ServiceActions
 			$bCacheEnabled = !$bAppDebug && $this->Config()->Get('cache', 'system_data', true);
 			$sCacheFileName = '';
 			if ($bCacheEnabled) {
-				$sCacheFileName = KeyPathHelper::CssCache($sTheme, $this->oActions->Plugins()->Hash()) . $sMinify;
+				$sCacheFileName = '/CssCache/'.$this->oActions->Plugins()->Hash().'/'.$sTheme.'/'.APP_VERSION.'/' . $sMinify;
 				$this->oActions->verifyCacheByKey(\md5($sCacheFileName . ($bJson ? 1 : 0)));
 				$sResult = $this->Cacher()->Get($sCacheFileName);
 			}

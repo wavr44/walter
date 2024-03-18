@@ -22,7 +22,7 @@ const
 
 	getNotificationMessage = code => {
 		let key = getKeyByValue(Notifications, code);
-		return key ? I18N_DATA.NOTIFICATIONS[i18nKey(key).replace('_NOTIFICATION', '_ERROR')] : '';
+		return key ? I18N_DATA.NOTIFICATIONS[key] : '';
 	},
 
 	fromNow = date => relativeTime(Math.round((date.getTime() - Date.now()) / 1000));
@@ -211,7 +211,7 @@ export const
 				script.remove();
 				resolve();
 			};
-			script.onerror = () => reject(new Error('Language '+language+' failed'));
+			script.onerror = () => reject(Error('Language '+language+' failed'));
 			script.src = langLink(language, admin);
 	//		script.async = true;
 			doc.head.append(script);

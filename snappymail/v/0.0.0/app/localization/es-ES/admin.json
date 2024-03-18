@@ -85,13 +85,14 @@
 	"TAB_SECURITY": {
 		"LEGEND_SECURITY": "Seguridad",
 		"LABEL_USE_IMAGE_PROXY": "Utilizar un proxy local para mostrar imágenes externas",
-		"LABEL_ALLOW_OPENPGP": "Permitir OpenPGP",
+		"LABEL_AUTO_VERIFY": "Verify signatures automatically",
 		"LABEL_SHOW_PHP_INFO": "Mostrar información de PHP",
 		"LEGEND_ADMIN_PANEL_ACCESS_CREDENTIALS": "Credenciales de Acceso al panel de control",
 		"LABEL_CURRENT_PASSWORD": "Contraseña actual",
 		"LABEL_NEW_PASSWORD": "Nueva contraseña",
 		"LABEL_REPEAT_PASSWORD": "Re-ingresar",
 		"LABEL_REQUIRE_VERIFICATION": "Requerir verificación del certificado SSL",
+		"CRYPTO": "Crypto",
 		"LABEL_ALLOW_SELF_SIGNED": "Permitir certificados auto-firmados"
 	},
 	"TAB_PACKAGES": {
@@ -135,6 +136,7 @@
 		"SECURE_OPTION_NONE": "Ninguno",
 		"LABEL_ALLOW_SIEVE_SCRIPTS": "Permitir scripts de filtro",
 		"LABEL_USE_SHORT_LOGIN": "Inicio de Sesión corto",
+		"LABEL_LOWERCASE_LOGIN": "Lowercase login (case-insensitive)",
 		"LABEL_USE_AUTH": "Usar autenticación",
 		"LABEL_SET_SENDER": "Usar inicio de sesión como remitente",
 		"LABEL_AUTH_PLAIN_LINE": "Force single command AUTH PLAIN login",
@@ -168,17 +170,17 @@
 		"UNKNOWN_ERROR": "Error desconocido"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Request failed",
-		"REQUEST_ABORTED": "Request is aborted",
-		"REQUEST_TIMEOUT": "Request timed out",
-		"INVALID_TOKEN": "Token inválido",
-		"AUTH_ERROR": "Autenticación fallida",
-		"DOMAIN_ALREADY_EXISTS": "El Dominio ya existe",
-		"CANT_SAVE_PLUGIN_SETTINGS": "No se pudieron guardar las configuraciones",
-		"CANT_INSTALL_PACKAGE": "No se ha podido instalar el extensión",
-		"CANT_DELETE_PACKAGE": "No se ha podido eliminar el extensión",
-		"INVALID_PLUGIN_PACKAGE": "El paquete de extensión no válido",
-		"UNSUPPORTED_PLUGIN_PACKAGE": "El paquete del extensión es incompatible",
-		"UNKNOWN_ERROR": "Error desconocido"
+		"RequestError": "Request failed",
+		"RequestAborted": "Request is aborted",
+		"RequestTimeout": "Request timed out",
+		"InvalidToken": "Token inválido",
+		"AuthError": "Autenticación fallida",
+		"DomainAlreadyExists": "El Dominio ya existe",
+		"CantSavePluginSettings": "No se pudieron guardar las configuraciones",
+		"CantInstallPackage": "No se ha podido instalar el extensión",
+		"CantDeletePackage": "No se ha podido eliminar el extensión",
+		"InvalidPluginPackage": "El paquete de extensión no válido",
+		"UnsupportedPluginPackage": "El paquete del extensión es incompatible",
+		"UnknownError": "Error desconocido"
 	}
 }

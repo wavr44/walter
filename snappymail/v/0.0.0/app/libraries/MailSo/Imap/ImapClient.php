@@ -53,7 +53,7 @@ class ImapClient extends \MailSo\Net\NetClient
 	public function Hash() : string
 	{
 		return \md5('ImapClientHash/'.
-			$this->Settings->Login . '@' .
+			$this->Settings->username . '@' .
 			$this->Settings->host . ':' .
 			$this->Settings->port
 		);
@@ -111,26 +111,14 @@ class ImapClient extends \MailSo\Net\NetClient
 			return $this;
 		}
 
-		if (!empty($oSettings->ProxyAuthUser) && $oSettings->ProxyAuthPassword) {
-			$sLogin = $oSettings->ProxyAuthUser;
-			$sPassword = $oSettings->ProxyAuthPassword->getValue();
-			$sProxyAuthUser = $oSettings->Login;
-		} else {
-			$sLogin = $oSettings->Login;
-			$sPassword = $oSettings->Password;
-			$sProxyAuthUser = '';
-		}
-
-		$sLogin = \MailSo\Base\Utils::IdnToAscii(\MailSo\Base\Utils::Trim($sLogin));
+		$sLogin = $oSettings->username;
+		$sPassword = $oSettings->passphrase;
 
 		if (!\strlen($sLogin) || !\strlen($sPassword)) {
 			$this->writeLogException(new \UnexpectedValueException, \LOG_ERR);
 		}
 
 		$type = '';
-		if ($this->Encrypted()) {
-			\array_unshift($oSettings->SASLMechanisms, 'PLAIN', 'LOGIN');
-		}
 		foreach ($oSettings->SASLMechanisms as $sasl_type) {
 			if ($this->hasCapability("AUTH={$sasl_type}") && \SnappyMail\SASL::isSupported($sasl_type)) {
 				$type = $sasl_type;
@@ -225,9 +213,6 @@ class ImapClient extends \MailSo\Net\NetClient
 
 			$this->setCapabilities($oResponse);
 
-			if (\strlen($sProxyAuthUser)) {
-				$this->SendRequestGetResponse('PROXYAUTH', array($this->EscapeString($sProxyAuthUser)));
-			}
 /*
 			// TODO: RFC 9051
 			if ($this->hasCapability('IMAP4rev2')) {
