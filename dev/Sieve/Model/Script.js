@@ -140,8 +140,8 @@ function filtersToSieveScript(filters)
 				result.push(sTab + 'discard;');
 				break;
 			case 'ForceUnspam':
-					require.fileinto = 1;
-					result.push(sTab + 'fileinto "INBOX";');
+				require.fileinto = 1;
+				result.push(sTab + 'fileinto "INBOX";');
 				break;
 			case 'Vacation':
 				if (value) {
