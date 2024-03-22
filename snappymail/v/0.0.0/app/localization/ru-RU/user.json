@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Не принимать",
 		"SUBNAME_VACATION_MESSAGE": "Сообщение автоответчика",
 		"SUBNAME_DISCARD": "Уничтожить"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Безопасность",

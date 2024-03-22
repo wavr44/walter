@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Afvis",
 		"SUBNAME_VACATION_MESSAGE": "Feriemeddelelse",
 		"SUBNAME_DISCARD": "Kassér"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sikkerhed",

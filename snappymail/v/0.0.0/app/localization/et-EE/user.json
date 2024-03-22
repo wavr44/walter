@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Lükka tagasi",
 		"SUBNAME_VACATION_MESSAGE": "Puhkuse teade",
 		"SUBNAME_DISCARD": "Hülga"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Turvalisus",

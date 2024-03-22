@@ -432,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "\"%EMAIL%\"(으)로 전달",
 		"SUBNAME_REJECT": "거부",
 		"SUBNAME_VACATION_MESSAGE": "부재 중 메시지",
-		"SUBNAME_DISCARD": "Discard"
+		"SUBNAME_DISCARD": "Discard",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "보안",

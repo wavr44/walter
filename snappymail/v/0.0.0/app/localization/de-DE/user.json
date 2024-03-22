@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Ablehnen",
 		"SUBNAME_VACATION_MESSAGE": "Urlaubsbenachrichtigung",
 		"SUBNAME_DISCARD": "Verwerfen"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sicherheit",

@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Avvis",
 		"SUBNAME_VACATION_MESSAGE": "Feriemelding",
 		"SUBNAME_DISCARD": "Forkast"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sikkerhet",

@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Zavrni",
 		"SUBNAME_VACATION_MESSAGE": "Sporočilo odsotnosti",
 		"SUBNAME_DISCARD": "Zavrzi"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Varnost",

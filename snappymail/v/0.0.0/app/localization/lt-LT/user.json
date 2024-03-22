@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Atmesti",
 		"SUBNAME_VACATION_MESSAGE": "Atostogų žinutė",
 		"SUBNAME_DISCARD": "Nepaisyti"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sauga",

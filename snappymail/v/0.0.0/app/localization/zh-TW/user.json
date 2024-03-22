@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "拒絕",
 		"SUBNAME_VACATION_MESSAGE": "休假訊息",
 		"SUBNAME_DISCARD": "捨棄"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "安全性",

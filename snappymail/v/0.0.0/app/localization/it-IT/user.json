@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Rifiuta",
 		"SUBNAME_VACATION_MESSAGE": "Messaggio fuori-ufficio",
 		"SUBNAME_DISCARD": "Scarta"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sicurezza",

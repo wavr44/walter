@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Rejeter",
 		"SUBNAME_VACATION_MESSAGE": "Message d'absence",
 		"SUBNAME_DISCARD": "Exclure"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sécurité",

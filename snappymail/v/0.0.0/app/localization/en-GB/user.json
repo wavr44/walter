@@ -432,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Forward to \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Reject",
 		"SUBNAME_VACATION_MESSAGE": "Vacation message",
-		"SUBNAME_DISCARD": "Discard"
+		"SUBNAME_DISCARD": "Discard",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Security",

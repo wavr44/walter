@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "برگشت‌زدن",
 		"SUBNAME_VACATION_MESSAGE": "پیام تعطیلات",
 		"SUBNAME_DISCARD": "دور انداختن"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "امنیت",

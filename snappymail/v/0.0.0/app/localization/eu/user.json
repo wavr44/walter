@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Errefusatu",
 		"SUBNAME_VACATION_MESSAGE": "Opor-mezua",
 		"SUBNAME_DISCARD": "Baztertu"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Segurtasuna",

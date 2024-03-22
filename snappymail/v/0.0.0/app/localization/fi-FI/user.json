@@ -433,6 +433,7 @@
 		"SUBNAME_REJECT": "Hylkää",
 		"SUBNAME_VACATION_MESSAGE": "Lomaviesti",
 		"SUBNAME_DISCARD": "Poista"
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Turvallisuus",
