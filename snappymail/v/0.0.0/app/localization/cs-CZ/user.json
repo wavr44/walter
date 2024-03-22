@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Přeposlat to \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Odmítnout",
 		"SUBNAME_VACATION_MESSAGE": "Odpověď v nepřítomnosti",
-		"SUBNAME_DISCARD": "Zahodit"
+		"SUBNAME_DISCARD": "Zahodit",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

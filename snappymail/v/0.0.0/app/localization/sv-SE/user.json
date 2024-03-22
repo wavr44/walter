@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Vidarebefordra till \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Avvisa",
 		"SUBNAME_VACATION_MESSAGE": "semestermeddelande",
-		"SUBNAME_DISCARD": "Kassera"
+		"SUBNAME_DISCARD": "Kassera",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

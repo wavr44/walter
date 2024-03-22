@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Doorsturen naar \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Afwijzen",
 		"SUBNAME_VACATION_MESSAGE": "Afwezigheidsbericht",
-		"SUBNAME_DISCARD": "Gooi weg"
+		"SUBNAME_DISCARD": "Gooi weg",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

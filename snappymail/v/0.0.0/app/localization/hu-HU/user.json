@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Továbbítás ide: \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Visszautasít",
 		"SUBNAME_VACATION_MESSAGE": "Vakáció üzenet",
-		"SUBNAME_DISCARD": "Elvetés"
+		"SUBNAME_DISCARD": "Elvetés",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

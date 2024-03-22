@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Edasta aadressile \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Lükka tagasi",
 		"SUBNAME_VACATION_MESSAGE": "Puhkuse teade",
-		"SUBNAME_DISCARD": "Hülga"
+		"SUBNAME_DISCARD": "Hülga",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

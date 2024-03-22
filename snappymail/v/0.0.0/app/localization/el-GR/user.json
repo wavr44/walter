@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Προώθηση στο \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Απόρριψη",
 		"SUBNAME_VACATION_MESSAGE": "Μήνυμα διακοπών",
-		"SUBNAME_DISCARD": "Απόρριψη"
+		"SUBNAME_DISCARD": "Απόρριψη",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Переслать на \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Не принимать",
 		"SUBNAME_VACATION_MESSAGE": "Сообщение автоответчика",
-		"SUBNAME_DISCARD": "Уничтожить"
+		"SUBNAME_DISCARD": "Уничтожить",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

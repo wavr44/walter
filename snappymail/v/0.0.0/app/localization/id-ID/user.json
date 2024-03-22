@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Teruskan ke \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Tolak",
 		"SUBNAME_VACATION_MESSAGE": "Pesan liburan",
-		"SUBNAME_DISCARD": "Buang"
+		"SUBNAME_DISCARD": "Buang",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

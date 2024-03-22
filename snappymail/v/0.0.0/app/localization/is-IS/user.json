@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Áframsenda til \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Hafna",
 		"SUBNAME_VACATION_MESSAGE": "Skilaboð vegna fría",
-		"SUBNAME_DISCARD": "Henda"
+		"SUBNAME_DISCARD": "Henda",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {

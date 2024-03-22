@@ -432,7 +432,7 @@
 		"SUBNAME_FORWARD_TO": "Encaminhar para \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Rejeitar",
 		"SUBNAME_VACATION_MESSAGE": "Mensagem de férias",
-		"SUBNAME_DISCARD": "Descartar"
+		"SUBNAME_DISCARD": "Descartar",
 		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
