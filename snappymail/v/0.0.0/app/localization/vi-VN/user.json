@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Từ chối",
 		"SELECT_ACTION_VACATION_MESSAGE": "Thư thông báo bạn đang nghỉ lễ",
 		"SELECT_ACTION_DISCARD": "Loại bỏ",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Người nhận (Gửi đến trực tiếp hay CC bản sao thư)",
 		"SELECT_FIELD_HEADER": "Phần đầu",
 		"SELECT_FIELD_BODY": "Phần thân",

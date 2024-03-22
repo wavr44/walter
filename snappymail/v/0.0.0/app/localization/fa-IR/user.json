@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "رد کردن",
 		"SELECT_ACTION_VACATION_MESSAGE": "پیام تعطیلات",
 		"SELECT_ACTION_DISCARD": "دور انداختن",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "گیرندگان (به یا رونوشت)",
 		"SELECT_FIELD_HEADER": "سرصفحه",
 		"SELECT_FIELD_BODY": "Body",

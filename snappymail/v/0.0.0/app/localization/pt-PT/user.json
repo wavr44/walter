@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Rejeitar",
 		"SELECT_ACTION_VACATION_MESSAGE": "Mensagem de férias",
 		"SELECT_ACTION_DISCARD": "Descartar",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Destinatários (Para ou Cc)",
 		"SELECT_FIELD_HEADER": "Cebeçalho",
 		"SELECT_FIELD_BODY": "Corpo",

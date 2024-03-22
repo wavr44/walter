@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Hylkää",
 		"SELECT_ACTION_VACATION_MESSAGE": "Lomaviesti",
 		"SELECT_ACTION_DISCARD": "Poista",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Vastaanottajat (Vast. ott. tai CC)",
 		"SELECT_FIELD_HEADER": "Header",
 		"SELECT_FIELD_BODY": "Body",

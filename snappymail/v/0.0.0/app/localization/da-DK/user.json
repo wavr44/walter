@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Afvis",
 		"SELECT_ACTION_VACATION_MESSAGE": "Feriemeddelelse",
 		"SELECT_ACTION_DISCARD": "Kassér",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Modtagere (Til eller CC)",
 		"SELECT_FIELD_HEADER": "Meddelelsesoplysninger",
 		"SELECT_FIELD_BODY": "Body",

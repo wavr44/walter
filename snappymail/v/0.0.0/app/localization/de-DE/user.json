@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Ablehnen",
 		"SELECT_ACTION_VACATION_MESSAGE": "Urlaubsbenachrichtigung",
 		"SELECT_ACTION_DISCARD": "Verwerfen",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Empfänger (An oder CC)",
 		"SELECT_FIELD_HEADER": "Nachrichtenkopf",
 		"SELECT_FIELD_BODY": "Nachrichteninhalt",

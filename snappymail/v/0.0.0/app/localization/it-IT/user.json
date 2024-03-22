@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Rifiuta",
 		"SELECT_ACTION_VACATION_MESSAGE": "Messaggio fuori-ufficio",
 		"SELECT_ACTION_DISCARD": "Scarta",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Destinatari (A oppure CC)",
 		"SELECT_FIELD_HEADER": "Intestazione",
 		"SELECT_FIELD_BODY": "Corpo",

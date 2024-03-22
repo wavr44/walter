@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Reject",
 		"SELECT_ACTION_VACATION_MESSAGE": "Vacation message",
 		"SELECT_ACTION_DISCARD": "Discard",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Recipients (To or CC)",
 		"SELECT_FIELD_HEADER": "Záhlavie",
 		"SELECT_FIELD_BODY": "Body",

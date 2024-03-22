@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Отхвърли",
 		"SELECT_ACTION_VACATION_MESSAGE": "Съобщение в отпуска",
 		"SELECT_ACTION_DISCARD": "Отхвърли",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Получатели (\"До\" и \"Копие до\")",
 		"SELECT_FIELD_HEADER": "Заглавие",
 		"SELECT_FIELD_BODY": "Body",

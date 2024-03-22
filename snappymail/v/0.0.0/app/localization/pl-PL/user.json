@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Odrzuć",
 		"SELECT_ACTION_VACATION_MESSAGE": "Wiadomość urlopowa",
 		"SELECT_ACTION_DISCARD": "Porzuć",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Adresaci (Do lub DW)",
 		"SELECT_FIELD_HEADER": "Nagłówek",
 		"SELECT_FIELD_BODY": "Treść",

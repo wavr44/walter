@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Zavrni",
 		"SELECT_ACTION_VACATION_MESSAGE": "Sporočilo odsotnosti",
 		"SELECT_ACTION_DISCARD": "Zavrzi",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Prejemniki (Za ali Kp)",
 		"SELECT_FIELD_HEADER": "Glava",
 		"SELECT_FIELD_BODY": "Body",

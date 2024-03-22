@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Atmesti",
 		"SELECT_ACTION_VACATION_MESSAGE": "Atostogų atsakiklis",
 		"SELECT_ACTION_DISCARD": "Nepaisyti",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Gavėjai (Kam ar CC)",
 		"SELECT_FIELD_HEADER": "Antraštė",
 		"SELECT_FIELD_BODY": "Body",

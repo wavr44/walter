@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "拒絕",
 		"SELECT_ACTION_VACATION_MESSAGE": "休假訊息",
 		"SELECT_ACTION_DISCARD": "捨棄",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "收件人 (收件者或副本)",
 		"SELECT_FIELD_HEADER": "標題",
 		"SELECT_FIELD_BODY": "內文",

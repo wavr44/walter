@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Avvisa",
 		"SELECT_ACTION_VACATION_MESSAGE": "Autosvar",
 		"SELECT_ACTION_DISCARD": "Ta bort",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Mottagare (Till eller CC)",
 		"SELECT_FIELD_HEADER": "Rubrik",
 		"SELECT_FIELD_BODY": "Body",

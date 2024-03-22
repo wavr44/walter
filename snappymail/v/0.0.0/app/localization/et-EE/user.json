@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Lükka tagasi",
 		"SELECT_ACTION_VACATION_MESSAGE": "Puhkuse teade",
 		"SELECT_ACTION_DISCARD": "Hülga",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Saaja",
 		"SELECT_FIELD_HEADER": "Päis",
 		"SELECT_FIELD_BODY": "Body",

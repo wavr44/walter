@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "拒否",
 		"SELECT_ACTION_VACATION_MESSAGE": "バケーションメッセージ",
 		"SELECT_ACTION_DISCARD": "破棄",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "受信者(To or CC)",
 		"SELECT_FIELD_HEADER": "ヘッダー",
 		"SELECT_FIELD_BODY": "本文",

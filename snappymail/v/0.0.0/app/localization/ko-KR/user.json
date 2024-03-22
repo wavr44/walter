@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "거부",
 		"SELECT_ACTION_VACATION_MESSAGE": "부재 중 메시지",
 		"SELECT_ACTION_DISCARD": "Discard",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "수신인 (받는 사람 또는 참조)",
 		"SELECT_FIELD_HEADER": "헤더",
 		"SELECT_FIELD_BODY": "Body",

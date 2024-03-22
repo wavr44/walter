@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Απόρριψη",
 		"SELECT_ACTION_VACATION_MESSAGE": "Μήνυμα διακοπών",
 		"SELECT_ACTION_DISCARD": "Απόρριψη",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Παραλήπτες (Προς ή κοινοποίηση)",
 		"SELECT_FIELD_HEADER": "Επικεφαλίδα",
 		"SELECT_FIELD_BODY": "Body",

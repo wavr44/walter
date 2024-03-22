@@ -16,7 +16,8 @@ export const FilterAction = {
 	Discard: 'Discard',
 	Vacation: 'Vacation',
 	Reject: 'Reject',
-	Forward: 'Forward'
+	Forward: 'Forward',
+	ForceUnspam: 'ForceUnspam'
 };
 
 /**
@@ -93,6 +94,9 @@ export class FilterModel extends AbstractModel {
 					case FilterAction.Discard:
 						result = rl.i18n(root + 'DISCARD');
 						break;
+					case FilterAction.ForceUnspam:
+						result = rl.i18n(root + 'FORCE_UNSPAM');
+						break;
 					// no default
 				}
 
@@ -112,6 +116,8 @@ export class FilterModel extends AbstractModel {
 						return result + 'None';
 					case FilterAction.Discard:
 						return result + 'Discard';
+					case FilterAction.ForceUnspam:
+						return result + 'ForceUnspam';
 					case FilterAction.MoveTo:
 					default:
 						return result + 'MoveToFolder';
