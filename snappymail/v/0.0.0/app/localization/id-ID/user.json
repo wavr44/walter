@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Tolak",
 		"SELECT_ACTION_VACATION_MESSAGE": "Pesan liburan",
 		"SELECT_ACTION_DISCARD": "Buang",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Penerima (Kepada atau tembusan)",
 		"SELECT_FIELD_HEADER": "Header",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Teruskan ke \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Tolak",
 		"SUBNAME_VACATION_MESSAGE": "Pesan liburan",
-		"SUBNAME_DISCARD": "Buang"
+		"SUBNAME_DISCARD": "Buang",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Keamanan",

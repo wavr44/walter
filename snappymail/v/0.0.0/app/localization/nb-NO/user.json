@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Avvis",
 		"SELECT_ACTION_VACATION_MESSAGE": "Feriemelding",
 		"SELECT_ACTION_DISCARD": "Forkast",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Hoved- eller kopimottaker",
 		"SELECT_FIELD_HEADER": "Meldingshode",
 		"SELECT_FIELD_BODY": "Brødtekst",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Videresend til «%EMAIL%»",
 		"SUBNAME_REJECT": "Avvis",
 		"SUBNAME_VACATION_MESSAGE": "Feriemelding",
-		"SUBNAME_DISCARD": "Forkast"
+		"SUBNAME_DISCARD": "Forkast",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sikkerhet",

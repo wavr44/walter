@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Не принимать",
 		"SELECT_ACTION_VACATION_MESSAGE": "Автоответчик",
 		"SELECT_ACTION_DISCARD": "Уничтожить",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Получатели (To или CC)",
 		"SELECT_FIELD_HEADER": "Заголовок",
 		"SELECT_FIELD_BODY": "Тело",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Переслать на \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Не принимать",
 		"SUBNAME_VACATION_MESSAGE": "Сообщение автоответчика",
-		"SUBNAME_DISCARD": "Уничтожить"
+		"SUBNAME_DISCARD": "Уничтожить",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Безопасность",

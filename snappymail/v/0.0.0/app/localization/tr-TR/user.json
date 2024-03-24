@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Reject",
 		"SELECT_ACTION_VACATION_MESSAGE": "Vacation message",
 		"SELECT_ACTION_DISCARD": "Discard",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Recipients (To or CC)",
 		"SELECT_FIELD_HEADER": "Header",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Forward to \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Reject",
 		"SUBNAME_VACATION_MESSAGE": "Vacation message",
-		"SUBNAME_DISCARD": "Discard"
+		"SUBNAME_DISCARD": "Discard",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Security",

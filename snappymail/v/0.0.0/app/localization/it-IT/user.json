@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Rifiuta",
 		"SELECT_ACTION_VACATION_MESSAGE": "Messaggio fuori-ufficio",
 		"SELECT_ACTION_DISCARD": "Scarta",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Destinatari (A oppure CC)",
 		"SELECT_FIELD_HEADER": "Intestazione",
 		"SELECT_FIELD_BODY": "Corpo",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Inoltra a \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Rifiuta",
 		"SUBNAME_VACATION_MESSAGE": "Messaggio fuori-ufficio",
-		"SUBNAME_DISCARD": "Scarta"
+		"SUBNAME_DISCARD": "Scarta",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sicurezza",

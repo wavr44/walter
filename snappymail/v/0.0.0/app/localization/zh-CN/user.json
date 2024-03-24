@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "拒收",
 		"SELECT_ACTION_VACATION_MESSAGE": "假期自动回复",
 		"SELECT_ACTION_DISCARD": "取消",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "接收人 (To 或 CC)",
 		"SELECT_FIELD_HEADER": "标题",
 		"SELECT_FIELD_BODY": "内容",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "转发到 \"%EMAIL%\"",
 		"SUBNAME_REJECT": "拒绝",
 		"SUBNAME_VACATION_MESSAGE": "假期自动回复",
-		"SUBNAME_DISCARD": "取消"
+		"SUBNAME_DISCARD": "取消",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "安全",

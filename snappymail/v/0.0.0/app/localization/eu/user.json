@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Errefusatu",
 		"SELECT_ACTION_VACATION_MESSAGE": "Opor mezua",
 		"SELECT_ACTION_DISCARD": "Baztertu",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Hartzaileak (Nori edo CC)",
 		"SELECT_FIELD_HEADER": "Goiburua",
 		"SELECT_FIELD_BODY": "Gorputza",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Birbidali \"%EMAIL%\"-era",
 		"SUBNAME_REJECT": "Errefusatu",
 		"SUBNAME_VACATION_MESSAGE": "Opor-mezua",
-		"SUBNAME_DISCARD": "Baztertu"
+		"SUBNAME_DISCARD": "Baztertu",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Segurtasuna",

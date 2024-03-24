@@ -109,3 +109,10 @@ export class KeepCommand extends ActionCommand
 export class DiscardCommand extends ActionCommand
 {
 }
+
+/**
+ * https://tools.ietf.org/html/rfc5228#section-4.4
+ */
+export class ForceUnspamCommand extends ActionCommand
+{
+}

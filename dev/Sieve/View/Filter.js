@@ -148,6 +148,8 @@ export class FilterPopupView extends rl.pluginPopupView {
 
 		this.actionTypeOptions.push({ id: FilterAction.Discard, name: i18nFilter('ACTION_DISCARD') });
 
+		this.actionTypeOptions.push({ id: FilterAction.ForceUnspam, name: i18nFilter('FORCE_UNSPAM') });
+
 		this.typeOptionsSize([
 			{ id: FilterConditionType.Over, name: i18nFilter('TYPE_OVER') },
 			{ id: FilterConditionType.Under, name: i18nFilter('TYPE_UNDER') }

@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Lükka tagasi",
 		"SELECT_ACTION_VACATION_MESSAGE": "Puhkuse teade",
 		"SELECT_ACTION_DISCARD": "Hülga",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Saaja",
 		"SELECT_FIELD_HEADER": "Päis",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Edasta aadressile \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Lükka tagasi",
 		"SUBNAME_VACATION_MESSAGE": "Puhkuse teade",
-		"SUBNAME_DISCARD": "Hülga"
+		"SUBNAME_DISCARD": "Hülga",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Turvalisus",

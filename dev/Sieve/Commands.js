@@ -11,7 +11,8 @@ import {
 	DiscardCommand,
 	FileIntoCommand,
 	KeepCommand,
-	RedirectCommand
+	RedirectCommand,
+	ForceUnspamCommand
 } from 'Sieve/Commands/Actions';
 
 import {
@@ -75,6 +76,7 @@ export const
 		FileIntoCommand,
 		KeepCommand,
 		RedirectCommand,
+		ForceUnspamCommand,
 		// Test commands
 		AddressTest,
 		AllOfTest,

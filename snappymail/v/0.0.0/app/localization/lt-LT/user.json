@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Atmesti",
 		"SELECT_ACTION_VACATION_MESSAGE": "Atostogų atsakiklis",
 		"SELECT_ACTION_DISCARD": "Nepaisyti",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Gavėjai (Kam ar CC)",
 		"SELECT_FIELD_HEADER": "Antraštė",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "persiūsti \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Atmesti",
 		"SUBNAME_VACATION_MESSAGE": "Atostogų žinutė",
-		"SUBNAME_DISCARD": "Nepaisyti"
+		"SUBNAME_DISCARD": "Nepaisyti",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sauga",

@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Hafna",
 		"SELECT_ACTION_VACATION_MESSAGE": "Skilaboð vegna fría",
 		"SELECT_ACTION_DISCARD": "Henda",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Viðtakendur (Til eða CC)",
 		"SELECT_FIELD_HEADER": "Haus",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Áframsenda til \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Hafna",
 		"SUBNAME_VACATION_MESSAGE": "Skilaboð vegna fría",
-		"SUBNAME_DISCARD": "Henda"
+		"SUBNAME_DISCARD": "Henda",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Öryggi",

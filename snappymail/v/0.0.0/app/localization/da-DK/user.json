@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Afvis",
 		"SELECT_ACTION_VACATION_MESSAGE": "Feriemeddelelse",
 		"SELECT_ACTION_DISCARD": "Kassér",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Modtagere (Til eller CC)",
 		"SELECT_FIELD_HEADER": "Meddelelsesoplysninger",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Videresend til \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Afvis",
 		"SUBNAME_VACATION_MESSAGE": "Feriemeddelelse",
-		"SUBNAME_DISCARD": "Kassér"
+		"SUBNAME_DISCARD": "Kassér",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Sikkerhed",

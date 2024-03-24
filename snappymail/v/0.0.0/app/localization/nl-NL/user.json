@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Afwijzen",
 		"SELECT_ACTION_VACATION_MESSAGE": "Afwezigheidbericht",
 		"SELECT_ACTION_DISCARD": "Gooi weg",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Ontvanger(s) (Aan of CC)",
 		"SELECT_FIELD_HEADER": "Berichtkop",
 		"SELECT_FIELD_BODY": "Berichtinhoud",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Doorsturen naar \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Afwijzen",
 		"SUBNAME_VACATION_MESSAGE": "Afwezigheidsbericht",
-		"SUBNAME_DISCARD": "Gooi weg"
+		"SUBNAME_DISCARD": "Gooi weg",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Beveiliging",

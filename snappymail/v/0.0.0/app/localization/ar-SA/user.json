@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "الرفض",
 		"SELECT_ACTION_VACATION_MESSAGE": "رسالة العطلة",
 		"SELECT_ACTION_DISCARD": "تجاهل",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "المستلمين (الى أو نسخة الى)",
 		"SELECT_FIELD_HEADER": "Header",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "\"%EMAIL%\" إعادة توجيه الى",
 		"SUBNAME_REJECT": "رفض",
 		"SUBNAME_VACATION_MESSAGE": "رسالة العطلة",
-		"SUBNAME_DISCARD": "تجاهل"
+		"SUBNAME_DISCARD": "تجاهل",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "الأمان",

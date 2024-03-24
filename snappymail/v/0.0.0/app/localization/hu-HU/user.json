@@ -326,6 +326,7 @@
 		"SELECT_ACTION_REJECT": "Visszautasít",
 		"SELECT_ACTION_VACATION_MESSAGE": "Vakáció üzenet",
 		"SELECT_ACTION_DISCARD": "Elvetés",
+		"SELECT_ACTION_FORCE_UNSPAM": "Force remove from spam into Inbox",
 		"SELECT_FIELD_RECIPIENTS": "Címzettek (címzett vagy másolat)",
 		"SELECT_FIELD_HEADER": "Fejléc",
 		"SELECT_FIELD_BODY": "Body",
@@ -431,7 +432,8 @@
 		"SUBNAME_FORWARD_TO": "Továbbítás ide: \"%EMAIL%\"",
 		"SUBNAME_REJECT": "Visszautasít",
 		"SUBNAME_VACATION_MESSAGE": "Vakáció üzenet",
-		"SUBNAME_DISCARD": "Elvetés"
+		"SUBNAME_DISCARD": "Elvetés",
+		"SUBNAME_FORCE_UNSPAM": "Force Unspam"
 	},
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Biztonság",
