@@ -34,6 +34,7 @@ class LoginGMailPlugin extends \RainLoop\Plugins\AbstractPlugin
 		$this->addHook('sieve.before-login', 'clientLogin');
 
 		$this->addPartHook('LoginGMail', 'ServiceLoginGMail');
+		$this->addPartHook('AddGMail', 'ServiceAddGMail');
 
 		// Prevent Disallowed Sec-Fetch Dest: document Mode: navigate Site: cross-site User: true
 		$this->addHook('filter.http-paths', 'httpPaths');
@@ -47,81 +48,20 @@ class LoginGMailPlugin extends \RainLoop\Plugins\AbstractPlugin
 				\trim($oConfig->Get('security', 'secfetch_allow', '') . ';site=cross-site', ';')
 			);
 		}
+		if (!empty($aPaths[0]) && 'AddGMail' === $aPaths[0]) {
+			$oConfig = \RainLoop\Api::Config();
+			$oConfig->Set('security', 'secfetch_allow',
+				\trim($oConfig->Get('security', 'secfetch_allow', '') . ';site=cross-site', ';')
+			);
+		}
 	}
 
 	public function ServiceLoginGMail() : string
 	{
 		$oActions = \RainLoop\Api::Actions();
-		$oHttp = $oActions->Http();
-		$oHttp->ServerNoCache();
-
 		try
 		{
-			if (isset($_GET['error'])) {
-				throw new \RuntimeException($_GET['error']);
-			}
-			if (!isset($_GET['code']) || empty($_GET['state']) || 'gmail' !== $_GET['state']) {
-				$oActions->Location(\RainLoop\Utils::WebPath());
-				exit;
-			}
-			$oGMail = $this->gmailConnector();
-			if (!$oGMail) {
-				$oActions->Location(\RainLoop\Utils::WebPath());
-				exit;
-			}
-
-			$iExpires = \time();
-			$aResponse = $oGMail->getAccessToken(
-				static::TOKEN_URI,
-				'authorization_code',
-				array(
-					'code' => $_GET['code'],
-					'redirect_uri' => $oHttp->GetFullUrl().'?LoginGMail'
-				)
-			);
-			if (200 != $aResponse['code']) {
-				if (isset($aResponse['result']['error'])) {
-					throw new \RuntimeException(
-						$aResponse['code']
-						. ': '
-						. $aResponse['result']['error']
-						. ' / '
-						. $aResponse['result']['error_description']
-					);
-				}
-				throw new \RuntimeException("HTTP: {$aResponse['code']}");
-			}
-			$aResponse = $aResponse['result'];
-			if (empty($aResponse['access_token'])) {
-				throw new \RuntimeException('access_token missing');
-			}
-			if (empty($aResponse['refresh_token'])) {
-				throw new \RuntimeException('refresh_token missing');
-			}
-
-			$sAccessToken = $aResponse['access_token'];
-			$iExpires += $aResponse['expires_in'];
-
-			$oGMail->setAccessToken($sAccessToken);
-			$aUserInfo = $oGMail->fetch('https://www.googleapis.com/oauth2/v2/userinfo');
-			if (200 != $aUserInfo['code']) {
-				throw new \RuntimeException("HTTP: {$aResponse['code']}");
-			}
-			$aUserInfo = $aUserInfo['result'];
-			if (empty($aUserInfo['id'])) {
-				throw new \RuntimeException('unknown id');
-			}
-			if (empty($aUserInfo['email'])) {
-				throw new \RuntimeException('unknown email address');
-			}
-
-			static::$auth = [
-				'access_token' => $sAccessToken,
-				'refresh_token' => $aResponse['refresh_token'],
-				'expires_in' => $aResponse['expires_in'],
-				'expires' => $iExpires
-			];
-
+			$aUserInfo = $this->gmailResponse('LoginGMail');
 			$oPassword = new \SnappyMail\SensitiveString($aUserInfo['id']);
 			$oAccount = $oActions->LoginProcess($aUserInfo['email'], $oPassword);
 //			$oAccount = MainAccount::NewInstanceFromCredentials($oActions, $aUserInfo['email'], $aUserInfo['email'], $oPassword, true);
@@ -141,6 +81,50 @@ class LoginGMailPlugin extends \RainLoop\Plugins\AbstractPlugin
 		exit;
 	}
 
+	/**
+	 * Add as additional account
+	 */
+	public function ServiceAddGMail() : string
+	{
+		$oActions = \RainLoop\Api::Actions();
+		try
+		{
+			if (empty($_COOKIE)) {
+				// Failed in Firefox
+				exit;
+			}
+
+			$oMainAccount = $oActions->getMainAccountFromToken();
+			$aAccounts = $oActions->GetAccounts($oMainAccount);
+
+			$aUserInfo = $this->gmailResponse('AddGMail');
+			$sEmail = $aUserInfo['email'];
+			if ($oMainAccount->Email() === $sEmail || isset($aAccounts[$sEmail])) {
+				throw new ClientException(Notifications::AccountAlreadyExists);
+			}
+
+			$oPassword = new \SnappyMail\SensitiveString('oauth2');
+			$oAccount = $oActions->LoginProcess($aUserInfo['email'], $oPassword, false);
+			if ($oAccount) {
+				$aAccount = $oAccount->asTokenArray($oMainAccount);
+				$aAccount['name'] = '';
+				$oActions->LocalStorageProvider()->Put($oAccount, StorageType::CONFIG, 'oauth2',
+					\SnappyMail\Crypt::EncryptToJSON(static::$auth, $oAccount->CryptKey())
+				);
+				$aAccounts[$sEmail] = $aAccount;
+				$this->SetAccounts($oMainAccount, $aAccounts);
+			}
+		}
+		catch (\Exception $oException)
+		{
+			print_r($oException);
+			exit($oException->getMessage());
+			$oActions->Logger()->WriteException($oException, \LOG_ERR);
+		}
+		exit;
+		$oActions->Location(\RainLoop\Utils::WebPath());
+	}
+
 	public function configMapping() : array
 	{
 		return [
@@ -158,38 +142,73 @@ class LoginGMailPlugin extends \RainLoop\Plugins\AbstractPlugin
 
 	public function clientLogin(\RainLoop\Model\Account $oAccount, \MailSo\Net\NetClient $oClient, \MailSo\Net\ConnectSettings $oSettings) : void
 	{
-		if ($oAccount instanceof MainAccount && \str_ends_with($oAccount->Email(), '@gmail.com')) {
+		if (\str_ends_with($oAccount->Email(), '@gmail.com')) {
 			$oActions = \RainLoop\Api::Actions();
-			try {
-				$aData = static::$auth ?: \SnappyMail\Crypt::DecryptFromJSON(
-					$oActions->StorageProvider()->Get($oAccount, StorageType::SESSION, \RainLoop\Utils::GetSessionToken()),
-					$oAccount->CryptKey()
-				);
-			} catch (\Throwable $oException) {
-//				$oActions->Logger()->WriteException($oException, \LOG_ERR);
-				return;
-			}
-			if (!empty($aData['expires']) && !empty($aData['access_token']) && !empty($aData['refresh_token'])) {
-				if (\time() >= $aData['expires']) {
-					$iExpires = \time();
-					$oGMail = $this->gmailConnector();
-					if ($oGMail) {
-						$aRefreshTokenResponse = $oGMail->getAccessToken(
-							static::TOKEN_URI,
-							'refresh_token',
-							array('refresh_token' => $aData['refresh_token'])
-						);
-						if (!empty($aRefreshTokenResponse['result']['access_token'])) {
-							$aData['access_token'] = $aRefreshTokenResponse['result']['access_token'];
-							$aResponse['expires'] = $iExpires + $aResponse['expires_in'];
-							$oActions->StorageProvider()->Put($oAccount, StorageType::SESSION, \RainLoop\Utils::GetSessionToken(),
-								\SnappyMail\Crypt::EncryptToJSON($aData, $oAccount->CryptKey())
+			if ($oAccount instanceof MainAccount) {
+				try {
+					$aData = static::$auth ?: \SnappyMail\Crypt::DecryptFromJSON(
+						$oActions->StorageProvider()->Get($oAccount, StorageType::SESSION, \RainLoop\Utils::GetSessionToken()),
+						$oAccount->CryptKey()
+					);
+				} catch (\Throwable $oException) {
+//					$oActions->Logger()->WriteException($oException, \LOG_ERR);
+					return;
+				}
+				if (!empty($aData['expires']) && !empty($aData['access_token']) && !empty($aData['refresh_token'])) {
+					if (\time() >= $aData['expires']) {
+						$iExpires = \time();
+						$oGMail = $this->gmailConnector();
+						if ($oGMail) {
+							$aRefreshTokenResponse = $oGMail->getAccessToken(
+								static::TOKEN_URI,
+								'refresh_token',
+								array('refresh_token' => $aData['refresh_token'])
 							);
+							if (!empty($aRefreshTokenResponse['result']['access_token'])) {
+								$aData['access_token'] = $aRefreshTokenResponse['result']['access_token'];
+								$aResponse['expires'] = $iExpires + $aResponse['expires_in'];
+								$oActions->StorageProvider()->Put($oAccount, StorageType::SESSION, \RainLoop\Utils::GetSessionToken(),
+									\SnappyMail\Crypt::EncryptToJSON($aData, $oAccount->CryptKey())
+								);
+							}
 						}
 					}
+					$oSettings->passphrase = $aData['access_token'];
+					\array_unshift($oSettings->SASLMechanisms, 'OAUTHBEARER', 'XOAUTH2');
 				}
-				$oSettings->passphrase = $aData['access_token'];
-				\array_unshift($oSettings->SASLMechanisms, 'OAUTHBEARER', 'XOAUTH2');
+			} else if ('oauth2' == $oSettings->passphrase) {
+				// \RainLoop\Model\AdditionalAccount
+				try {
+					$aData = static::$auth ?: \SnappyMail\Crypt::DecryptFromJSON(
+						$oActions->LocalStorageProvider()->Get($oAccount, StorageType::CONFIG, 'oauth2'),
+						$oAccount->CryptKey()
+					);
+				} catch (\Throwable $oException) {
+//					$oActions->Logger()->WriteException($oException, \LOG_ERR);
+					return;
+				}
+				if (!empty($aData['expires']) && !empty($aData['access_token']) && !empty($aData['refresh_token'])) {
+					if (\time() >= $aData['expires']) {
+						$iExpires = \time();
+						$oGMail = $this->gmailConnector();
+						if ($oGMail) {
+							$aRefreshTokenResponse = $oGMail->getAccessToken(
+								static::TOKEN_URI,
+								'refresh_token',
+								array('refresh_token' => $aData['refresh_token'])
+							);
+							if (!empty($aRefreshTokenResponse['result']['access_token'])) {
+								$aData['access_token'] = $aRefreshTokenResponse['result']['access_token'];
+								$aResponse['expires'] = $iExpires + $aResponse['expires_in'];
+								$oActions->LocalStorageProvider()->Put($oAccount, StorageType::CONFIG, 'oauth2',
+									\SnappyMail\Crypt::EncryptToJSON($aData, $oAccount->CryptKey())
+								);
+							}
+						}
+					}
+					$oSettings->passphrase = $aData['access_token'];
+					\array_unshift($oSettings->SASLMechanisms, 'OAUTHBEARER', 'XOAUTH2');
+				}
 			}
 		}
 	}
@@ -220,4 +239,80 @@ class LoginGMailPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 		return null;
 	}
+
+
+	protected function gmailResponse(string $query) : array
+	{
+		$oActions = \RainLoop\Api::Actions();
+		$oHttp = $oActions->Http();
+		$oHttp->ServerNoCache();
+
+		if (isset($_GET['error'])) {
+			throw new \RuntimeException($_GET['error']);
+		}
+		if (!isset($_GET['code']) || empty($_GET['state']) || 'gmail' !== $_GET['state']) {
+			$oActions->Location(\RainLoop\Utils::WebPath());
+			exit;
+		}
+		$oGMail = $this->gmailConnector();
+		if (!$oGMail) {
+			$oActions->Location(\RainLoop\Utils::WebPath());
+			exit;
+		}
+
+		$iExpires = \time();
+		$aResponse = $oGMail->getAccessToken(
+			static::TOKEN_URI,
+			'authorization_code',
+			array(
+				'code' => $_GET['code'],
+				'redirect_uri' => $oHttp->GetFullUrl().'?'.$query
+			)
+		);
+		if (200 != $aResponse['code']) {
+			if (isset($aResponse['result']['error'])) {
+				throw new \RuntimeException(
+					$aResponse['code']
+					. ': '
+					. $aResponse['result']['error']
+					. ' / '
+					. $aResponse['result']['error_description']
+				);
+			}
+			throw new \RuntimeException("HTTP: {$aResponse['code']}");
+		}
+		$aResponse = $aResponse['result'];
+		if (empty($aResponse['access_token'])) {
+			throw new \RuntimeException('access_token missing');
+		}
+		if (empty($aResponse['refresh_token'])) {
+			throw new \RuntimeException('refresh_token missing');
+		}
+
+		$sAccessToken = $aResponse['access_token'];
+		$iExpires += $aResponse['expires_in'];
+
+		$oGMail->setAccessToken($sAccessToken);
+		$aUserInfo = $oGMail->fetch('https://www.googleapis.com/oauth2/v2/userinfo');
+		if (200 != $aUserInfo['code']) {
+			throw new \RuntimeException("HTTP: {$aResponse['code']}");
+		}
+		$aUserInfo = $aUserInfo['result'];
+		if (empty($aUserInfo['id'])) {
+			throw new \RuntimeException('unknown id');
+		}
+		if (empty($aUserInfo['email'])) {
+			throw new \RuntimeException('unknown email address');
+		}
+
+		static::$auth = [
+			'access_token' => $sAccessToken,
+			'refresh_token' => $aResponse['refresh_token'],
+			'expires_in' => $aResponse['expires_in'],
+			'expires' => $iExpires
+		];
+
+		return $aUserInfo;
+	}
+
 }

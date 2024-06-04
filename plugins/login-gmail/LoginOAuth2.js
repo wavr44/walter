@@ -1,10 +1,10 @@
 (rl => {
 	const client_id = rl.pluginSettingsGet('login-gmail', 'client_id'),
-		login = () => {
+		login = mode => {
 			document.location = 'https://accounts.google.com/o/oauth2/auth?' + (new URLSearchParams({
 				response_type: 'code',
 				client_id: client_id,
-				redirect_uri: document.location.href + '?LoginGMail',
+				redirect_uri: document.location.href + '?' + mode,
 				scope: [
 					// Primary Google Account email address
 					'https://www.googleapis.com/auth/userinfo.email',
@@ -36,9 +36,16 @@
 					container = e.detail.viewModelDom.querySelector('#plugin-Login-BottomControlGroup'),
 					btn = Element.fromHTML('<button type="button">GMail</button>'),
 					div = Element.fromHTML('<div class="controls"></div>');
-				btn.onclick = login;
+				btn.onclick = ()=>login('LoginGMail');
 				div.append(btn);
 				container && container.append(div);
+			}
+			if ('PopupsAccount' === e.detail.viewModelTemplateID) {
+				const
+					container = e.detail.viewModelDom.querySelector('footer'),
+					btn = Element.fromHTML('<button class="btn" type="button">GMail</button>');
+				btn.onclick = ()=>login('AddGMail');
+				container && container.append(btn);
 			}
 		});
 	}
