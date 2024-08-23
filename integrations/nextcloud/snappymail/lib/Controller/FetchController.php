@@ -12,8 +12,9 @@ use OCP\IL10N;
 use OCP\IRequest;
 
 class FetchController extends Controller {
-	private $config;
-	private $appManager;
+	private IConfig $config;
+	private IAppManager $appManager;
+	private IL10N $l;
 
 	public function __construct(string $appName, IRequest $request, IAppManager $appManager, IConfig $config, IL10N $l) {
 		parent::__construct($appName, $request);
@@ -52,11 +53,18 @@ class FetchController extends Controller {
 				$this->config->setAppValue('snappymail', 'snappymail-autologin-with-email',
 					isset($_POST['snappymail-autologin']) ? '2' === $_POST['snappymail-autologin'] : false);
 				$this->config->setAppValue('snappymail', 'snappymail-no-embed', isset($_POST['snappymail-no-embed']));
+				$this->config->setAppValue('snappymail', 'snappymail-autologin-oidc', isset($_POST['snappymail-autologin-oidc']));
 			} else {
 				return new JSONResponse([
 					'status' => 'error',
 					'Message' => $this->l->t('Invalid argument(s)')
 				]);
+			}
+
+			if (!empty($_POST['snappymail-app_path'])) {
+				$oConfig = \RainLoop\Api::Config();
+				$oConfig->Set('webmail', 'app_path', $_POST['snappymail-app_path']);
+				$oConfig->Save();
 			}
 
 			if (!empty($_POST['import-rainloop'])) {
@@ -100,7 +108,7 @@ class FetchController extends Controller {
 
 				$sPass = $_POST['snappymail-password'];
 				if ('******' !== $sPass) {
-					$this->config->setUserValue($sUser, 'snappymail', 'snappymail-password',
+					$this->config->setUserValue($sUser, 'snappymail', 'passphrase',
 						$sPass ? SnappyMailHelper::encodePassword($sPass, \md5($sEmail)) : '');
 				}
 			} else {
@@ -111,12 +119,21 @@ class FetchController extends Controller {
 				]);
 			}
 
+			// Logout as the credentials have changed
+			SnappyMailHelper::loadApp();
+			\RainLoop\Api::Actions()->DoLogout();
+
 			return new JSONResponse([
 				'status' => 'success',
 				'Message' => $this->l->t('Saved successfully'),
 				'Email' => $sEmail
 			]);
 		} catch (Exception $e) {
+			// Logout as the credentials might have changed, as exception could be in one attribute
+			// TODO: Handle both exceptions separately?
+			SnappyMailHelper::loadApp();
+			\RainLoop\Api::Actions()->DoLogout();
+			
 			return new JSONResponse([
 				'status' => 'error',
 				'Message' => $e->getMessage()

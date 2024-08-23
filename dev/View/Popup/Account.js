@@ -1,5 +1,6 @@
 import { addObservablesTo } from 'External/ko';
 import { getNotification } from 'Common/Translator';
+import { loadAccountsAndIdentities } from 'Common/UtilsUser';
 
 import Remote from 'Remote/User/Fetch';
 
@@ -35,9 +36,9 @@ export class AccountPopupView extends AbstractViewPopup {
 					this.submitRequest(false);
 					if (iError) {
 						this.submitError(getNotification(iError));
-						this.submitErrorAdditional(data?.ErrorMessageAdditional);
+						this.submitErrorAdditional(data?.messageAdditional);
 					} else {
-						rl.app.accountsAndIdentities();
+						loadAccountsAndIdentities();
 						this.close();
 					}
 				}, data

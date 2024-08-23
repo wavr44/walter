@@ -5,13 +5,16 @@
 
 namespace SnappyMail\HTTP;
 
-class CSP
+class CSP implements \Stringable
 {
 	public
 		$report = false,
 		$report_to = [],
 		$report_only = false;
 
+	/**
+	 * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy#directives
+	 */
 	private $directives = [
 		'base-uri' => ["'self'"],
 		'default-src' => ["'self'", 'data:'],
@@ -22,7 +25,9 @@ class CSP
 		// Knockout.js requires unsafe-inline?
 //		'script-src' => ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
 		'img-src' => ["'self'", 'data:'],
+		'media-src' => ["'self'", 'data:'],
 		'style-src' => ["'self'", "'unsafe-inline'"],
+		'connect-src' => ["'self'", 'data:', "keys.openpgp.org"]
 	];
 
 	function __construct(string $default = '')
@@ -78,7 +83,7 @@ class CSP
 		} else {
 			\header('Content-Security-Policy: ' . $this);
 		}
-		if (empty($this->directives['frame-ancestors'])) {
+		if (empty($this->directives['frame-ancestors']) || \in_array('none', $this->directives['frame-ancestors'])) {
 			\header('X-Frame-Options: DENY');
 		} else {
 //			\header('X-Frame-Options: SAMEORIGIN');

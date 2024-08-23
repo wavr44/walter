@@ -39,11 +39,15 @@
 		avatars = new Map,
 		ncAvatars = new Map,
 		templateId = 'MailMessageView',
-		getAvatarUid = msg => {
-			let from = msg.from[0],
-				bimi = 'pass' == from.dkimStatus ? 1 : 0;
-			return `${bimi}/${from.email.toLowerCase()}`;
+		getBimiSelector = msg => {
+			// Get 's' value out of 'v=BIMI1; s=foo;'
+			let bimiSelector = msg.headers().valueByName('BIMI-Selector');
+			bimiSelector = bimiSelector ? bimiSelector.match(/;.*s=([^\s;]+)/)[1] : '';
+			return bimiSelector || '';
 		},
+		getBimiId = msg => ('pass' == msg.from[0].dkimStatus ? 1 : 0) + '-' + getBimiSelector(msg),
+		getAvatarUrl = msg => `?Avatar/${getBimiId(msg)}/${msg.avatar}`,
+		getAvatarUid = msg => `${getBimiId(msg)}/${msg.from[0].email.toLowerCase()}`,
 		getAvatar = msg => ncAvatars.get(msg.from[0].email.toLowerCase()) || avatars.get(getAvatarUid(msg)),
 		hash = async txt => {
 			if (/^[0-9a-f]{15,}$/i.test(txt)) {
@@ -72,6 +76,8 @@
 			if (rl.pluginSettingsGet('avatars', 'delay')) {
 				queue.push([msg, fn]);
 				runQueue();
+			} else if (msg.avatar) {
+				fn(getAvatarUrl(msg));
 			}
 		},
 		runQueue = (() => {
@@ -84,6 +90,8 @@
 						item[1](url);
 						item = queue.shift();
 						continue;
+					} else if (item[0].avatar) {
+						item[1](getAvatarUrl(item[0]));
 					} else if (!avatars.has(uid)) {
 						let from = item[0].from[0];
 						rl.pluginRemoteRequest((iError, data) => {
@@ -97,9 +105,9 @@
 							runQueue();
 						}, 'Avatar', {
 							bimi: 'pass' == from.dkimStatus ? 1 : 0,
+							bimiSelector: getBimiSelector(item[0]),
 							email: from.email
 						});
-						break;
 					}
 				}
 				runQueue();
@@ -107,75 +115,81 @@
 			}
 		}).debounce(1000);
 
-	/**
-	 * Loads images from Nextcloud contacts
-	 */
-	addEventListener('DOMContentLoaded', () => {
+//	addEventListener('DOMContentLoaded', () => {
+		/**
+		 * Modify templates
+		 */
+		getEl('MailMessageList').content.querySelectorAll('.messageCheckbox')
+			.forEach(el => el.append(Element.fromHTML(`<img class="fromPic" data-bind="fromPic:$data" loading="lazy">`)));
+		const messageItemHeader = getEl(templateId).content.querySelector('.messageItemHeader');
+		if (messageItemHeader) {
+			messageItemHeader.prepend(Element.fromHTML(
+				`<img class="fromPic" data-bind="visible: viewUserPicVisible, attr: {'src': viewUserPic() }" loading="lazy">`
+			));
+		}
+
+		/**
+		 * Loads images from Nextcloud contacts
+		 */
 //		rl.pluginSettingsGet('avatars', 'nextcloud');
-		if (parent.OC) {
-			const OC = () => parent.OC,
+		if (parent.OC?.requestToken) {
+			const OC = parent.OC,
 				nsDAV = 'DAV:',
 				nsNC = 'http://nextcloud.com/ns',
 				nsCard = 'urn:ietf:params:xml:ns:carddav',
 				getElementsByTagName = (parent, namespace, localName) => parent.getElementsByTagNameNS(namespace, localName),
 				getElementValue = (parent, namespace, localName) =>
-					getElementsByTagName(parent, namespace, localName)?.item(0)?.textContent,
-				generateUrl = path => OC().webroot + '/remote.php' + path;
-			if (OC().requestToken) {
-				fetch(generateUrl(`/dav/addressbooks/users/${OC().currentUser}/contacts/`), {
-					mode: 'same-origin',
-					cache: 'no-cache',
-					redirect: 'error',
-					credentials: 'same-origin',
-					method: 'REPORT',
-					headers: {
-						requesttoken: OC().requestToken,
-						'Content-Type': 'application/xml; charset=utf-8',
-						Depth: 1
-					},
-					body: '<x4:addressbook-query xmlns:x4="urn:ietf:params:xml:ns:carddav"><x0:prop xmlns:x0="DAV:"><x4:address-data><x4:prop name="EMAIL"/></x4:address-data><x3:has-photo xmlns:x3="http://nextcloud.com/ns"/></x0:prop></x4:addressbook-query>'
-				})
-				.then(response => (response.status < 400) ? response.text() : Promise.reject(new Error({ response })))
-				.then(text => {
-					const
-						xmlParser = new DOMParser(),
-						responseList = getElementsByTagName(
-							xmlParser.parseFromString(text, 'application/xml').documentElement,
-							nsDAV,
-							'response');
-					for (let i = 0; i < responseList.length; ++i) {
-						const item = responseList.item(i);
-						if (1 == getElementValue(item, nsNC, 'has-photo')) {
-							[...getElementValue(item, nsCard, 'address-data').matchAll(/EMAIL.*?:([^@\r\n]+@[^@\r\n]+)/g)]
-							.forEach(match => {
-								ncAvatars.set(
-									match[1].toLowerCase(),
-									getElementValue(item, nsDAV, 'href') + '?photo'
-								);
-							});
-						}
+					getElementsByTagName(parent, namespace, localName)?.item(0)?.textContent;
+			fetch(`${OC.webroot}/remote.php/dav/addressbooks/users/${OC.currentUser}/contacts/`, {
+				mode: 'same-origin',
+				cache: 'no-cache',
+				redirect: 'error',
+				credentials: 'same-origin',
+				method: 'REPORT',
+				headers: {
+					requesttoken: OC.requestToken,
+					'Content-Type': 'application/xml; charset=utf-8',
+					Depth: 1
+				},
+				body: '<x4:addressbook-query xmlns:x4="urn:ietf:params:xml:ns:carddav"><x0:prop xmlns:x0="DAV:"><x4:address-data><x4:prop name="EMAIL"/></x4:address-data><x3:has-photo xmlns:x3="http://nextcloud.com/ns"/></x0:prop></x4:addressbook-query>'
+			})
+			.then(response => (response.status < 400) ? response.text() : Promise.reject(new Error({ response })))
+			.then(text => {
+				const
+					xmlParser = new DOMParser(),
+					responseList = getElementsByTagName(
+						xmlParser.parseFromString(text, 'application/xml').documentElement,
+						nsDAV,
+						'response');
+				for (let i = 0; i < responseList.length; ++i) {
+					const item = responseList.item(i);
+					if (1 == getElementValue(item, nsNC, 'has-photo')) {
+						[...getElementValue(item, nsCard, 'address-data').matchAll(/EMAIL.*?:([^@\r\n]+@[^@\r\n]+)/g)]
+						.forEach(match => {
+							ncAvatars.set(
+								match[1].toLowerCase(),
+								getElementValue(item, nsDAV, 'href') + '?photo'
+							);
+						});
 					}
-				});
-			}
+				}
+			});
 		}
-	});
+//	});
 
+	/**
+	 * Used by MailMessageList
+	 */
 	ko.bindingHandlers.fromPic = {
 		init: (element, self, dummy, msg) => {
 			try {
 				if (msg?.from?.[0]) {
 					let url = getAvatar(msg),
-						from = msg.from[0],
 						fn = url=>{element.src = url};
 					if (url) {
 						fn(url);
-					} else if (msg.avatar) {
-						if (msg.avatar?.startsWith('data:')) {
-							fn(msg.avatar);
-						} else {
-							element.onerror = () => setIdenticon(from, fn);
-							fn(`?Avatar/${'pass' == from.dkimStatus ? 1 : 0}/${msg.avatar}`);
-						}
+					} else if (msg.avatar?.startsWith('data:')) {
+						fn(msg.avatar);
 					} else {
 						addQueue(msg, fn);
 					}
@@ -188,17 +202,6 @@
 
 	addEventListener('rl-view-model.create', e => {
 		if (templateId === e.detail.viewModelTemplateID) {
-
-			const
-				template = getEl(templateId),
-				messageItemHeader = template.content.querySelector('.messageItemHeader');
-
-			if (messageItemHeader) {
-				messageItemHeader.prepend(Element.fromHTML(
-					`<img class="fromPic" data-bind="visible: viewUserPicVisible, attr: {'src': viewUserPic() }" loading="lazy">`
-				));
-			}
-
 			let view = e.detail;
 			view.viewUserPic = ko.observable('');
 			view.viewUserPicVisible = ko.observable(false);
@@ -214,8 +217,7 @@
 					if (url) {
 						fn(url);
 					} else if (msg.avatar) {
-						fn(msg.avatar.startsWith('data:') ? msg.avatar
-							: `?Avatar/${'pass' == msg.from[0].dkimStatus ? 1 : 0}/${msg.avatar}`);
+						fn(msg.avatar.startsWith('data:') ? msg.avatar : getAvatarUrl(msg));
 					} else {
 //						let from = msg.from[0];
 //						view.viewUserPic(`?Avatar/${'pass' == from.dkimStatus ? 1 : 0}/${encodeURIComponent(from.email)}`);
@@ -224,11 +226,6 @@
 					}
 				}
 			});
-		}
-
-		if ('MailMessageList' === e.detail.viewModelTemplateID) {
-			getEl('MailMessageList').content.querySelectorAll('.messageCheckbox')
-				.forEach(el => el.append(Element.fromHTML(`<img class="fromPic" data-bind="fromPic:$data" loading="lazy">`)));
 		}
 	});
 

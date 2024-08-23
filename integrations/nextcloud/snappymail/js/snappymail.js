@@ -13,6 +13,7 @@ document.onreadystatechange = () => {
 		passThemesToIFrame();
 		let form = document.querySelector('form.snappymail');
 		form && SnappyMailFormHelper(form);
+		setupUnifiedSearchListener()
 	}
 };
 
@@ -136,8 +137,22 @@ function SnappyMailFormHelper(oForm)
 
 			return false;
 		});
-	}
-	catch(e) {
+	} catch (e) {
 		console.error(e);
 	}
+}
+
+function setupUnifiedSearchListener() {
+	const iframe = document.getElementById('rliframe');
+	if (!iframe || !iframe.contentWindow) return;
+
+	addEventListener('hashchange', (event) => {
+		const hashIndex = event.newURL.indexOf('#/mailbox/');
+		if (hashIndex !== -1) {
+			const hash = event.newURL.substring(hashIndex + 1);
+			if (/\/[\w-]+\/[\w-]+\/\w\d+\/.{0,24}/.test(hash)) {
+				iframe.contentWindow.location.hash = hash;
+			}
+		}
+	});
 }

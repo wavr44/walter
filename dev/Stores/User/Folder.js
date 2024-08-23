@@ -59,7 +59,7 @@ FolderUserStore = new class {
 			 */
 			displaySpecSetting: false,
 
-//			sortMode: '',
+			sortMode: '',
 
 			quotaLimit: 0,
 			quotaUsage: 0,
@@ -70,8 +70,8 @@ FolderUserStore = new class {
 			trashFolder: '',
 			archiveFolder: '',
 
-			folderListOptimized: false,
-			folderListError: '',
+			optimized: false,
+			error: '',
 
 			foldersLoading: false,
 			foldersCreating: false,
@@ -80,8 +80,6 @@ FolderUserStore = new class {
 
 			foldersInboxUnreadCount: 0
 		});
-
-		self.sortMode = ko.observable('');
 
 		self.namespace = '';
 

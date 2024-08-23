@@ -3,7 +3,8 @@
 const
 	qUri = path => doc.location.pathname.replace(/\/+$/,'') + '/?/' + path,
 	eId = id => doc.getElementById('rl-'+id),
-	admin = '1' == eId('app')?.dataset?.admin,
+	admin = '1' == eId('app').dataset.admin,
+	mimeJSON = 'application/json',
 
 	toggle = div => {
 		eId('loading').hidden = true;
@@ -69,7 +70,7 @@ window.rl = {
 			headers: {}
 		}, init);
 		let asJSON = 1,
-			XToken = RL_APP_DATA.System?.token,
+			XToken = (RL_APP_DATA.System || {}).token,
 			object = {};
 		if (postData) {
 			init.method = 'POST';
@@ -92,7 +93,7 @@ window.rl = {
 				}
 			}
 			if (asJSON) {
-				init.headers['Content-Type'] = 'application/json';
+				init.headers['Content-Type'] = mimeJSON;
 				postData = JSON.stringify(postData);
 			}
 			init.body = postData;
@@ -104,9 +105,13 @@ window.rl = {
 
 	fetchJSON: (resource, init, postData) => {
 		init = Object.assign({ headers: {} }, init);
-		init.headers.Accept = 'application/json';
+		init.headers.Accept = mimeJSON;
 		return rl.fetch(resource, init, postData).then(response => {
 			if (response.ok) {
+				const ct = response.headers.get('Content-Type');
+				if (!ct.startsWith(mimeJSON)) {
+					return Promise.reject(new Error(`Invalid Content-Type '${ct}' for url '${resource}'`));
+				}
 				/* TODO: use this for non-developers?
 				response.clone()
 				let data = response.text();
@@ -118,15 +123,15 @@ window.rl = {
 					return Promise.reject(Notifications.JsonParse);
 					return {
 						Result: false,
-						ErrorCode: 952, // Notifications.JsonParse
-						ErrorMessage: e.message,
-						ErrorMessageAdditional: data
+						code: 952, // Notifications.JsonParse
+						message: e.message,
+						messageAdditional: data
 					}
 				}
 				*/
 				return response.json();
 			}
-			return Promise.reject('Network response error: ' + response.status);
+			return Promise.reject(new Error('Network response error: ' + response.status));
 		});
 	}
 };

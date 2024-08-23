@@ -12,13 +12,56 @@ import { ThemeStore } from 'Stores/Theme';
 import Remote from 'Remote/User/Fetch';
 import { attachmentDownload } from 'Common/Links';
 
+import { AccountModel } from 'Model/Account';
+import { IdentityModel } from 'Model/Identity';
+import { AccountUserStore } from 'Stores/User/Account';
+import { IdentityUserStore } from 'Stores/User/Identity';
+import { isArray } from 'Common/Utils';
+
+import { showScreenPopup } from 'Knoin/Knoin';
+import { IdentityPopupView } from 'View/Popup/Identity';
+
 export const
 
-moveAction = ko.observable(false),
+// 1 = move, 2 = copy
+moveAction = ko.observable(0),
 
 dropdownsDetectVisibility = (() =>
 	dropdownVisibility(!!dropdowns.find(item => item.classList.contains('show')))
 ).debounce(50),
+
+
+editIdentity = Identity => showScreenPopup(IdentityPopupView, [Identity]),
+
+loadAccountsAndIdentities = () => {
+	AccountUserStore.loading(true);
+	IdentityUserStore.loading(true);
+
+	Remote.request('AccountsAndIdentities', (iError, oData) => {
+		AccountUserStore.loading(false);
+		IdentityUserStore.loading(false);
+
+		if (!iError) {
+			let items = oData.Result.Accounts;
+			AccountUserStore(isArray(items)
+				? items.map(oValue => new AccountModel(oValue.email, oValue.name))
+				: []
+			);
+			AccountUserStore.unshift(new AccountModel(SettingsGet('mainEmail'), '', false));
+
+			items = oData.Result.Identities;
+			IdentityUserStore(isArray(items)
+				? items.map(identityData => IdentityModel.reviveFromJson(identityData))
+				: []
+			);
+
+			// Invoke "Update Identity" pop up right after login
+			// https://github.com/the-djmaze/snappymail/issues/1689
+			const main = IdentityUserStore.main();
+			main && !main.exists() && setTimeout(()=>editIdentity(main), 1000);
+		}
+	});
+},
 
 /**
  * @param {string} link
@@ -89,7 +132,7 @@ computedPaginatorHelper = (koCurrentPage, koPageCount) => {
 			next = 0,
 			limit = 2;
 
-		if (1 < pageCount || (0 < pageCount && pageCount < currentPage)) {
+		if (1 < pageCount) {
 			if (pageCount < currentPage) {
 				fAdd(pageCount);
 				prev = pageCount;
@@ -248,7 +291,7 @@ setLayoutResizer = (source, sClientSideKeyName, mode) =>
 
 viewMessage = (oMessage, popup) => {
 	if (popup) {
-		oMessage.viewPopupMessage();
+		oMessage.popupMessage();
 	} else {
 		MessageUserStore.error('');
 		let id = 'rl-msg-' + oMessage.hash,
@@ -260,6 +303,8 @@ viewMessage = (oMessage, popup) => {
 				class:'b-text-part'
 					+ (oMessage.pgpSigned() ? ' openpgp-signed' : '')
 					+ (oMessage.pgpEncrypted() ? ' openpgp-encrypted' : '')
+					+ (oMessage.smimeSigned() ? ' smime-signed' : '')
+					+ (oMessage.smimeEncrypted() ? ' smime-encrypted' : '')
 			});
 			MessageUserStore.purgeCache();
 		}
@@ -276,7 +321,7 @@ viewMessage = (oMessage, popup) => {
 		MessageUserStore.loading(false);
 		oMessage.body.hidden = false;
 
-		if (oMessage.isUnseen()) {
+		if (oMessage.isUnseen() && SettingsUserStore.messageReadAuto()) {
 			MessageUserStore.MessageSeenTimer = setTimeout(
 				() => MessagelistUserStore.setAction(oMessage.folder, MessageSetAction.SetSeen, [oMessage]),
 				SettingsUserStore.messageReadDelay() * 1000 // seconds
@@ -301,10 +346,14 @@ populateMessageBody = (oMessage, popup) => {
 				} else {
 					let json = oData?.Result;
 					if (json
-					 && oMessage.hash === json.hash
-//					 && oMessage.folder === json.folder
-//					 && oMessage.uid == json.uid
-					 && oMessage.revivePropertiesFromJson(json)
+						&& ((
+								oMessage.hash && oMessage.hash === json.hash
+							) || (
+								!oMessage.hash
+								&& oMessage.folder === json.folder
+								&& oMessage.uid == json.uid)
+						)
+						&& oMessage.revivePropertiesFromJson(json)
 					) {
 /*
 						if (bCached) {
@@ -321,5 +370,5 @@ populateMessageBody = (oMessage, popup) => {
 	}
 };
 
-leftPanelDisabled.subscribe(value => value && moveAction(false));
+leftPanelDisabled.subscribe(value => value && moveAction(0));
 moveAction.subscribe(value => value && leftPanelDisabled(false));

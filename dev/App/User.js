@@ -1,8 +1,7 @@
 import 'External/User/ko';
 
 import { SMAudio } from 'Common/Audio';
-import { isArray, pInt } from 'Common/Utils';
-import { mailToHelper, setLayoutResizer, dropdownsDetectVisibility } from 'Common/UtilsUser';
+import { mailToHelper, setLayoutResizer, dropdownsDetectVisibility, loadAccountsAndIdentities } from 'Common/UtilsUser';
 
 import {
 	FolderType,
@@ -27,24 +26,21 @@ import {
 	getFolderFromCacheList
 } from 'Common/Cache';
 
-import { i18n, reloadTime } from 'Common/Translator';
+import { i18n, reloadTime, getErrorMessage } from 'Common/Translator';
 
 import { SettingsUserStore } from 'Stores/User/Settings';
 import { NotificationUserStore } from 'Stores/User/Notification';
 import { AccountUserStore } from 'Stores/User/Account';
 import { ContactUserStore } from 'Stores/User/Contact';
-import { IdentityUserStore } from 'Stores/User/Identity';
 import { FolderUserStore } from 'Stores/User/Folder';
 import { PgpUserStore } from 'Stores/User/Pgp';
+import { SMimeUserStore } from 'Stores/User/SMime';
 import { MessagelistUserStore } from 'Stores/User/Messagelist';
 import { ThemeStore, initThemes } from 'Stores/Theme';
 import { LanguageStore } from 'Stores/Language';
 import { MessageUserStore } from 'Stores/User/Message';
 
 import Remote from 'Remote/User/Fetch';
-
-import { AccountModel } from 'Model/Account';
-import { IdentityModel } from 'Model/Identity';
 
 import { LoginUserScreen } from 'Screen/User/Login';
 import { MailBoxUserScreen } from 'Screen/User/MailBox';
@@ -89,6 +85,10 @@ export class AppUser extends AbstractApp {
 
 		this.folderList = FolderUserStore.folderList;
 		this.messageList = MessagelistUserStore;
+
+		this.ask = AskPopupView;
+
+		this.loadAccountsAndIdentities = loadAccountsAndIdentities;
 	}
 
 	/**
@@ -113,7 +113,7 @@ export class AppUser extends AbstractApp {
 			case FolderType.Trash:
 				oMoveFolder = getFolderFromCacheList(FolderUserStore.trashFolder());
 				nSetSystemFoldersNotification = iFolderType;
-				bDelete = bDelete || UNUSED_OPTION_VALUE === FolderUserStore.trashFolder()
+				bDelete = bDelete/* || UNUSED_OPTION_VALUE === FolderUserStore.trashFolder()*/
 					|| sFromFolderFullName === FolderUserStore.spamFolder()
 					|| sFromFolderFullName === FolderUserStore.trashFolder();
 				break;
@@ -125,9 +125,7 @@ export class AppUser extends AbstractApp {
 			// no default
 		}
 
-		if (!oMoveFolder && !bDelete) {
-			showScreenPopup(FolderSystemPopupView, [nSetSystemFoldersNotification]);
-		} else if (bDelete) {
+		if (bDelete) {
 			showScreenPopup(AskPopupView, [
 				i18n('POPUPS_ASK/DESC_WANT_DELETE_MESSAGES'),
 				() => {
@@ -136,32 +134,9 @@ export class AppUser extends AbstractApp {
 			]);
 		} else if (oMoveFolder) {
 			MessagelistUserStore.moveMessages(sFromFolderFullName, oUids, oMoveFolder.fullName);
+		} else {
+			showScreenPopup(FolderSystemPopupView, [nSetSystemFoldersNotification]);
 		}
-	}
-
-	accountsAndIdentities() {
-		AccountUserStore.loading(true);
-		IdentityUserStore.loading(true);
-
-		Remote.request('AccountsAndIdentities', (iError, oData) => {
-			AccountUserStore.loading(false);
-			IdentityUserStore.loading(false);
-
-			if (!iError) {
-				let items = oData.Result.Accounts;
-				AccountUserStore(isArray(items)
-					? items.map(oValue => new AccountModel(oValue.email, oValue.name))
-					: []
-				);
-				AccountUserStore.unshift(new AccountModel(SettingsGet('mainEmail'), '', false));
-
-				items = oData.Result.Identities;
-				IdentityUserStore(isArray(items)
-					? items.map(identityData => IdentityModel.reviveFromJson(identityData))
-					: []
-				);
-			}
-		});
 	}
 
 	/**
@@ -173,8 +148,10 @@ export class AppUser extends AbstractApp {
 	}
 
 	logout() {
-		localStorage.removeItem('register_protocol_offered');
-		Remote.request('Logout', () => rl.logoutReload(Settings.app('customLogoutLink')));
+		Remote.request('Logout', (iError, data) =>
+			iError ? alert('Logout error: ' + getErrorMessage(iError, data))
+				: rl.logoutReload(Settings.app('customLogoutLink'))
+		);
 	}
 
 	bootstart() {
@@ -206,19 +183,17 @@ export class AppUser extends AbstractApp {
 			SettingsUserStore.init();
 			ContactUserStore.init();
 
-			loadFolders(value => {
+			loadFolders((success, error) => {
 				try {
-					if (value) {
+					if (success) {
 						startScreens([
 							MailBoxUserScreen,
 							SettingsUserScreen
 						]);
 
-						setRefreshFoldersInterval(pInt(SettingsGet('CheckMailInterval')));
+						setRefreshFoldersInterval(SettingsGet('CheckMailInterval'));
 
-						ContactUserStore.init();
-
-						this.accountsAndIdentities();
+						loadAccountsAndIdentities();
 
 						setTimeout(() => {
 							const cF = FolderUserStore.currentFolderFullName();
@@ -247,27 +222,17 @@ export class AppUser extends AbstractApp {
 						setInterval(reloadTime, 60000);
 
 						PgpUserStore.init();
+						SMimeUserStore.loadCertificates();
 
 						setTimeout(() => mailToHelper(SettingsGet('mailToEmail')), 500);
-
-						if (!localStorage.getItem('register_protocol_offered')) {
-							// When auto-login is active
-							navigator.registerProtocolHandler?.(
-								'mailto',
-								location.protocol + '//' + location.host + location.pathname + '?mailto&to=%s',
-								(SettingsGet('title') || 'SnappyMail')
-							);
-							localStorage.setItem('register_protocol_offered', '1');
-						}
-
 					} else {
 						this.logout();
+						alert('Folders error: ' + getErrorMessage(0, error))
 					}
 				} catch (e) {
 					console.error(e);
 				}
 			});
-
 		} else {
 			startScreens([LoginUserScreen]);
 		}
@@ -278,3 +243,50 @@ export class AppUser extends AbstractApp {
 		showScreenPopup(ComposePopupView, params);
 	}
 }
+
+AskPopupView.password = function(sAskDesc, btnText, ask) {
+	return new Promise(resolve => {
+		this.showModal([
+			sAskDesc,
+			view => resolve({
+				password:view.passphrase(),
+				username:/*ask & 2 ? */view.username(),
+				remember:/*ask & 4 ? */view.remember()
+			}),
+			() => resolve(null),
+			true,
+			ask || 1,
+			btnText
+		]);
+	});
+};
+
+AskPopupView.cryptkey = () => new Promise(resolve => {
+	const fn = () => AskPopupView.showModal([
+		i18n('CRYPTO/ASK_CRYPTKEY_PASS'),
+		view => {
+			let pass = view.passphrase();
+			if (pass) {
+				Remote.post('ResealCryptKey', null, {
+					passphrase: pass
+				}).then(response => {
+					resolve(response?.Result);
+				}).catch(e => {
+					if (111 === e.code) {
+						fn();
+					} else {
+						console.error(e);
+						resolve(null);
+					}
+				});
+			} else {
+				resolve(null);
+			}
+		},
+		() => resolve(null),
+		true,
+		1,
+		i18n('CRYPTO/DECRYPT')
+	]);
+	fn();
+});

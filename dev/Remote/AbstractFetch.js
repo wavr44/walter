@@ -8,18 +8,17 @@ let iJsonErrorCount = 0;
 const getURL = (add = '') => serverRequest('Json') + pString(add),
 
 checkResponseError = data => {
-	const err = data ? data.ErrorCode : null;
+	const err = data ? data.code : null;
 	if (Notifications.InvalidToken === err) {
-		console.error(getNotification(err));
+		console.error(getNotification(err) + ` (${data.messageAdditional})`);
 //		alert(getNotification(err));
-		rl.logoutReload();
+		setTimeout(rl.logoutReload, 5000);
 	} else if ([
 			Notifications.AuthError,
 			Notifications.ConnectionError,
 			Notifications.DomainNotAllowed,
 			Notifications.AccountNotAllowed,
 			Notifications.MailServerError,
-			Notifications.UnknownNotification,
 			Notifications.UnknownError
 		].includes(err)
 	) {
@@ -132,8 +131,8 @@ export class AbstractFetchRemote
 
 		fetchJSON(sAction, getURL(sGetAdd),
 			sGetAdd ? null : (params || {}),
-			undefined === iTimeout ? 30000 : pInt(iTimeout),
-			data => {
+			pInt(iTimeout ?? 30000),
+			async data => {
 				let iError = 0;
 				if (data) {
 /*
@@ -145,8 +144,12 @@ export class AbstractFetchRemote
 						iJsonErrorCount = 0;
 					} else {
 						checkResponseError(data);
-						iError = data.ErrorCode || Notifications.UnknownError
+						iError = data.code || Notifications.UnknownError
 					}
+				}
+
+				if (111 === iError && rl.app.ask && await rl.app.ask.cryptkey()) {
+					return this.request(sAction, fCallback, params, iTimeout, sGetAdd);
 				}
 
 				fCallback && fCallback(
@@ -170,13 +173,6 @@ export class AbstractFetchRemote
 		});
 	}
 
-	/**
-	 * @param {?Function} fCallback
-	 */
-	getPublicKey(fCallback) {
-		this.request('GetPublicKey', fCallback);
-	}
-
 	setTrigger(trigger, value) {
 		if (trigger) {
 			value = !!value;
@@ -193,11 +189,15 @@ export class AbstractFetchRemote
 	post(action, fTrigger, params, timeOut) {
 		this.setTrigger(fTrigger, true);
 		return fetchJSON(action, getURL(), params || {}, pInt(timeOut, 30000),
-			data => {
+			async data => {
 				abort(action, 0, 1);
 
 				if (!data) {
 					return Promise.reject(new FetchError(Notifications.JsonParse));
+				}
+
+				if (111 === data?.code && rl.app.ask && await rl.app.ask.cryptkey()) {
+					return this.post(action, fTrigger, params, timeOut);
 				}
 /*
 				let isCached = false, type = '';
@@ -222,8 +222,8 @@ export class AbstractFetchRemote
 				if (!data.Result || action !== data.Action) {
 					checkResponseError(data);
 					return Promise.reject(new FetchError(
-						data ? data.ErrorCode : 0,
-						data ? (data.ErrorMessageAdditional || data.ErrorMessage) : ''
+						data ? data.code : 0,
+						data ? (data.messageAdditional || data.message) : ''
 					));
 				}
 

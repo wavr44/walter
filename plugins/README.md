@@ -1,3 +1,5 @@
+Also see https://github.com/the-djmaze/snappymail/tree/master/plugins/example
+
 PHP
 ```php
 class Plugin extends \RainLoop\Plugins\AbstractPlugin
@@ -130,8 +132,9 @@ $Plugin->addHook('hook.name', 'functionName');
 ### login.credentials
 	params:
 		string &$sEmail
-		string &$sLogin
+		string &$sImapUser
 		string &$sPassword
+		string &$sSmtpUser
 
 ### login.success
 	params:
@@ -163,6 +166,12 @@ $Plugin->addHook('hook.name', 'functionName');
 		\MailSo\Imap\ImapClient $oImapClient
 		bool $bSuccess
 		\MailSo\Imap\Settings $oSettings
+
+### imap.message-headers
+	params:
+		array &$aHeaders
+
+	Allows you to fetch more MIME headers for messages.
 
 ## Sieve
 
@@ -285,6 +294,13 @@ and called in JavaScript using rl.pluginRemoteRequest().
 	params:
 		array &$aPaths
 
+### filter.language
+	params:
+		string &$sLanguage
+		bool $bAdmin
+
+	Allows you to set a different language
+
 ### filter.message-html
 	params:
 		\RainLoop\Model\Account $oAccount
@@ -396,34 +412,53 @@ and called in JavaScript using rl.pluginRemoteRequest().
 		string $sName
 		mixed &$mResult
 
-### service.app-delay-start-begin
-	no params
-
-### service.app-delay-start-end
-	no params
-
 # JavaScript Events
 
 ## mailbox
 ### mailbox.inbox-unread-count
 ### mailbox.message-list.selector.go-up
 ### mailbox.message-list.selector.go-down
+
 ### mailbox.message.show
+	Use to show a specific message.
+``` JavaScript
+	dispatchEvent(
+		new CustomEvent(
+			'mailbox.message.show',
+			{
+				detail: {
+					folder: 'INBOX',
+					uid: 1
+				},
+				cancelable: false
+			}
+		)
+	);
+```
+
 ## audio
 ### audio.start
 ### audio.stop
 ### audio.api.stop
 ## Misc
-### idle
 ### rl-layout
+	event.detail value is one of:
+	0. NoPreview
+	1. SidePreview
+	2. BottomPreview
 
 ### rl-view-model.create
 	event.detail = the ViewModel class
-	Happens immediately after the ViewModel constructor
+	Happens immediately after the ViewModel constructor.
+	See accessible properties as https://github.com/the-djmaze/snappymail/blob/master/dev/Knoin/AbstractViews.js
 
 ### rl-view-model
 	event.detail = the ViewModel class
 	Happens after the full build (vm.onBuild()) and contains viewModelDom
+
+### rl-vm-visible
+	event.detail = the ViewModel class
+	Happens after the model is made visible (vm.afterShow())
 
 ### sm-admin-login
 	event.detail = FormData

@@ -28,10 +28,46 @@ $keys = [
 	'url',
 	'version'
 ];
+/*
+$released = [
+	'add-x-originating-ip-header',
+	'avatars',
+	'backup',
+	'black-list',
+	'change-password',
+	'change-password-froxlor',
+	'change-password-hestia',
+	'change-password-hmailserver',
+	'change-password-ispconfig',
+	'change-password-poppassd',
+	'custom-login-mapping',
+	'imap-contacts-suggestions',
+	'kolab',
+	'ldap-contacts-suggestions',
+	'ldap-identities',
+	'ldap-login-mapping',
+	'ldap-mail-accounts',
+	'login-external',
+	'login-external-sso',
+	'login-override',
+	'login-register',
+	'login-remote',
+	'mailbox-detect',
+	'nextcloud',
+	'override-smtp-credentials',
+	'set-remote-addr',
+	'smtp-use-from-adr-account',
+	'snowfall-on-login-screen',
+	'two-factor-auth',
+	'view-ics',
+	'white-list'
+];
+*/
 foreach (glob(ROOT_DIR . '/plugins/*', GLOB_NOSORT | GLOB_ONLYDIR) as $dir) {
 	if (is_file("{$dir}/index.php") && !strpos($dir, '.bak')) {
 		require "{$dir}/index.php";
 		$name = basename($dir);
+//		if (!in_array($name, $released)) continue;
 		$class = new ReflectionClass(str_replace('-', '', $name) . 'Plugin');
 		$manifest_item = [];
 		foreach ($class->getConstants() as $key => $value) {

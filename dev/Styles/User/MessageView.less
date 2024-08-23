@@ -18,7 +18,7 @@
 			position: relative;
 			display: inline-block;
 			color: white;
-			font-size: 20px;
+			font-size: 143%;
 			line-height: 30px;
 			background: rgba(0, 0, 0, .6);
 			padding: 15px;
@@ -68,7 +68,7 @@
 
 	.b-message-view-desc {
 		text-align: center;
-		font-size: 24px;
+		font-size: 171%;
 		line-height: 30px;
 		color: #999;
 		padding: 25vh 10px 0;
@@ -139,7 +139,7 @@
 
 		.subjectParent {
 			display: flex;
-			font-size: 18px;
+			font-size: 128%;
 			font-weight: bold;
 		}
 
@@ -171,8 +171,6 @@
 		}
 
 		.informationFull {
-			margin-top: 30px;
-
 
 			table {
 				border-spacing: 0;
@@ -200,7 +198,7 @@
 		}
 	}
 
-	.openpgp-control {
+	.crypto-control {
 		padding: 0.5em;
 
 		span {
@@ -259,7 +257,7 @@
 
 	.loading {
 		text-align: center;
-		font-size: 24px;
+		font-size: 171%;
 		color: grey;
 		padding: 50px 0;
 	}
@@ -287,15 +285,6 @@
 
 		border-bottom: 1px solid var(--border-color, #bbb);
 		position: relative;
-
-		.attachmentList {
-			margin: 0;
-/*
-			min-height: 4em;
-			max-height: 15vh;
-			overflow: auto;
-*/
-		}
 
 		&:not(.selection-mode) {
 			.checkboxAttachment {
@@ -341,6 +330,11 @@
 		height: 100%;
 		padding: 10px;
 		position: relative;
+
+		&.swapColors {
+			background-color: var(--main-color, currentcolor);
+			color: var(--main-bg-color);
+		}
 
 		* {
 			box-sizing: unset;
@@ -394,7 +388,7 @@
 			img[data-x-src]:not([src]):hover::after {
 				content: attr(data-x-src);
 				font-family: var(--fontSans);
-				font-size: 11px;
+				font-size: 80%;
 				height: auto;
 				transform: translate(-25%,0);
 				width: fit-content;

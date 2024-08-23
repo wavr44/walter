@@ -38,6 +38,15 @@
 				</div>
 			</p>
 			<br />
+
+			<p>
+				<input id="snappymail-autologin-oidc" name="snappymail-autologin-oidc" type="checkbox" class="checkbox" <?php if ($_['snappymail-autologin-oidc']) echo 'checked="checked"'; ?>>
+				<label for="snappymail-autologin-oidc">
+					<?php echo($l->t('Attempt to automatically login with OIDC when active')); ?>
+				</label>
+			</p>
+			<br />
+
 			<p>
 				<input id="snappymail-no-embed" name="snappymail-no-embed" type="checkbox" class="checkbox" <?php if ($_['snappymail-no-embed']) echo 'checked="checked"'; ?>>
 				<label for="snappymail-no-embed">
@@ -61,6 +70,15 @@
 			</p>
 			<br />
 			<?php } ?>
+
+			<p>
+				<label for="snappymail-app_path">
+					<?php echo($l->t('app_path')); ?>
+				</label>
+				<input id="snappymail-app_path" name="snappymail-app_path" type="text" <?php echo 'value="'.\htmlspecialchars($_['snappymail-app_path']).'"'; ?> style="width:20em">
+			</p>
+			<br />
+
 			<p>
 				<button id="snappymail-save-button" name="snappymail-save-button"><?php echo($l->t('Save')); ?></button>
 				<div class="snappymail-result-desc" style="white-space: pre"></div>

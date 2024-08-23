@@ -30,8 +30,6 @@ const
 			sDeepPrefix = '\u00A0\u00A0\u00A0',
 			showUnsubscribed = true/*!SettingsUserStore.hideUnsubscribed()*/,
 
-			disabled = rl.settings.get('sieveAllowFileintoInbox') ? '' : 'INBOX',
-
 			foldersWalk = folders => {
 				folders.forEach(oItem => {
 					if (showUnsubscribed || oItem.hasSubscriptions() || !oItem.exists) {
@@ -39,7 +37,7 @@ const
 							id: oItem.fullName,
 							name: sDeepPrefix.repeat(oItem.deep) + oItem.detailedName(),
 							system: false,
-							disabled: !oItem.selectable() || disabled == oItem.fullName
+							disabled: !oItem.selectable()
 						});
 					}
 
@@ -120,11 +118,13 @@ export class FilterPopupView extends rl.pluginPopupView {
 					id: FilterAction.MoveTo,
 					name: i18nFilter('ACTION_MOVE_TO')
 				});
-				this.actionTypeOptions.push({
-					id: FilterAction.Forward,
-					name: i18nFilter('ACTION_FORWARD_TO')
-				});
 			}
+
+			// redirect command
+			this.actionTypeOptions.push({
+				id: FilterAction.Forward,
+				name: i18nFilter('ACTION_FORWARD_TO')
+			});
 
 			if (capa.includes('reject')) {
 				this.actionTypeOptions.push({ id: FilterAction.Reject, name: i18nFilter('ACTION_REJECT') });
