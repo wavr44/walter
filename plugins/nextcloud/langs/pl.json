@@ -9,6 +9,7 @@
 		"SELECT_CALENDAR": "Wybierz kalendarz",
 		"FILE_ATTACH": "dołącz",
 		"FILE_INTERNAL": "link wewnętrzny",
-		"FILE_PUBLIC": "link publiczny"
+		"FILE_PUBLIC": "link publiczny",
+		"ADDRESS_BOOK": "Address Book"
 	}
 }

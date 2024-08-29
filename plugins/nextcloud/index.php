@@ -10,7 +10,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		DESCRIPTION = 'Integrate with Nextcloud v20+',
 		REQUIRED = '2.36.2';
 
-	public function Init() : void
+	public function Init(): void
 	{
 		if (static::IsIntegrated()) {
 			\SnappyMail\Log::debug('Nextcloud', 'integrated');
@@ -36,17 +36,64 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 			$this->addTemplate('templates/PopupsNextcloudFiles.html');
 			$this->addTemplate('templates/PopupsNextcloudCalendars.html');
 
-//			$this->addHook('login.credentials.step-2', 'loginCredentials2');
-//			$this->addHook('login.credentials', 'loginCredentials');
+			//			$this->addHook('login.credentials.step-2', 'loginCredentials2');
+			//			$this->addHook('login.credentials', 'loginCredentials');
 			$this->addHook('imap.before-login', 'beforeLogin');
 			$this->addHook('smtp.before-login', 'beforeLogin');
 			$this->addHook('sieve.before-login', 'beforeLogin');
+
+			$this->addJs('js/addressbook.js'); // add js file
+			$this->addTemplate('templates/AddressBookSettings.html');
+			$this->addJsonHook('JsonGetAddressbooks', 'GetAddressBooks');
+			$this->addJsonHook('NextcloudUpdateAddressBook', 'UpdateAddressBook');
 		} else {
 			\SnappyMail\Log::debug('Nextcloud', 'NOT integrated');
 			// \OC::$server->getConfig()->getAppValue('snappymail', 'snappymail-no-embed');
 			$this->addHook('main.content-security-policy', 'ContentSecurityPolicy');
 		}
 	}
+
+	public function GetAddressBooks()
+	{
+		$addressBooks = [];
+
+		$contactsManager = \OC::$server->getContactsManager();
+
+		$selectedUri = $this->Settings()->GetConf('NextCloudAddressBookUri', 'webmail');
+
+		foreach ($contactsManager->getUserAddressBooks() as $addressBook) {
+			if ($addressBook->isSystemAddressBook()) {
+				$contactsManager->unregisterAddressBook($addressBook);
+				continue;
+			}
+
+			$book = new AddressBook();
+			$book->uri = $addressBook->getUri();
+			$book->name = $addressBook->getDisplayName();
+			if (strcmp($selectedUri, $book->uri) === 0) {
+				$book->selected = true;
+			}
+
+			$addressBooks[] = $book;
+		}
+
+
+		return $this->jsonResponse(__FUNCTION__, array(
+			'addressbooks' => json_encode($addressBooks)
+		));
+	}
+
+	public function UpdateAddressBook(): array
+	{
+		$uri = $this->jsonParam('uri');
+		$oSettings = $this->Settings();
+		if (\is_string($uri)) {
+			$oSettings->SetConf('NextCloudAddressBookUri', $uri);
+			$this->SettingsProvider()->Save($this->Account(), $oSettings);
+		}
+		return $this->jsonResponse(__FUNCTION__, true);
+	}
+
 
 	public function ContentSecurityPolicy(\SnappyMail\HTTP\CSP $CSP)
 	{
@@ -55,7 +102,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 	}
 
-	public function Supported() : string
+	public function Supported(): string
 	{
 		return static::IsIntegrated() ? '' : 'Nextcloud not found to use this plugin';
 	}
@@ -70,24 +117,24 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		return static::IsIntegrated() && \OC::$server->getUserSession()->isLoggedIn();
 	}
 
-	public function loginCredentials(string &$sEmail, string &$sLogin, ?string &$sPassword = null) : void
+	public function loginCredentials(string &$sEmail, string &$sLogin, ?string &$sPassword = null): void
 	{
 		/**
 		 * This has an issue.
 		 * When user changes email address, all settings are gone as the new
 		 * _data_/_default_/storage/{domain}/{local-part} is used
 		 */
-//		$ocUser = \OC::$server->getUserSession()->getUser();
-//		$sEmail = $ocUser->getEMailAddress() ?: $ocUser->getPrimaryEMailAddress() ?: $sEmail;
+		//		$ocUser = \OC::$server->getUserSession()->getUser();
+		//		$sEmail = $ocUser->getEMailAddress() ?: $ocUser->getPrimaryEMailAddress() ?: $sEmail;
 	}
 
-	public function loginCredentials2(string &$sEmail, ?string &$sPassword = null) : void
+	public function loginCredentials2(string &$sEmail, ?string &$sPassword = null): void
 	{
 		$ocUser = \OC::$server->getUserSession()->getUser();
 		$sEmail = $ocUser->getEMailAddress() ?: $ocUser->getPrimaryEMailAddress() ?: $sEmail;
 	}
 
-	public function beforeLogin(\RainLoop\Model\Account $oAccount, \MailSo\Net\NetClient $oClient, \MailSo\Net\ConnectSettings $oSettings) : void
+	public function beforeLogin(\RainLoop\Model\Account $oAccount, \MailSo\Net\NetClient $oClient, \MailSo\Net\ConnectSettings $oSettings): void
 	{
 		// https://apps.nextcloud.com/apps/oidc_login
 		$config = \OC::$server->getConfig();
@@ -104,11 +151,12 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		// Only login with OIDC access token if
 		// it is enabled in config, the user is currently logged in with OIDC,
 		// the current snappymail account is the OIDC account and no account defined explicitly
-		if (\OC::$server->getConfig()->getAppValue('snappymail', 'snappymail-autologin-oidc', false)
-		 && \OC::$server->getSession()->get('is_oidc')
-		 && $sNcEmail === $oSettings->username
-		 && !$bAccountDefinedExplicitly
-//		 && $oClient->supportsAuthType('OAUTHBEARER') // v2.28
+		if (
+			\OC::$server->getConfig()->getAppValue('snappymail', 'snappymail-autologin-oidc', false)
+			&& \OC::$server->getSession()->get('is_oidc')
+			&& $sNcEmail === $oSettings->username
+			&& !$bAccountDefinedExplicitly
+			//		 && $oClient->supportsAuthType('OAUTHBEARER') // v2.28
 		) {
 			$sAccessToken = \OC::$server->getSession()->get('oidc_access_token');
 			if ($sAccessToken) {
@@ -123,7 +171,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 	\OC::$server->getLDAPProvider();
 	*/
 
-	public function NextcloudAttachFile() : array
+	public function NextcloudAttachFile(): array
 	{
 		$aResult = [
 			'success' => false,
@@ -147,10 +195,10 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		return $this->jsonResponse(__FUNCTION__, $aResult);
 	}
 
-	public function NextcloudSaveMsg() : array
+	public function NextcloudSaveMsg(): array
 	{
 		$sSaveFolder = \ltrim($this->jsonParam('folder', ''), '/');
-//		$aValues = \RainLoop\Api::Actions()->decodeRawKey($this->jsonParam('msgHash', ''));
+		//		$aValues = \RainLoop\Api::Actions()->decodeRawKey($this->jsonParam('msgHash', ''));
 		$msgHash = $this->jsonParam('msgHash', '');
 		$aValues = \json_decode(\MailSo\Base\Utils::UrlSafeBase64Decode($msgHash), true);
 		$aResult = [
@@ -204,14 +252,14 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				foreach ($data->items as $aItem) {
 					$sSavedFileName = empty($aItem['fileName']) ? 'file.dat' : $aItem['fileName'];
 					if (!empty($aItem['data'])) {
-						$sSavedFileNameFull = static::SmartFileExists($sSaveFolder.'/'.$sSavedFileName, $oFiles);
+						$sSavedFileNameFull = static::SmartFileExists($sSaveFolder . '/' . $sSavedFileName, $oFiles);
 						if (!$oFiles->file_put_contents($sSavedFileNameFull, $aItem['data'])) {
 							$data->result = false;
 						}
 					} else if (!empty($aItem['fileHash'])) {
 						$fFile = $data->filesProvider->GetFile($data->account, $aItem['fileHash'], 'rb');
 						if (\is_resource($fFile)) {
-							$sSavedFileNameFull = static::SmartFileExists($sSaveFolder.'/'.$sSavedFileName, $oFiles);
+							$sSavedFileNameFull = static::SmartFileExists($sSaveFolder . '/' . $sSavedFileName, $oFiles);
 							if (!$oFiles->file_put_contents($sSavedFileNameFull, $fFile)) {
 								$data->result = false;
 							}
@@ -225,19 +273,19 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 	}
 
-	public function FilterAppData($bAdmin, &$aResult) : void
+	public function FilterAppData($bAdmin, &$aResult): void
 	{
 		if (!$bAdmin && \is_array($aResult)) {
 			$ocUser = \OC::$server->getUserSession()->getUser();
 			$sUID = $ocUser->getUID();
 			$oUrlGen = \OC::$server->getURLGenerator();
 			$sWebDAV = $oUrlGen->getAbsoluteURL($oUrlGen->linkTo('', 'remote.php') . '/dav');
-//			$sWebDAV = \OCP\Util::linkToRemote('dav');
+			//			$sWebDAV = \OCP\Util::linkToRemote('dav');
 			$aResult['Nextcloud'] = [
 				'UID' => $sUID,
 				'WebDAV' => $sWebDAV,
 				'CalDAV' => $this->Config()->Get('plugin', 'calendar', false)
-//				'WebDAV_files' => $sWebDAV . '/files/' . $sUID
+				//				'WebDAV_files' => $sWebDAV . '/files/' . $sUID
 			];
 			if (empty($aResult['Auth'])) {
 				$config = \OC::$server->getConfig();
@@ -259,9 +307,9 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				}
 				if (!$sEmail) {
 					$sEmail = $ocUser->getEMailAddress();
-//						?: $ocUser->getPrimaryEMailAddress();
+					//						?: $ocUser->getPrimaryEMailAddress();
 				}
-/*
+				/*
 				if ($config->getAppValue('snappymail', 'snappymail-autologin-oidc', false)) {
 					if (\OC::$server->getSession()->get('is_oidc')) {
 						$sEmail = "{$sUID}@nextcloud";
@@ -308,7 +356,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 	}
 
-	public function FilterLanguage(&$sLanguage, $bAdmin) : void
+	public function FilterLanguage(&$sLanguage, $bAdmin): void
 	{
 		if (!\RainLoop\Api::Config()->Get('webmail', 'allow_languages_on_settings', true)) {
 			$aResultLang = \SnappyMail\L10n::getLanguages($bAdmin);
@@ -331,7 +379,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 	 *
 	 * @return string return locale
 	 */
-	private function determineLocale(string $langCode, array $languagesArray) : ?string
+	private function determineLocale(string $langCode, array $languagesArray): ?string
 	{
 		// Direct check for the language code
 		if (\in_array($langCode, $languagesArray)) {
@@ -378,7 +426,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				include_once __DIR__ . '/NextcloudAddressBook.php';
 				$mResult = new NextcloudAddressBook();
 			}
-/*
+			/*
 			if ($this->Config()->Get('plugin', 'storage', false) && ('storage' === $sName || 'storage-local' === $sName)) {
 				require_once __DIR__ . '/storage.php';
 				$oDriver = new \NextcloudStorage(APP_PRIVATE_DATA.'storage', $sName === 'storage-local');
@@ -387,7 +435,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 	}
 
-	protected function configMapping() : array
+	protected function configMapping(): array
 	{
 		return array(
 			\RainLoop\Plugins\Property::NewInstance('suggestions')->SetLabel('Suggestions')
@@ -396,7 +444,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 			\RainLoop\Plugins\Property::NewInstance('ignoreSystemAddressbook')->SetLabel('Ignore system addressbook')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
 				->SetDefaultValue(true),
-/*
+			/*
 			\RainLoop\Plugins\Property::NewInstance('storage')->SetLabel('Use Nextcloud user ID in config storage path')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
 				->SetDefaultValue(false)
@@ -407,7 +455,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		);
 	}
 
-	private static function SmartFileExists(string $sFilePath, $oFiles) : string
+	private static function SmartFileExists(string $sFilePath, $oFiles): string
 	{
 		$sFilePath = \str_replace('\\', '/', \trim($sFilePath));
 
@@ -421,11 +469,10 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 
 		while (true) {
 			++$iIndex;
-			$sFilePathNew = $aFileInfo['dirname'].'/'.
-				\preg_replace('/\(\d{1,2}\)$/', '', $aFileInfo['filename']).
-				' ('.$iIndex.')'.
-				(empty($aFileInfo['extension']) ? '' : '.'.$aFileInfo['extension'])
-			;
+			$sFilePathNew = $aFileInfo['dirname'] . '/' .
+				\preg_replace('/\(\d{1,2}\)$/', '', $aFileInfo['filename']) .
+				' (' . $iIndex . ')' .
+				(empty($aFileInfo['extension']) ? '' : '.' . $aFileInfo['extension']);
 			if (!$oFiles->file_exists($sFilePathNew)) {
 				return $sFilePathNew;
 			}
@@ -435,4 +482,26 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		}
 		return $sFilePath;
 	}
+
+	private function Account(): \RainLoop\Model\Account
+	{
+		return \RainLoop\Api::Actions()->getAccountFromToken();
+	}
+
+	private function SettingsProvider(): \RainLoop\Providers\Settings
+	{
+		return \RainLoop\Api::Actions()->SettingsProvider(true);
+	}
+
+	private function Settings(): \RainLoop\Settings
+	{
+		return $this->SettingsProvider()->Load($this->Account());
+	}
+}
+
+class AddressBook
+{
+	public string $uri;
+	public string $name;
+	public bool $selected = false;
 }

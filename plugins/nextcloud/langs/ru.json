@@ -9,6 +9,7 @@
 		"SELECT_CALENDAR": "Выбрать календарь",
 		"FILE_ATTACH": "Прикрепить с ПК",
 		"FILE_INTERNAL": "Внутреняя",
-		"FILE_PUBLIC": "Публичная"
+		"FILE_PUBLIC": "Публичная",
+		"ADDRESS_BOOK": "Address Book"
 	}
 }
