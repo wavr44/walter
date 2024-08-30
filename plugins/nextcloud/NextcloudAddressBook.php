@@ -7,6 +7,9 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	use RainLoop\Providers\AddressBook\CardDAV;
 	private $contactsManager;
 
+	private const DEFAULT_URI = 'webmail';
+	private const SETTINGS_KEY = 'nextCloudAddressBookUri';
+
 	function __construct()
 	{
 		$this->GetSavedAddressBookKey();
@@ -21,20 +24,21 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 				$this->contactsManager->unregisterAddressBook($addressBook);
 			}
 		}
+
 		$uid = \OC::$server->getUserSession()->getUser()->getUID();
 		$cardDavBackend = \OC::$server->get(\OCA\DAV\CardDAV\CardDavBackend::class);
 		$principalUri = 'principals/users/' . $uid;
 		$uri = $this->GetSavedUri();
 		$addressBookId = $cardDavBackend->getAddressBooksByUri($principalUri, $uri);
+
 		if ($addressBookId === null) {
-			$addressBookId = $cardDavBackend->createAddressBook($principalUri, $uri, array_filter([
+			return $cardDavBackend->createAddressBook($principalUri, $uri, array_filter([
 				'{DAV:}displayname' => 'WebMail',
 				'{urn:ietf:params:xml:ns:carddav}addressbook-description' => 'Recipients from snappymail',
 			]));
-		} else {
-			$addressBookId = $addressBookId['id'];
 		}
-		return $addressBookId;
+
+		return $addressBookId['id'];
 	}
 
 	public function IsSupported(): bool
@@ -177,6 +181,6 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 
 	private function GetSavedUri(): string
 	{
-		return $this->Settings()->GetConf('NextCloudAddressBookUri', 'webmail');
+		return $this->Settings()->GetConf(self::SETTINGS_KEY, self::DEFAULT_URI);
 	}
 }

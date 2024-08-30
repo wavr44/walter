@@ -10,6 +10,10 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		DESCRIPTION = 'Integrate with Nextcloud v20+',
 		REQUIRED = '2.36.2';
 
+
+	private const DEFAULT_ADDRESSBOOK_URI = 'webmail';
+	private const ADDRESSBOOK_SETTINGS_KEY = 'nextCloudAddressBookUri';
+
 	public function Init(): void
 	{
 		if (static::IsIntegrated()) {
@@ -42,9 +46,8 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 			$this->addHook('smtp.before-login', 'beforeLogin');
 			$this->addHook('sieve.before-login', 'beforeLogin');
 
-			$this->addJs('js/addressbook.js'); // add js file
-			$this->addTemplate('templates/AddressBookSettings.html');
-			$this->addJsonHook('JsonGetAddressbooks', 'GetAddressBooks');
+			$this->addJs('js/addressbook.js');
+			$this->addJsonHook('NextcloudGetAddressBooks', 'GetAddressBooks');
 			$this->addJsonHook('NextcloudUpdateAddressBook', 'UpdateAddressBook');
 		} else {
 			\SnappyMail\Log::debug('Nextcloud', 'NOT integrated');
@@ -59,7 +62,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 
 		$contactsManager = \OC::$server->getContactsManager();
 
-		$selectedUri = $this->Settings()->GetConf('NextCloudAddressBookUri', 'webmail');
+		$selectedUri = $this->Settings()->GetConf(self::ADDRESSBOOK_SETTINGS_KEY, self::DEFAULT_ADDRESSBOOK_URI);
 
 		foreach ($contactsManager->getUserAddressBooks() as $addressBook) {
 			if ($addressBook->isSystemAddressBook()) {
@@ -88,7 +91,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		$uri = $this->jsonParam('uri');
 		$oSettings = $this->Settings();
 		if (\is_string($uri)) {
-			$oSettings->SetConf('NextCloudAddressBookUri', $uri);
+			$oSettings->SetConf(self::ADDRESSBOOK_SETTINGS_KEY, $uri);
 			$this->SettingsProvider()->Save($this->Account(), $oSettings);
 		}
 		return $this->jsonResponse(__FUNCTION__, true);

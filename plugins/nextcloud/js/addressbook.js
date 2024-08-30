@@ -1,36 +1,38 @@
 (rl => {
 	if (rl) {
-		class AddressBookSettings /* extends AbstractViewSettings */ {
-			constructor() {
-				this.addressBookList = ko.observableArray();
-				this.selectedAddressBook = ko.observable();
+		addEventListener('rl-view-model', e => {
+			if ('SettingsContacts' === e.detail.viewModelTemplateID) {
+				const container = e.detail.viewModelDom.querySelector('.form-horizontal');
+				if (container) {
+					rl.pluginRemoteRequest((iError, oData) => {
+						if (!iError) {
+							const mainDivElement = Element.fromHTML('<div class="control-group">'
+								+ '<label>' + rl.i18n("NEXTCLOUD/ADDRESS_BOOK") + '</label>'
+								+ '</div>');
 
-				rl.pluginRemoteRequest((iError, oData) => {
-					if (!iError) {
-						const books = JSON.parse(oData.Result.addressbooks);
-						books.forEach(book => {
-							this.addressBookList.push(book);
+							const selectElement = Element.fromHTML('<select></select>');
 
-							if (book.selected) {
-								this.selectedAddressBook(book.uri);
-							}
-						});
-
-						this.selectedAddressBook.subscribe(value => {
-							rl.pluginRemoteRequest(() => { }, 'NextcloudUpdateAddressBook', {
-								uri: value
+							const books = JSON.parse(oData.Result.addressbooks);
+							books.forEach(book => {
+								if (book.selected) {
+									selectElement.append(Element.fromHTML('<option value="' + book.uri + '" selected="selected">' + book.name + '</option>'));
+								} else {
+									selectElement.append(Element.fromHTML('<option value="' + book.uri + '">' + book.name + '</option>'));
+								}
 							});
-						});
-					}
-				}, "JsonGetAddressbooks");
-			}
-		}
 
-		rl.addSettingsViewModel(
-			AddressBookSettings,
-			'AddressBookSettings',
-			'NEXTCLOUD/ADDRESS_BOOK',
-			'addressbook'
-		);
+							selectElement.onchange = function() {
+								rl.pluginRemoteRequest(() => { }, 'NextcloudUpdateAddressBook', {
+									uri: selectElement.value
+								});
+							}
+
+							mainDivElement.append(selectElement);
+							container.append(mainDivElement);
+						}
+					}, "NextcloudGetAddressBooks");
+				}
+			}
+		});
 	}
 })(window.rl);
