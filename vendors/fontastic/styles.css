@@ -46,9 +46,6 @@
 .icon-down-mini::before {
   content: "⌄";
 }
-.icon-cross::before {
-  content: "✖";
-}
 .icon-ok::before {
   content: "✔";
 }
@@ -105,4 +102,7 @@
 }
 .icon-check-mark-circle-two::before {
   content: "\e073";
+}
+.icon-file-calendar::before {
+  content: "📅";
 }

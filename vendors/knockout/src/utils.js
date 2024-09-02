@@ -25,6 +25,7 @@ ko.utils = {
             : node => node.cloneNode(true)),
 
     setDomNodeChildren: (domNode, childNodes) => {
+//        domNode.replaceChildren(...childNodes);
         ko.utils.emptyDomNode(domNode);
         childNodes && domNode.append(...childNodes);
     },
@@ -84,7 +85,7 @@ ko.utils = {
 
     triggerEvent: (element, eventType) => {
         if (!element?.nodeType)
-            throw new Error("element must be a DOM node when calling triggerEvent");
+            throw Error("element must be a DOM node when calling triggerEvent");
 
         element.dispatchEvent(new Event(eventType));
     },
@@ -92,7 +93,7 @@ ko.utils = {
     unwrapObservable: value => ko.isObservable(value) ? value() : value,
 
     setTextContent: (element, textContent) =>
-        element.textContent = ko.utils.unwrapObservable(textContent) || ""
+        element.textContent = ko.utils.unwrapObservable(textContent)
 };
 
 ko.exportSymbol('utils', ko.utils);

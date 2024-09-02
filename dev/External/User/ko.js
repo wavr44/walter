@@ -1,9 +1,9 @@
 import 'External/ko';
 import ko from 'ko';
-import { HtmlEditor } from 'Common/Html';
+import { RFC822 } from 'Common/File';
+import { HtmlEditor } from 'Common/HtmlEditor';
 import { timeToNode } from 'Common/Translator';
 import { doc, elementById, addEventsListeners, dropdowns, leftPanelDisabled } from 'Common/Globals';
-import { dropdownsDetectVisibility } from 'Common/UtilsUser';
 import { EmailAddressesComponent } from 'Component/EmailAddresses';
 import { ThemeStore } from 'Stores/Theme';
 import { dropFilesInFolder } from 'Common/Folders';
@@ -44,7 +44,7 @@ const rlContentType = 'snappymail/action',
 		let files = false;
 //		if (e.dataTransfer.types.includes('Files'))
 		for (const item of e.dataTransfer.items) {
-			files |= 'file' === item.kind && 'message/rfc822' === item.type;
+			files |= 'file' === item.kind && RFC822 === item.type;
 		}
 		if (files || dragMessages()) {
 			e.stopPropagation();
@@ -91,7 +91,7 @@ Object.assign(ko.bindingHandlers, {
 				};
 
 			if (ko.isObservable(fValue)) {
-				editor = new HtmlEditor(element, fUpdateKoValue, fOnReady, fUpdateKoValue);
+				editor = new HtmlEditor(element, fOnReady, fUpdateKoValue, fUpdateKoValue);
 
 				fValue.__fetchEditorValue = fUpdateKoValue;
 
@@ -103,7 +103,7 @@ Object.assign(ko.bindingHandlers, {
 		}
 	},
 
-	moment: {
+	time: {
 		init: ttn,
 		update: ttn
 	},
@@ -194,10 +194,6 @@ Object.assign(ko.bindingHandlers, {
 				};
 			addEventsListeners(element, {
 				dragstart: e => {
-					dragData = {
-						action: 'sortable',
-						element: element
-					};
 					setDragAction(e, 'sortable', 'move', element, element);
 					element.style.opacity = 0.25;
 				},
@@ -246,19 +242,6 @@ Object.assign(ko.bindingHandlers, {
 		init: element => {
 			dropdowns.push(element);
 			element.ddBtn = new BSN.Dropdown(element.querySelector('.dropdown-toggle'));
-		}
-	},
-
-	openDropdownTrigger: {
-		update: (element, fValueAccessor) => {
-			if (ko.unwrap(fValueAccessor())) {
-				const el = element.ddBtn;
-				el.open || el.toggle();
-	//			el.focus();
-
-				dropdownsDetectVisibility();
-				fValueAccessor()(false);
-			}
 		}
 	}
 });

@@ -30,7 +30,7 @@ use XMLWriter;
  * @author Evert Pot (http://evertpot.com/)
  * @license http://sabre.io/license/ Modified BSD License
  */
-class Writer extends XMLWriter
+class Writer extends \XMLWriter
 {
     use ContextStackTrait;
 
@@ -92,7 +92,7 @@ class Writer extends XMLWriter
      *    ]
      * ]
      *
-     * @param mixed $value
+     * @param mixed $value PHP value to be written
      */
     public function write($value): void
     {
@@ -135,7 +135,7 @@ class Writer extends XMLWriter
             } else {
                 // An empty namespace means it's the global namespace. This is
                 // allowed, but it mustn't get a prefix.
-                if ('' === $namespace || null === $namespace) {
+                if ('' === $namespace) {
                     $result = $this->startElement($localName);
                     $this->writeAttribute('xmlns', '');
                 } else {

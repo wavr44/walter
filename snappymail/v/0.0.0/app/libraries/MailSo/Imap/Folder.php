@@ -31,13 +31,15 @@ class Folder implements \JsonSerializable
 	 */
 	private array $aMetadata = array();
 
+	public ?Responses\ACL $myRights = null;
+
 	/**
-	 * @throws \InvalidArgumentException
+	 * @throws \ValueError
 	 */
 	function __construct(string $sFullName, string $sDelimiter = null, array $aAttributes = array())
 	{
 		if (!\strlen($sFullName)) {
-			throw new \InvalidArgumentException;
+			throw new \ValueError;
 		}
 		$this->FullName = $sFullName;
 		$this->setDelimiter($sDelimiter);
@@ -146,12 +148,7 @@ class Folder implements \JsonSerializable
 	#[\ReturnTypeWillChange]
 	public function jsonSerialize()
 	{
-/*
-		if ($this->ImapClient->hasCapability('ACL') || $this->ImapClient->CapabilityValue('RIGHTS')) {
-			// MailSo\Imap\Responses\ACL
-			$rights = $this->ImapClient->FolderMyRights($this->FullName);
-		}
-*/
+		$selectable = $this->Selectable();
 		$result = array(
 			'@Object' => 'Object/Folder',
 			'name' => $this->Name(),
@@ -164,18 +161,20 @@ class Folder implements \JsonSerializable
 			'totalEmails' => $this->MESSAGES,
 			'unreadEmails' => $this->UNSEEN,
 			'id' => $this->MAILBOXID,
-			'role' => $this->Role()
+			'size' => $this->SIZE,
+			'role' => $this->Role(),
 /*
-			'myRights' => [
-				'mayReadItems'   => !$rights || ($rights->hasRight('l') && $rights->hasRight('r')),
-				'mayAddItems'    => !$rights || $rights->hasRight('i'),
-				'mayRemoveItems' => !$rights || ($rights->hasRight('t') && $rights->hasRight('e')),
-				'maySetSeen'     => !$rights || $rights->hasRight('s'),
-				'maySetKeywords' => !$rights || $rights->hasRight('w'),
-				'mayCreateChild' => !$rights || $rights->hasRight('k'),
-				'mayRename'      => !$rights || $rights->hasRight('x'),
-				'mayDelete'      => !$rights || $rights->hasRight('x'),
-				'maySubmit'      => !$rights || $rights->hasRight('p')
+			'rights' => $this->myRights,
+			'myRights' => $this->myRights ?: [
+				'mayReadItems'   => $selectable,
+				'mayAddItems'    => $selectable,
+				'mayRemoveItems' => $selectable,
+				'maySetSeen'     => $selectable,
+				'maySetKeywords' => $selectable,
+				'mayCreateChild' => $selectable,
+				'mayRename'      => $selectable,
+				'mayDelete'      => $selectable,
+				'maySubmit'      => $selectable
 			]
 */
 		);

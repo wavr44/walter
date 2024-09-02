@@ -56,7 +56,7 @@ trait Folders
 	}
 
 	/**
-	 * @throws \InvalidArgumentException
+	 * @throws \ValueError
 	 * @throws \MailSo\RuntimeException
 	 * @throws \MailSo\Net\Exceptions\*
 	 * @throws \MailSo\Imap\Exceptions\*
@@ -64,7 +64,7 @@ trait Folders
 	public function FolderDelete(string $sFolderName) : void
 	{
 		if (!$sFolderName || 'INBOX' === $sFolderName) {
-			throw new \InvalidArgumentException;
+			throw new \ValueError;
 		}
 
 		$oInfo = $this->hasCapability('IMAP4rev2')
@@ -82,7 +82,8 @@ trait Folders
 		$this->SendRequestGetResponse('DELETE', [$this->EscapeFolderName($sFolderName)]);
 //		$this->FolderCheck();
 
-		// Will this workaround solve Dovecot issue #124 ?
+		// Will this workaround solve Dovecot issue?
+		// https://github.com/the-djmaze/snappymail/issues/124
 		try {
 			$this->FolderRename($sFolderName, "{$sFolderName}-dummy");
 			$this->FolderRename("{$sFolderName}-dummy", $sFolderName);
@@ -135,13 +136,17 @@ trait Folders
 			FolderStatus::UIDNEXT,
 			FolderStatus::UIDVALIDITY
 		);
-		// RFC 4551
-		if ($this->hasCapability('CONDSTORE')) {
+		// RFC 4551 or RFC 5162
+		if ($this->hasCapability('CONDSTORE') || $this->hasCapability('QRESYNC')) {
 			$aStatusItems[] = FolderStatus::HIGHESTMODSEQ;
 		}
 		// RFC 7889
 		if ($this->hasCapability('APPENDLIMIT')) {
 			$aStatusItems[] = FolderStatus::APPENDLIMIT;
+		}
+		// RFC 8438
+		if ($this->hasCapability('STATUS=SIZE')) {
+			$aStatusItems[] = FolderStatus::SIZE;
 		}
 		// RFC 8474
 		if ($this->hasCapability('OBJECTID')) {
@@ -151,11 +156,6 @@ trait Folders
 			$aStatusItems[] = 'X-GUID';
 */
 		}
-/*		// STATUS SIZE can take a significant amount of time, therefore not active
-		if ($this->hasCapability('IMAP4rev2')) {
-			$aStatusItems[] = FolderStatus::SIZE;
-		}
-*/
 		return $aStatusItems;
 	}
 
@@ -184,7 +184,7 @@ trait Folders
 			 */
 /*
 			if ($this->hasCapability('ESEARCH') && !isset($oFolderInfo->UNSEEN)) {
-				$oFolderInfo->UNSEEN = $this->MessageSimpleESearch('UNSEEN', ['COUNT'])['COUNT'];
+				$oFolderInfo->UNSEEN = $this->MessageESearch('UNSEEN', ['COUNT'])['COUNT'];
 			}
 			return $oFolderInfo;
 */
@@ -214,8 +214,7 @@ trait Folders
 //			$oFolderInfo->SIZE = \max($oFolderInfo->SIZE, $oInfo->SIZE);
 //			$oFolderInfo->RECENT = \max(0, $oFolderInfo->RECENT, $oInfo->RECENT);
 			$oFolderInfo->hasStatus = $oInfo->hasStatus;
-			$oFolderInfo->generateETag($this);
-			return $oFolderInfo;
+			$oInfo = $oFolderInfo;
 		}
 
 		$oInfo->generateETag($this);
@@ -361,7 +360,7 @@ trait Folders
 		}
 
 		if (!\strlen(\trim($sFolderName))) {
-			throw new \InvalidArgumentException;
+			throw new \ValueError;
 		}
 
 		$aSelectParams = array();
@@ -435,7 +434,7 @@ trait Folders
 		$oResult->UNSEEN = null;
 /*
 		if ($this->hasCapability('ESEARCH')) {
-			$oResult->UNSEEN = $this->MessageSimpleESearch('UNSEEN', ['COUNT'])['COUNT'];
+			$oResult->UNSEEN = $this->MessageESearch('UNSEEN', ['COUNT'])['COUNT'];
 		}
 */
 		$this->oCurrentFolderInfo = $oResult;
@@ -455,10 +454,7 @@ trait Folders
 		$aParameters = array();
 		$aReturnParams = array();
 
-		if ($bIsSubscribeList) {
-			// IMAP4rev2 deprecated
-			$sCmd = 'LSUB';
-		} else if ($this->hasCapability('LIST-EXTENDED')) {
+		if ($this->hasCapability('LIST-EXTENDED')) {
 			// RFC 5258
 			$aReturnParams[] = 'SUBSCRIBED';
 //			$aReturnParams[] = 'CHILDREN';
@@ -471,6 +467,9 @@ trait Folders
 			if ($this->hasCapability('SPECIAL-USE')) {
 				$aReturnParams[] = 'SPECIAL-USE';
 			}
+		} else if ($bIsSubscribeList) {
+			// IMAP4rev2 deprecated
+			$sCmd = 'LSUB';
 		}
 
 		$aParameters[] = $this->EscapeFolderName($sParentFolderName);
@@ -521,7 +520,7 @@ trait Folders
 				$oFolderCollection[$sFullName]->setStatusFromResponse($oResponse);
 				$oFolderCollection[$sFullName]->generateETag($this);
 			}
-			else if ($sCmd === $oResponse->StatusOrIndex && 5 === \count($oResponse->ResponseList)) {
+			else if ($sCmd === $oResponse->StatusOrIndex && 5 <= \count($oResponse->ResponseList)) {
 				try
 				{
 					$sFullName = $this->toUTF8($oResponse->ResponseList[4]);
@@ -566,7 +565,7 @@ trait Folders
 		if ($bMetadata && !$aMetadata /*&& 50 < $oFolderCollection->count()*/) {
 			foreach ($oFolderCollection as $oFolder) {
 //				if (2 > \substr_count($oFolder->FullName, $oFolder->Delimiter()))
-				try {
+				if ($oFolder->Selectable()) try {
 					$oFolder->SetAllMetadata(
 						$this->getMetadata($oFolder->FullName, ['/shared', '/private'], ['DEPTH'=>'infinity'])
 					);
@@ -575,7 +574,19 @@ trait Folders
 				}
 			}
 		}
-
+/*
+		// RFC 4314
+		if ($this->hasCapability('ACL')) {
+			foreach ($oFolderCollection as $oFolder) {
+				if ($oFolder->Selectable()) try {
+					$oFolder->myRights = $this->FolderMyRights($oFolder->FullName);
+				} catch (\Throwable $oException) {
+					// BAD Error in IMAP command MYRIGHTS: ACLs disabled
+					break;
+				}
+			}
+		}
+*/
 		if (!$bInbox && !$sParentFolderName && !isset($oFolderCollection['INBOX'])) {
 			$oFolderCollection['INBOX'] = new Folder('INBOX', $sDelimiter);
 		}

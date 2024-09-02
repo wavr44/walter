@@ -46,7 +46,7 @@ class Service
      * The writer may use this if you attempt to serialize an object with a
      * class that does not implement XmlSerializable.
      *
-     * Instead it will look at this classmap to see if there is a custom
+     * Instead, it will look at this classmap to see if there is a custom
      * serializer here. This is useful if you don't want your value objects
      * to be responsible for serializing themselves.
      *
@@ -103,11 +103,11 @@ class Service
      *
      * @param string|resource $input
      *
-     * @throws ParseException
-     *
      * @return array<string, mixed>|object|string
+     *
+     * @throws ParseException
      */
-    public function parse($input, string $contextUri = null, string &$rootElementName = null)
+    public function parse($input, ?string $contextUri = null, ?string &$rootElementName = null)
     {
         if (is_resource($input)) {
             // Unfortunately the XMLReader doesn't support streams. When it
@@ -147,11 +147,11 @@ class Service
      * @param string|string[] $rootElementName
      * @param string|resource $input
      *
-     * @throws ParseException
-     *
      * @return array<string, mixed>|object|string
+     *
+     * @throws ParseException
      */
-    public function expect($rootElementName, $input, string $contextUri = null)
+    public function expect($rootElementName, $input, ?string $contextUri = null)
     {
         if (is_resource($input)) {
             // Unfortunately the XMLReader doesn't support streams. When it
@@ -198,9 +198,9 @@ class Service
      * This allows an implementor to easily create URI's relative to the root
      * of the domain.
      *
-     * @param string|array<string, mixed>|object|XmlSerializable $value
+     * @param string|array<int|string, mixed>|object|XmlSerializable $value
      */
-    public function write(string $rootElementName, $value, string $contextUri = null): string
+    public function write(string $rootElementName, $value, ?string $contextUri = null): string
     {
         $w = $this->getWriter();
         $w->openMemory();
@@ -262,9 +262,9 @@ class Service
      * The ValueObject must have been previously registered using
      * mapValueObject().
      *
-     *@throws \InvalidArgumentException
+     * @throws \InvalidArgumentException
      */
-    public function writeValueObject(object $object, string $contextUri = null): string
+    public function writeValueObject(object $object, ?string $contextUri = null): string
     {
         if (!isset($this->valueObjectMap[get_class($object)])) {
             throw new \InvalidArgumentException('"'.get_class($object).'" is not a registered value object class. Register your class with mapValueObject.');
@@ -283,9 +283,9 @@ class Service
      *
      * If the string was invalid, it will throw an InvalidArgumentException.
      *
-     * @throws \InvalidArgumentException
+     * @return array{string, string}
      *
-     * @return array{string|null, string}
+     * @throws \InvalidArgumentException
      */
     public static function parseClarkNotation(string $str): array
     {

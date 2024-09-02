@@ -1,55 +1,17 @@
 <?php
 
-if (PHP_VERSION_ID < 70400) {
-	echo '<p style="color: red">';
-	echo '[301] Your PHP version ('.PHP_VERSION.') is lower than the minimal required 7.4.0!';
-	echo '</p>';
+require_once __DIR__ . '/app/libraries/snappymail/integrity.php';
+
+$result = \SnappyMail\Integrity::phpVersion();
+if ($result) {
+	echo '<p style="color: red">[301] ' . $result . '</p>';
 	exit(301);
 }
 
-$aOptional = array(
-	'cURL'    => extension_loaded('curl'),
-	'exif'    => extension_loaded('exif'),
-	'finfo'   => class_exists('finfo'),
-	'gd'      => extension_loaded('gd'),
-	'gnupg'   => extension_loaded('gnupg'),
-	'gmagick' => extension_loaded('gmagick'),
-	'imagick' => extension_loaded('imagick'),
-	'iconv'   => function_exists('iconv'),
-	'intl'    => function_exists('idn_to_ascii'),
-	'ldap'    => extension_loaded('ldap'),
-	'OpenSSL' => extension_loaded('openssl'),
-	'mysql'   => extension_loaded('pdo_mysql'),
-	'pgsql'   => extension_loaded('pdo_pgsql'),
-	'redis'   => extension_loaded('redis'),
-	'Sodium'  => extension_loaded('sodium'),
-	'sqlite'  => extension_loaded('pdo_sqlite'),
-	'tidy'    => extension_loaded('tidy'),
-	'uuid'    => extension_loaded('uuid'),
-	'xxtea'   => extension_loaded('xxtea'),
-	'zip'     => extension_loaded('zip')
-);
-
-$aRequirements = array(
-	'mbstring' => extension_loaded('mbstring'),
-	'Zlib'     => extension_loaded('zlib'),
-	// enabled by default:
-	'json'     => function_exists('json_decode'),
-	'libxml'   => function_exists('libxml_use_internal_errors'),
-	'dom'      => class_exists('DOMDocument')
-	// https://github.com/the-djmaze/snappymail/issues/392
-//	'phar'     => class_exists('PharData')
-);
-
-if (in_array(false, $aRequirements)) {
+$result = \SnappyMail\Integrity::phpExtensions();
+if ($result) {
 	echo '<p>[302] The following PHP extensions are not available in your PHP configuration!</p>';
-	echo '<ul>';
-	foreach ($aRequirements as $sKey => $bValue) {
-		if (!$bValue) {
-			echo '<li>'.$sKey.'</li>';
-		}
-	}
-	echo '</ul>';
+	echo '<ul><li>' . \implode('</li>li><li>', $result) . '</li></ul>';
 	exit(302);
 }
 
@@ -61,10 +23,12 @@ if (defined('APP_VERSION')) {
 	is_file($sCheckFilePath) && unlink($sCheckFilePath);
 	is_dir($sCheckFolder) && rmdir($sCheckFolder);
 
-	if (!is_dir(APP_DATA_FOLDER_PATH)) {
-		mkdir(APP_DATA_FOLDER_PATH, 0700, true);
-	} else {
-		chmod(APP_DATA_FOLDER_PATH, 0700);
+	if (is_writable(dirname(APP_DATA_FOLDER_PATH))) {
+		if (is_dir(APP_DATA_FOLDER_PATH)) {
+			chmod(APP_DATA_FOLDER_PATH, 0700);
+		} else {
+			mkdir(APP_DATA_FOLDER_PATH, 0700, true);
+		}
 	}
 
 	$sTest = '';
@@ -72,31 +36,36 @@ if (defined('APP_VERSION')) {
 	{
 		case !is_dir(APP_DATA_FOLDER_PATH):
 			$sTest = 'is_dir';
+			error_log('Data folder permission error is_dir('.APP_DATA_FOLDER_PATH.')');
 			break;
 		case !is_readable(APP_DATA_FOLDER_PATH):
 			$sTest = 'is_readable';
+			error_log('Data folder permission error is_readable('.APP_DATA_FOLDER_PATH.')');
 			break;
-		case !is_writable(APP_DATA_FOLDER_PATH):
-			$sTest = 'is_writable';
-			break;
+//		case !is_writable(APP_DATA_FOLDER_PATH):
+//			$sTest = 'is_writable';
+//			error_log('Data folder permission error is_writable('.APP_DATA_FOLDER_PATH.')');
+//			break;
 		case !mkdir($sCheckFolder, 0700):
 			$sTest = 'mkdir';
+			error_log("Data folder permission error mkdir({$sCheckFolder})");
 			break;
 		case false === file_put_contents($sCheckFilePath, time()):
+			error_log("Data folder permission error file_put_contents({$sCheckFilePath})");
 			$sTest = 'file_put_contents';
 			break;
 		case !unlink($sCheckFilePath):
+			error_log("Data folder permission error unlink({$sCheckFilePath})");
 			$sTest = 'unlink';
 			break;
 		case !rmdir($sCheckFolder):
+			error_log("Data folder permission error rmdir({$sCheckFolder})");
 			$sTest = 'rmdir';
 			break;
 	}
 
-	if (!empty($sTest))
-	{
-		echo '[202] Data folder permissions error ['.$sTest.']';
-		error_log("Data folder permission error {$sTest}({$sCheckFolder})");
+	if (!empty($sTest)) {
+		echo "[202] {$sTest}() failed";
 		exit(202);
 	}
 
@@ -140,7 +109,7 @@ if (defined('APP_VERSION')) {
 			}
 		}
 
-		$sName = \SnappyMail\IDN::toAscii(mb_strtolower(gethostname()));
+		$sName = idn_to_ascii(mb_strtolower(gethostname()));
 		$sFile = APP_PRIVATE_DATA.'domains/'.$sName.'.json';
 		if (!file_exists($sFile) && !file_exists(APP_PRIVATE_DATA.'domains/'.$sName.'.ini')) {
 			$config = json_decode(file_get_contents(__DIR__ . '/app/domains/default.json'), true);

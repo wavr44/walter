@@ -47,6 +47,18 @@ class Cookies
 			: null;
 	}
 
+	public static function setSecure(string $sName, $data): void
+	{
+		if (\is_null($data)) {
+			static::clear($sName);
+		} else {
+			static::set(
+				$sName,
+				\MailSo\Base\Utils::UrlSafeBase64Encode(Crypt::EncryptToJSON($data))
+			);
+		}
+	}
+
 	private static function _set(string $sName, string $sValue, int $iExpire, bool $httponly = true) : bool
 	{
 		$sPath = static::$DefaultPath;
@@ -83,7 +95,7 @@ class Cookies
 		if ($cookie_remove) {
 			\header_remove('Set-Cookie');
 			foreach ($cookies as $cookie) {
-				\header($cookie);
+				\header($cookie,false);
 			}
 		}
 
@@ -118,14 +130,14 @@ class Cookies
 		foreach (\str_split($sValue, $iMaxSize) as $i => $sPart) {
 			$sCookieName = $i ? "{$sName}~{$i}" : $sName;
 			Log::debug('COOKIE', "set {$sCookieName}");
-			static::_set($sCookieName, $sPart, $iExpire);
+			static::_set($sCookieName, $sPart, $iExpire, $httponly);
 		}
 		// Delete unused old 4K split cookie parts
 		foreach (\array_keys($_COOKIE) as $sCookieName) {
 			$aSplit = \explode('~', $sCookieName);
 			if (isset($aSplit[1]) && $aSplit[0] == $sName && $aSplit[1] > $i) {
 				Log::debug('COOKIE', "unset {$sCookieName}");
-				static::_set($sCookieName, '', 0);
+				static::_set($sCookieName, '', 0, $httponly);
 			}
 		}
 	}
@@ -134,5 +146,11 @@ class Cookies
 	{
 		static::init();
 		static::_set($sName, '', 0);
+		// Delete 4K split cookie parts
+		foreach (\array_keys($_COOKIE) as $sCookieName) {
+			if (\strtok($sCookieName, '~') === $sName) {
+				static::_set($sCookieName, '', 0);
+			}
+		}
 	}
 }

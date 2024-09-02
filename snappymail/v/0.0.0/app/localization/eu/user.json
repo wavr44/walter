@@ -11,6 +11,7 @@
 		"CLOSE": "Itxi",
 		"CONTACTS": "Kontaktuak",
 		"DELETE": "Ezabatu",
+		"UNDELETE": "Undelete",
 		"DONE": "Eginda",
 		"EMAIL": "Email",
 		"FROM": "Nork",
@@ -18,6 +19,7 @@
 		"LOGOUT": "Saioa itxi",
 		"MORE": "Gehiago",
 		"MOVE_TO": "Mugitu",
+		"COPY_TO": "Kopiatu hona",
 		"NAME": "Izena",
 		"NONE": "Bat ere ez",
 		"TO_SPAM": "Move message(s) to Spam",
@@ -58,12 +60,18 @@
 		"UNSEEN": "Irakurri gabe",
 		"DATE": "Data",
 		"DATE_ALL": "Denak",
-		"DATE_3_DAYS": "3 egun arterakoak",
-		"DATE_7_DAYS": "Astebetako arterakoak",
-		"DATE_MONTH": "Hilabete arterakoak",
-		"DATE_3_MONTHS": "3 hilabete arterakoak",
-		"DATE_6_MONTHS": "6 hilabete arterakoak",
-		"DATE_YEAR": "Urtebete arterakoak",
+		"BEFORE_3_DAYS": "Older then 3 days",
+		"BEFORE_7_DAYS": "Older then 1 week",
+		"BEFORE_MONTH": "Older then 1 month",
+		"BEFORE_3_MONTHS": "Older then 3 months",
+		"BEFORE_6_MONTHS": "Older then 6 months",
+		"BEFORE_YEAR": "Older then 1 year",
+		"SINCE_3_DAYS": "3 egun arterakoak",
+		"SINCE_7_DAYS": "Astebetako arterakoak",
+		"SINCE_MONTH": "Hilabete arterakoak",
+		"SINCE_3_MONTHS": "3 hilabete arterakoak",
+		"SINCE_6_MONTHS": "6 hilabete arterakoak",
+		"SINCE_YEAR": "Urtebete arterakoak",
 		"SUBFOLDERS": "Azpikarpetak",
 		"SUBFOLDERS_NONE": "Bat ere ez",
 		"SUBFOLDERS_SUBTREE": "Denak",
@@ -80,8 +88,19 @@
 		"TRASH_NAME": "Zakarrontzia",
 		"ARCHIVE_NAME": "Artxiboa"
 	},
-	"QUOTA": {
-		"TITLE": "Kuota"
+	"IMAP": {
+		"ACL_RIGHTS": "Rights",
+		"ACL_A": "Administer",
+		"ACL_E": "Expunge",
+		"ACL_I": "Insert messages",
+		"ACL_K": "Create sub-folders",
+		"ACL_L": "Show messages",
+		"ACL_P": "Send mail",
+		"ACL_R": "Select folder",
+		"ACL_S": "\\SEEN tag",
+		"ACL_T": "\\DELETED tag",
+		"ACL_W": "Other tags",
+		"ACL_X": "Delete\/Rename folder"
 	},
 	"MESSAGE_LIST": {
 		"BUTTON_RELOAD": "Eguneratu mezuen zerrenda",
@@ -139,6 +158,7 @@
 		"MENU_VIEW_ORIGINAL": "Erakutsi jatorrizkoa",
 		"HTML_VIEW": "Ikusi HTML mezua",
 		"PLAIN_VIEW": "Ikusi testu soil mezua",
+		"SWAP_COLORS": "Swap default (background)color",
 		"MENU_DOWNLOAD_ORIGINAL": "Deskargatu .eml fitxategi bezala",
 		"MENU_FILTER_SIMILAR": "Iragazi hau bezalako mezuak",
 		"MENU_PRINT": "Inprimatu",
@@ -153,7 +173,9 @@
 		"SPAM_SCORE": "Spam Puntuzioa",
 		"HAS_VIRUS_WARNING": "KONTUZ: virusa detektatu da",
 		"TAGS": "Etiketak",
-		"NEW_TAG": "Etiketa berria"
+		"NEW_TAG": "Etiketa berria",
+		"ENABLE_TRACKING_LINKS": "Enable tracking links",
+		"TRACKING_ENABLED": "Links are now tracked when clicked!"
 	},
 	"MESSAGE_TAGS": {
 		"$important": "Garrantzitsua",
@@ -185,7 +207,6 @@
 		"ALWAYS_IF_POSSIBLE": "Beti aukera badago",
 		"BUTTON_ADD_CONTACT": "Gehitu Kontaktua",
 		"BUTTON_CREATE_CONTACT": "Sortu",
-		"BUTTON_UPDATE_CONTACT": "Eguneratu",
 		"BUTTON_IMPORT": "Inportatu (csv, vcf, vCard)",
 		"BUTTON_EXPORT_VCARD": "Esportatu (vcf, vCard)",
 		"BUTTON_EXPORT_CSV": "Esportatu (csv)",
@@ -209,7 +230,8 @@
 		"ADD_MENU_BIRTHDAY": "Urtebetetzea",
 		"ADD_MENU_TAGS": "Etiketak",
 		"BUTTON_SHARE_ALL": "Denak",
-		"BUTTON_SYNC": "Sinkronizazioa (CardDAV)"
+		"BUTTON_SYNC": "Sinkronizazioa (CardDAV)",
+		"SEND_TO_ALL_CONTACT_EMAILS": "Send to all contact emails"
 	},
 	"COMPOSE": {
 		"LINK_SHOW_INPUTS": "erakutsi eremu guztiak",
@@ -244,20 +266,20 @@
 		"TITLE_LANGUAGES": "Aukeratu zure hizkuntza"
 	},
 	"POPUPS_ADD_ACCOUNT": {
-		"TITLE_ADD_ACCOUNT": "Kontua gehitu?",
+		"TITLE_ADD_ACCOUNT": "Kontua gehitu",
 		"BUTTON_ADD_ACCOUNT": "Gehitu",
-		"TITLE_UPDATE_ACCOUNT": "Kontua eguneratu?",
-		"BUTTON_UPDATE_ACCOUNT": "Eguneratu"
+		"TITLE_UPDATE_ACCOUNT": "Kontua eguneratu"
 	},
 	"POPUPS_IDENTITY": {
-		"TITLE_ADD_IDENTITY": "Nortasuna gehitu?",
-		"TITLE_UPDATE_IDENTITY": "Nortasuna eguneratu?",
+		"TITLE_ADD_IDENTITY": "Nortasuna gehitu",
+		"TITLE_UPDATE_IDENTITY": "Nortasuna eguneratu",
+		"LABEL": "Label",
 		"BUTTON_ADD_IDENTITY": "Gehitu",
-		"BUTTON_UPDATE_IDENTITY": "Eguneratu",
+		"SIGNATURE": "Signature",
 		"LABEL_SIGNATURE_INSERT_BEFORE": "Txertatu sinadura hau erantzuteko testuaren aurretik"
 	},
 	"POPUPS_CREATE_FOLDER": {
-		"TITLE_CREATE_FOLDER": "Karpeta sortu?",
+		"TITLE_CREATE_FOLDER": "Karpeta sortu",
 		"LABEL_PARENT": "Karpeta gurasoa",
 		"BUTTON_CREATE": "Sortu",
 		"TITLE_CREATING_PROCESS": "Karpeta sortzen"
@@ -269,6 +291,21 @@
 		"DANGER_DESC_HTML_2": "Behin hasita, ekintza hau ezin da gelditu edo utzi.",
 		"TITLE_CLEARING_PROCESS": "Karpeta garbitzen..."
 	},
+	"CRYPTO": {
+		"SIGN": "Sinatu",
+		"ENCRYPT": "Zifratu",
+		"DECRYPT": "Deszifratu",
+		"VERIFY": "Egiaztatu",
+		"GOOD_SIGNATURE": "%USER%-en sinadura egokia",
+		"ERROR": "%TYPE% errorea: %ERROR%",
+		"CREATE_SELF_SIGNED": "Create self-signed",
+		"VALID_UNTIL": "Valid until",
+		"PRIVATE_KEY": "Private key",
+		"CHANGE_PASS": "Change passphrase",
+		"CURRENT_PASS": "Current passphrase",
+		"NEW_PASS": "New passphrase",
+		"ASK_CRYPTKEY_PASS": "Your login passphrase has changed. Please fill in your old login password to decrypt data"
+	},
 	"OPENPGP": {
 		"POPUP_IMPORT_TITLE": "Inportatu OpenPGP gakoa",
 		"POPUP_IMPORT_BUTTON": "Inportatu",
@@ -277,20 +314,26 @@
 		"POPUP_GENERATE_TITLE": "Sortu OpenPGP gako parea",
 		"POPUP_GENERATE_BUTTON": "Sortu",
 		"LABEL_KEY_TYPE": "Mota",
-		"LABEL_SIGN": "Sinatu",
-		"LABEL_ENCRYPT": "Zifratu",
-		"BUTTON_DECRYPT": "Deszifratu",
-		"BUTTON_VERIFY": "Egiaztatu",
 		"SIGNED_MESSAGE": "OpenPGP sinatutako mezua",
 		"ENCRYPTED_MESSAGE": "OpenPGP zifratutako mezua",
 		"STORE_IN_GNUPG": "Zerbitzarian gorden GnuPG-n",
+		"STORE_PUBLIC_KEY_IN_GNUPG": "Store public key on server in GnuPG",
+		"STORE_PRIVATE_KEY_IN_GNUPG": "Store private key on server in GnuPG",
 		"BACKUP_ON_SERVER": "Zerbitzarian gorde (zifratuta)",
-		"GOOD_SIGNATURE": "%USER%-en sinadura egokia",
-		"ERROR": "OpenPGP errorea: %ERROR%"
+		"BACKUP_PUBLIC_KEY_ON_SERVER": "Backup public key on server",
+		"BACKUP_PRIVATE_KEY_ON_SERVER": "Backup private key on server"
+	},
+	"SMIME": {
+		"POPUP_IMPORT_TITLE": "Import S\/MIME certificate",
+		"CERTIFICATE": "Certificate",
+		"CERTIFICATES": "S\/MIME Certificates",
+		"SIGNED_MESSAGE": "S\/MIME sinatutako mezua",
+		"ENCRYPTED_MESSAGE": "S\/MIME zifratutako mezua",
+		"PRIVATE_KEY_OF": "S\/MIME private key of %EMAIL%"
 	},
 	"POPUPS_FILTER": {
-		"TITLE_CREATE_FILTER": "Sortu iragazkia?",
-		"TITLE_EDIT_FILTER": "Eguneratu iragazkia?",
+		"TITLE_CREATE_FILTER": "Sortu iragazkia",
+		"TITLE_EDIT_FILTER": "Eguneratu iragazkia",
 		"LEGEND_CONDITIONS": "Baldintzak",
 		"LEGEND_ACTIONS": "Ekintzak",
 		"BUTTON_ADD_CONDITION": "Gehitu baldintza",
@@ -384,7 +427,8 @@
 		"IMAGEURL": "Image URL",
 		"IMAGEUPLOAD": "Image select",
 		"UNDO": "Undo",
-		"REDO": "Redo"
+		"REDO": "Redo",
+		"REMOVESTYLE": "Remove style"
 	},
 	"SETTINGS_LABELS": {
 		"GENERAL": "Orokorra",
@@ -408,10 +452,10 @@
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "Segurtasuna",
 		"LABEL_AUTOLOGOUT": "Saioa automatikoki itxi",
-		"AUTOLOGIN_NEVER_OPTION_NAME": "Inoiz"
+		"FORGET_KEY_PASS": "Forget private key passphrase",
+		"NEVER": "Inoiz"
 	},
 	"SETTINGS_GENERAL": {
-		"LEGEND_GENERAL": "Orokorra",
 		"LANGUAGE": "Hizkuntza",
 		"HOUR_FORMAT": "Hour format",
 		"IDENTITY": "Nortasuna",
@@ -428,6 +472,7 @@
 		"HIDE_DELETED_MESSAGES": "Ezkutatu ezabatzeko markatutako mezuak",
 		"USE_CHECKBOXES_IN_LIST": "Bistaratu kontrol laukiak zerrendan",
 		"USE_THREADS": "Erabili hariak",
+		"THREAD_ALGORITHM": "Threads algorithm",
 		"REPLY_SAME_FOLDER": "Kokatu erantzunak erantzundako mezuaren karpeta berean",
 		"PREFER_HTML": "Lehenetsi HTMLa testu arruntari",
 		"PREFER_HTML_INFO": "Mezuak batzuetan bi formatuetan datoz. Aukera honekin HTML edo testu arrunt partea erakustea aukera dezakezu.",
@@ -452,7 +497,9 @@
 		"IMAGES_OPTION_ASK": "Always ask",
 		"IMAGES_OPTION_WHITELIST": "Whitelist or ask",
 		"IMAGES_OPTION_ALWAYS": "Show always",
-		"IMAGES_WHITELIST": "Images whitelist"
+		"IMAGES_WHITELIST": "Images whitelist",
+		"MESSAGE_POPUP_WINDOW": "Popup in new window instead of tab",
+		"MAILTO": "Register as 'mailto:' links handler"
 	},
 	"SETTINGS_CONTACTS": {
 		"LABEL_CONTACTS_AUTOSAVE": "Automatikoki gehitu hartzaileak helbide-liburura",
@@ -486,7 +533,7 @@
 		"TO_MANY_FOLDERS_DESC_2": "Beraien zati bat bakarrik erakutsi dugu, errendimendu arazoak saihesteko.",
 		"HELP_DELETE_FOLDER": "Ezabatu karpeta",
 		"HELP_SHOW_HIDE_FOLDER": "Erakutsi\/ezkutatu karpeta",
-		"HELP_CHECK_FOR_NEW_MESSAGES": "Bilatu\/ez bilatu mezu berriak",
+		"HELP_CHECK_FOR_NEW_MESSAGES": "Bilatu mezu berriak",
 		"HIDE_UNSUBSCRIBED": "Ezkutatu harpidetzik gabeko karpetak",
 		"UNHIDE_KOLAB_FOLDERS": "Erakutsi Kolab karpetak",
 		"TYPE_CALENDAR": "Egutegia",
@@ -509,6 +556,7 @@
 	"SETTINGS_OPENPGP": {
 		"BUTTON_IMPORT_KEY": "Inportatu Gakoa",
 		"BUTTON_GENERATE_KEY_PAIR": "Sortu Gako Parea",
+		"IMPORT_FROM_SERVER": "Import from server",
 		"TITLE_PRIVATE": "Pribatua",
 		"TITLE_PUBLIC": "Publikoa",
 		"GET_MAILVELOPE": "Lortu Mailvelope nabigatzaileko gehigarria."
@@ -551,42 +599,43 @@
 		"LABEL_CLOSE_COMPOSE": "Itxi mezua"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "Eskaerak huts egin du",
-		"REQUEST_ABORTED": "Eskaera bertan behera utzi da",
-		"REQUEST_TIMEOUT": "Eskaera denboraz kantpo",
-		"INVALID_TOKEN": "Ez-baliozko tokena",
-		"AUTH_ERROR": "Autentikazio errorea",
-		"CONNECTION_ERROR": "Ezin da zerbitzarira konektatu",
-		"DOMAIN_ALREADY_EXISTS": "Domeinua jadanik existitzen da",
-		"DOMAIN_NOT_ALLOWED": "Domeinu ez baimendua",
-		"ACCOUNT_NOT_ALLOWED": "Kontu ez baimendua",
-		"CONTACTS_SYNC_ERROR": "Kontaktu sinkronizazio errorea",
-		"CANT_GET_MESSAGE_LIST": "Ezin da mezuen zerrenda eskuratu",
-		"CANT_GET_MESSAGE": "Ezin da mezua eskuratu",
-		"CANT_DELETE_MESSAGE": "Ezin da mezua ezabatu",
-		"CANT_COPY_MESSAGE": "Ezin da mezua kopiatu",
-		"CANT_MOVE_MESSAGE": "Ezin da mezua mugitu",
-		"CANT_SAVE_MESSAGE": "Ezin da mezua gorde",
-		"CANT_SEND_MESSAGE": "Ezin da mezua bidali",
-		"INVALID_RECIPIENTS": "Ez-baliozko hartzaileak",
-		"CANT_SAVE_FILTERS": "Ezin dira iragazkiak gorde",
-		"CANT_GET_FILTERS": "Ezin dira iragazkiak eskuratu",
-		"CANT_ACTIVATE_FILTERS_SCRIPT": "Ezin dira iragazki-scriptak aktibatu",
-		"CANT_DELETE_FILTERS_SCRIPT": "Ezin dira iragazki-scriptak ezabatu",
-		"FILTERS_ARE_NOT_CORRECT": "Iragazkiak ez dira zuzenak",
-		"CANT_CREATE_FOLDER": "Ezin da karpeta sortu",
-		"CANT_RENAME_FOLDER": "Ezin da karpeta berrizendatu",
-		"CANT_DELETE_FOLDER": "Ezin da karpeta ezabatu",
-		"CANT_DELETE_NON_EMPTY_FOLDER": "Ezin da hutsi ez dagoen direktorioa ezabatu",
-		"CANT_SUBSCRIBE_FOLDER": "Ezin da karpetara harpidetu",
-		"CANT_UNSUBSCRIBE_FOLDER": "Ezin da karpetatik harpidetza kendu",
-		"DEMO_SEND_MESSAGE_ERROR": "Segurtasunagatik, kontua honek ezin du kanpoko e-mail helbideetara mezurik bidali!",
-		"DEMO_ACCOUNT_ERROR": "Segurtasunagatik, kontu hau ez dago ahalbideratuta ekintza honetarako!",
-		"ACCOUNT_ALREADY_EXISTS": "Kontua jada existitzen da",
-		"ACCOUNT_DOES_NOT_EXIST": "Kontua ez da existitzen",
-		"ACCOUNT_SWITCH_FAILED": "\"%EMAIL%\" kontura aldaketak akatsa eman du",
-		"MAIL_SERVER_ERROR": "Errore bat gertatu da posta zebritzarira sartzean",
-		"INVALID_INPUT_ARGUMENT": "Ez-naliozko sarrera-argumentua",
-		"UNKNOWN_ERROR": "Errore ezezaguna"
+		"RequestError": "Eskaerak huts egin du",
+		"RequestAborted": "Eskaera bertan behera utzi da",
+		"RequestTimeout": "Eskaera denboraz kantpo",
+		"InvalidToken": "Ez-baliozko tokena",
+		"AuthError": "Autentikazio errorea",
+		"ConnectionError": "Ezin da zerbitzarira konektatu",
+		"DomainAlreadyExists": "Domeinua jadanik existitzen da",
+		"DomainNotAllowed": "Domeinu ez baimendua",
+		"AccountNotAllowed": "Kontu ez baimendua",
+		"CryptKeyError": "Your login passphrase has changed",
+		"ContactsSyncError": "Kontaktu sinkronizazio errorea",
+		"CantGetMessageList": "Ezin da mezuen zerrenda eskuratu",
+		"CantGetMessage": "Ezin da mezua eskuratu",
+		"CantDeleteMessage": "Ezin da mezua ezabatu",
+		"CantCopyMessage": "Ezin da mezua kopiatu",
+		"CantMoveMessage": "Ezin da mezua mugitu",
+		"CantSaveMessage": "Ezin da mezua gorde",
+		"CantSendMessage": "Ezin da mezua bidali",
+		"InvalidRecipients": "Ez-baliozko hartzaileak",
+		"CantSaveFilters": "Ezin dira iragazkiak gorde",
+		"CantGetFilters": "Ezin dira iragazkiak eskuratu",
+		"CantActivateFiltersScript": "Ezin dira iragazki-scriptak aktibatu",
+		"CantDeleteFiltersScript": "Ezin dira iragazki-scriptak ezabatu",
+		"FiltersAreNotCorrect": "Iragazkiak ez dira zuzenak",
+		"CantCreateFolder": "Ezin da karpeta sortu",
+		"CantRenameFolder": "Ezin da karpeta berrizendatu",
+		"CantDeleteFolder": "Ezin da karpeta ezabatu",
+		"CantDeleteNonEmptyFolder": "Ezin da hutsi ez dagoen direktorioa ezabatu",
+		"CantSubscribeFolder": "Ezin da karpetara harpidetu",
+		"CantUnsubscribeFolder": "Ezin da karpetatik harpidetza kendu",
+		"DemoSendMessageError": "Segurtasunagatik, kontua honek ezin du kanpoko e-mail helbideetara mezurik bidali!",
+		"DemoAccountError": "Segurtasunagatik, kontu hau ez dago ahalbideratuta ekintza honetarako!",
+		"AccountAlreadyExists": "Kontua jada existitzen da",
+		"AccountDoesNotExist": "Kontua ez da existitzen",
+		"AccountSwitchFailed": "\"%EMAIL%\" kontura aldaketak akatsa eman du",
+		"MailServerError": "Errore bat gertatu da posta zebritzarira sartzean",
+		"InvalidInputArgument": "Ez-naliozko sarrera-argumentua",
+		"UnknownError": "Errore ezezaguna"
 	}
 }

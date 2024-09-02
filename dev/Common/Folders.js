@@ -1,8 +1,8 @@
-import { isArray, arrayLength } from 'Common/Utils';
-import {
-	getFolderInboxName,
-	getFolderFromCacheList
-} from 'Common/Cache';
+import { RFC822 } from 'Common/File';
+import { getFolderInboxName, getFolderFromCacheList } from 'Common/Cache';
+import { baseCollator } from 'Common/Translator';
+import { SettingsGet } from 'Common/Globals';
+import { isArray, arrayLength, pInt } from 'Common/Utils';
 import { SettingsUserStore } from 'Stores/User/Settings';
 import { FolderUserStore } from 'Stores/User/Folder';
 import { MessagelistUserStore } from 'Stores/User/Messagelist';
@@ -10,13 +10,13 @@ import { MessagelistUserStore } from 'Stores/User/Messagelist';
 import Remote from 'Remote/User/Fetch';
 
 let refreshInterval,
-	// Default every 5 minutes
-	refreshFoldersInterval = 300000;
+	// Default every 15 minutes
+	refreshFoldersInterval = 900000;
 
 export const
 
 setRefreshFoldersInterval = minutes => {
-	refreshFoldersInterval = Math.max(5, minutes) * 60000;
+	refreshFoldersInterval = Math.max(1, pInt(SettingsGet('minRefreshInterval')), pInt(minutes)) * 60000;
 	clearInterval(refreshInterval);
 	refreshInterval = setInterval(() => {
 		const cF = FolderUserStore.currentFolderFullName(),
@@ -29,7 +29,7 @@ setRefreshFoldersInterval = minutes => {
 
 sortFolders = folders => {
 	try {
-		let collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+		let collator = baseCollator(true);
 		folders.sort((a, b) =>
 			a.isInbox() ? -1 : (b.isInbox() ? 1 : collator.compare(a.fullName, b.fullName))
 		);
@@ -50,15 +50,14 @@ folderListOptionsBuilder = (
 	aDisabled,
 	aHeaderLines,
 	fRenameCallback,
-	fDisableCallback,
-	bNoSelectSelectable,
-	aList = FolderUserStore.folderList()
+	fDisableCallback
 ) => {
 	const
 		aResult = [],
 		sDeepPrefix = '\u00A0\u00A0\u00A0',
 		// FolderSystemPopupView should always be true
 		showUnsubscribed = fRenameCallback ? !SettingsUserStore.hideUnsubscribed() : true,
+		isDisabled = fDisableCallback || (item => !item.selectable() || aDisabled.includes(item.fullName)),
 
 		foldersWalk = folders => {
 			folders.forEach(oItem => {
@@ -69,10 +68,7 @@ folderListOptionsBuilder = (
 							sDeepPrefix.repeat(oItem.deep) +
 							fRenameCallback(oItem),
 						system: false,
-						disabled: !bNoSelectSelectable && (
-							!oItem.selectable() ||
-							aDisabled.includes(oItem.fullName) ||
-							fDisableCallback(oItem))
+						disabled: isDisabled(oItem)
 					});
 				}
 				foldersWalk(oItem.subFolders());
@@ -93,7 +89,7 @@ folderListOptionsBuilder = (
 		})
 	);
 
-	foldersWalk(aList);
+	foldersWalk(FolderUserStore.folderList());
 
 	return aResult;
 },
@@ -198,12 +194,12 @@ folderInformationMultiply = (boot = false) => {
 dropFilesInFolder = (sFolderFullName, files) => {
 	let count = files.length;
 	for (const file of files) {
-		if ('message/rfc822' === file.type) {
+		if (RFC822 === file.type) {
 			let data = new FormData;
 			data.append('folder', sFolderFullName);
 			data.append('appendFile', file);
 			Remote.request('FolderAppend', (iError, data)=>{
-				iError && console.error(data.ErrorMessage);
+				iError && console.error(data.message);
 				0 == --count
 				&& FolderUserStore.currentFolderFullName() == sFolderFullName
 				&& MessagelistUserStore.reload(true, true);

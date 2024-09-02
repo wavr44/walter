@@ -11,7 +11,8 @@
 		<a class="btn" data-bind="visible: isSpamFolder, command: notSpamCommand" data-i18n="[title]GLOBAL/NOT_SPAM">
 			<i class="icon-check-mark-circle-two"></i>
 		</a>
-		<a class="btn fontastic" data-bind="command: deleteCommand" data-i18n="[title]GLOBAL/DELETE">🗑</a>
+		<a class="btn fontastic" data-bind="visible: !canBeUndeleted(), command: deleteCommand" data-i18n="[title]GLOBAL/DELETE">🗑</a>
+		<a class="btn fontastic" data-bind="visible: canBeUndeleted, command: undeleteCommand" data-i18n="[title]GLOBAL/UNDELETE"><div class=btn-rotate>🗑</div></a>
 	</div>
 	<div class="btn-group">
 		<a class="btn btn-thin buttonUp fontastic" data-bind="command: goUpCommand">❮</a>
@@ -40,7 +41,7 @@
 					<a class="btn btn-thin btn-transparent buttonReplyAll fontastic"
 						data-bind="visible: 2 == msgDefaultAction(), command: replyAllCommand" data-i18n="[title]MESSAGE/BUTTON_REPLY_ALL">↞</a>
 				</span>
-				<div class="btn-group" data-bind="registerBootstrapDropdown: true" style="display: inline-block">
+				<div class="btn-group" data-bind="registerBootstrapDropdown: true, initDom: actionsMenu" style="display: inline-block">
 					<a class="btn btn-thin btn-transparent dropdown-toggle fontastic" id="more-view-dropdown-id" href="#" tabindex="-1">☰</a>
 					<menu class="dropdown-menu right-edge" role="menu" aria-labelledby="more-view-dropdown-id">
 						<div data-bind="visible: !isDraftFolder()">
@@ -77,7 +78,16 @@
 								</a>
 							</li>
 							<li role="presentation">
+								<a href="#" tabindex="-1" data-bind="command: moveCommand" data-icon="📁" data-i18n="GLOBAL/MOVE_TO"></a>
+							</li>
+							<li role="presentation">
+								<a href="#" tabindex="-1" data-bind="command: copyCommand" data-icon="&#xE068;" data-i18n="GLOBAL/COPY_TO"></a>
+							</li>
+							<li role="presentation" data-bind="visible: !canBeUndeleted()">
 								<a href="#" tabindex="-1" data-bind="command: deleteCommand" data-icon="🗑" data-i18n="GLOBAL/DELETE"></a>
+							</li>
+							<li role="presentation" data-bind="visible: canBeUndeleted">
+								<a href="#" tabindex="-1" data-bind="command: undeleteCommand" data-icon="🗑" data-i18n="GLOBAL/UNDELETE" class="rotate"></a>
 							</li>
 							<li role="presentation">
 								<a href="#" tabindex="-1" data-bind="command: deleteWithoutMoveCommand" data-icon="🗑" data-i18n="MESSAGE_LIST/BUTTON_DELETE_WITHOUT_MOVE"></a>
@@ -105,6 +115,9 @@
 							<li role="presentation" data-bind="visible: isHtml()">
 								<a href="#" tabindex="-1" data-bind="click: viewPlain" data-icon="👁" data-i18n="MESSAGE/PLAIN_VIEW"></a>
 							</li>
+							<li role="presentation">
+								<a href="#" tabindex="-1" data-bind="click: swapColors" data-icon="🎨" data-i18n="MESSAGE/SWAP_COLORS"></a>
+							</li>
 							<li class="dividerbar" role="presentation">
 								<a target="_blank" href="#" tabindex="-1" data-bind="attr: { href: viewRaw() }">
 									<i class="icon-file-code"></i>
@@ -123,61 +136,19 @@
 		<div class="messageItemHeader" data-bind="if: message, i18nUpdate: message">
 			<div class="subjectParent">
 				<span class="infoParent g-ui-user-select-none fontastic" data-bind="click: toggleFullInfo">ℹ</span>
-				<span class="flagParent g-ui-user-select-none flagOff fontastic" data-bind="text: message().isFlagged() ? '★' : '☆', css: {'flagOn': message().isFlagged(), 'flagOff': !message().isFlagged()}"></span>
+				<span class="flagParent g-ui-user-select-none flagOff fontastic" data-bind="text: message().isFlagged() ? '★' : '☆', css: {flagOn: message().isFlagged(), flagOff: !message().isFlagged()}"></span>
 				<span class="subject" data-bind="text: message().subject"></span>
 				<a href="#" class="close" data-bind="click: closeMessage" style="margin-top: -8px;">×</a>
 			</div>
-			<div class="informationShort" data-bind="hidden: showFullInfo">
-				<span class="from" data-bind="html: viewFromShort, title: message().from"></span>
-				<i data-bind="visible: viewDkimIcon, css: dkimIconClass, title: dkimTitle"></i>
-			</div>
-			<div class="informationFull" data-bind="visible: showFullInfo, with: message">
-				<table>
-					<tr data-bind="visible: from.length">
-						<td data-i18n="GLOBAL/FROM"></td>
-						<td><span data-bind="text: from"></span>
-							<i data-bind="visible: $parent.viewDkimIcon, css: $parent.dkimIconClass, title: $parent.dkimTitle"></i>
-						</td>
-					</tr>
-					<tr data-bind="visible: to.length">
-						<td data-i18n="GLOBAL/TO"></td>
-						<td data-bind="text: to"></td>
-					</tr>
-					<tr data-bind="visible: cc.length">
-						<td data-i18n="GLOBAL/CC"></td>
-						<td data-bind="text: cc"></td>
-					</tr>
-					<tr data-bind="visible: bcc.length">
-						<td data-i18n="GLOBAL/BCC"></td>
-						<td data-bind="text: bcc"></td>
-					</tr>
-					<tr data-bind="visible: replyTo.length">
-						<td data-i18n="GLOBAL/REPLY_TO"></td>
-						<td data-bind="text: replyTo"></td>
-					</tr>
-					<tr data-bind="visible: dateTimestamp">
-						<td data-i18n="MESSAGE/LABEL_DATE"></td>
-						<td>
-							<time data-moment-format="FULL" data-bind="moment: dateTimestamp"></time>
-							&nbsp;
-							(<time data-moment-format="FROMNOW" data-bind="moment: dateTimestamp"></time>)
-						</td>
-					</tr>
-					<tr data-bind="visible: spamResult">
-						<td data-i18n="GLOBAL/SPAM"></td>
-						<td data-bind="text: spamStatus()"></td>
-					</tr>
-					<tr data-bind="visible: friendlySize()">
-						<td data-i18n="POPUPS_FILTER/SELECT_FIELD_SIZE"></td>
-						<td class="size" data-bind="text: friendlySize()"></td>
-					</tr>
-				</table>
+			<div class="informationShort">
+				<span class="from" data-bind="html: viewFromShort, attr:{ title: message().from }"></span>
+				<i class="fontastic" data-bind="text: dkimIcon, css: dkimIconClass, attr:{ title: dkimTitle }"></i>
 			</div>
 		</div>
 		<div id="messageItem">
 			<div class="messageItemHeader" data-bind="if: message, i18nUpdate: message">
 				<div data-bind="hidden: showFullInfo">
-					<time class="date" data-moment-format="FULL" data-bind="visible: 0 < message().dateTimestamp(), moment: message().dateTimestamp()"></time>
+					<time class="date" data-time-format="FULL" data-bind="visible: 0 < message().dateTimestamp(), time: message().dateTimestamp()"></time>
 					<div class="informationShortWrp">
 						<div class="informationShort" data-bind="visible: message().to.length">
 							<span data-i18n="GLOBAL/TO"></span>:
@@ -188,12 +159,52 @@
 							<span data-bind="text: message().cc"></span>
 						</div>
 					</div>
-					<div class="informationShort" data-bind="visible: message().spamResult()">
+					<div class="informationShort" data-bind="visible: message().spamResult">
 						<span data-i18n="MESSAGE/SPAM_SCORE"></span>:
-						<meter min="0" max="100" optimum="0" low="33" high="66" data-bind="value: message().spamScore(), title: message().spamStatus()"></meter>
+						<meter min="0" max="100" optimum="0" low="33" high="66" data-bind="value: message().spamScore, attr:{ title: message().spamStatus() }"></meter>
 					</div>
 				</div>
-				<div class="hasVirus" data-bind="visible: message().hasVirus()" data-i18n="MESSAGE/HAS_VIRUS_WARNING"></div>
+				<div class="informationFull" data-bind="visible: showFullInfo, with: message">
+					<table>
+						<tr data-bind="visible: from.length">
+							<td data-i18n="GLOBAL/FROM"></td>
+							<td data-bind="text: from"></td>
+						</tr>
+						<tr data-bind="visible: to.length">
+							<td data-i18n="GLOBAL/TO"></td>
+							<td data-bind="text: to"></td>
+						</tr>
+						<tr data-bind="visible: cc.length">
+							<td data-i18n="GLOBAL/CC"></td>
+							<td data-bind="text: cc"></td>
+						</tr>
+						<tr data-bind="visible: bcc.length">
+							<td data-i18n="GLOBAL/BCC"></td>
+							<td data-bind="text: bcc"></td>
+						</tr>
+						<tr data-bind="visible: replyTo.length">
+							<td data-i18n="GLOBAL/REPLY_TO"></td>
+							<td data-bind="text: replyTo"></td>
+						</tr>
+						<tr data-bind="visible: dateTimestamp">
+							<td data-i18n="MESSAGE/LABEL_DATE"></td>
+							<td>
+								<time data-time-format="FULL" data-bind="time: dateTimestamp"></time>
+								&nbsp;
+								(<time data-time-format="FROMNOW" data-bind="time: dateTimestamp"></time>)
+							</td>
+						</tr>
+						<tr data-bind="visible: spamResult">
+							<td data-i18n="GLOBAL/SPAM"></td>
+							<td data-bind="text: spamStatus()"></td>
+						</tr>
+						<tr data-bind="visible: friendlySize()">
+							<td data-i18n="POPUPS_FILTER/SELECT_FIELD_SIZE"></td>
+							<td class="size" data-bind="text: friendlySize()"></td>
+						</tr>
+					</table>
+				</div>
+				<div class="hasVirus" data-bind="visible: message().hasVirus" data-i18n="MESSAGE/HAS_VIRUS_WARNING"></div>
 				<!-- ko if: tagsAllowed -->
 				<div class="messageTags">
 					<span data-i18n="MESSAGE/TAGS"></span>:
@@ -203,7 +214,7 @@
 						<menu class="dropdown-menu right-edge" role="menu" aria-labelledby="tags-dropdown-id">
 							<div data-bind="foreach: message().tagOptions()">
 								<li role="presentation">
-									<a href="#" tabindex="-1" data-icon="☐" data-bind="click: toggle, text: label, title: value, attr: { class: css, 'data-icon': checked ? '☑' : '☐' }"></a>
+									<a href="#" tabindex="-1" data-icon="☐" data-bind="click: toggle, text: label, attr:{ title: value, class: css, 'data-icon': checked ? '☑' : '☐' }"></a>
 								</li>
 							</div>
 							<li role="presentation" class="dividerbar">
@@ -225,16 +236,16 @@
 					<div class="bodySubHeader" data-bind="if: message, i18nUpdate: message">
 						<div class="readReceipt" data-bind="visible: askReadReceipt, click: readReceipt"
 							data-icon="✉" data-i18n="MESSAGE/BUTTON_NOTIFY_READ_RECEIPT"></div>
-						<details class="attachmentsPlace" data-bind="visible: hasAttachments, css: {'selection-mode' : showAttachmentControls}">
+						<details class="attachmentsPlace" data-bind="visible: hasAttachments, css: {'selection-mode' : showAttachmentControls}, attr: { open: hasAttachments }">
 							<summary data-i18n="MESSAGE/PRINT_LABEL_ATTACHMENTS"></summary>
 							<!-- ko ifnot: simpleAttachmentsList -->
 							<ul class="attachmentList" data-bind="foreach: listAttachments">
 								<li class="attachmentItem" draggable="true"
-										data-bind="event: { 'dragstart': eventDragStart }, attr: { 'title': fileName }, css: {'checked': checked}">
-									<div class="attachmentIcon" data-bind="css: { 'hasPreview': hasPreview(), 'hasPreplay': hasPreplay(), 'isImage': isImage() }, attr: { 'style': thumbnailStyle() }">
+										data-bind="event: { dragstart: eventDragStart }, attr: { title: fileName }, css: {checked: checked}">
+									<div class="attachmentIcon" data-bind="css: { hasPreview: hasPreview(), hasPreplay: hasPreplay(), isImage: isImage() }, attr: { style: thumbnailStyle() }">
 										<i class="hidePreview iconMain" data-bind="css: iconClass()"></i>
 										<div class="showPreview">
-											<a data-bind="css: {'attachmentImagePreview': isImage()}, attr: { 'title': fileName, 'href': linkPreviewMain() }" target="_blank">
+											<a data-bind="css: {attachmentImagePreview: isImage()}, attr: { title: fileName, href: linkPreviewMain() }" target="_blank">
 												<i class="iconMain" data-bind="visible: !hasThumbnail(), css: iconClass()"></i>
 												<div class="iconPreview fontastic">👁</div>
 											</a>
@@ -251,7 +262,7 @@
 							<!-- /ko -->
 							<!-- ko if: simpleAttachmentsList -->
 							<ul class="attachmentListSimple" data-bind="foreach: listAttachments">
-								<li class="attachmentItem" data-bind="attr: { 'title': fileName }, css: {'checked': checked}">
+								<li class="attachmentItem" data-bind="attr: { title: fileName }, css: {checked: checked}">
 									<span class="attachmentName" data-bind="text: fileName"></span>
 									<i class="checkboxAttachment fontastic"
 										data-bind="visible: download, text: checked() ? '☑' : '☐', click: toggleChecked"></i>
@@ -284,16 +295,37 @@
 							</div>
 						</div>
 
+						<div class="btn-toolbar" data-bind="visible: message().hasTracking()">
+							<div class="btn" data-bind="visible: !nowTracking(), click: showTracking" data-icon="🔗" data-i18n="MESSAGE/ENABLE_TRACKING_LINKS"></div>
+							<div class="alert" data-bind="visible: nowTracking" data-i18n="MESSAGE/TRACKING_ENABLED" style="margin:0"></div>
+						</div>
+
 						<div data-bind="visible: message().pgpEncrypted()">
-							<div class="openpgp-control encrypted" data-bind="css: {'success': message().pgpDecrypted()}">
+							<div class="crypto-control encrypted" data-bind="css: {success: message().pgpDecrypted()}">
 								<span data-icon="🔒" data-i18n="OPENPGP/ENCRYPTED_MESSAGE"></span>
-								<button class="btn" data-bind="visible: pgpSupported, click: pgpDecrypt" data-i18n="OPENPGP/BUTTON_DECRYPT"></button>
+								<button class="btn" data-bind="visible: pgpSupported, click: pgpDecrypt" data-i18n="CRYPTO/DECRYPT"></button>
+								<div class="alert-error" data-icon="⚠" data-bind="visible: message().pgpEncrypted()?.error, text: message().pgpEncrypted()?.error"></div>
 							</div>
 						</div>
 						<div data-bind="visible: message().pgpSigned()">
-							<div class="openpgp-control signed" data-bind="css: {'success': message().pgpVerified() && message().pgpVerified().success, 'error': message().pgpVerified() && !message().pgpVerified().success}">
+							<div class="crypto-control signed" data-bind="css: {success: true === message().pgpSigned()?.success, error: false === message().pgpSigned()?.success}">
 								<span data-icon="✍" data-i18n="OPENPGP/SIGNED_MESSAGE"></span>
-								<button class="btn" data-bind="visible: pgpSupported, click: pgpVerify" data-i18n="OPENPGP/BUTTON_VERIFY"></button>
+								<button class="btn" data-bind="visible: pgpSupported, click: pgpVerify" data-i18n="CRYPTO/VERIFY"></button>
+								<div data-icon="⚠" data-bind="visible: message().pgpSigned()?.error, text: message().pgpSigned()?.error"></div>
+							</div>
+						</div>
+
+						<div data-bind="visible: message().smimeEncrypted()">
+							<div class="crypto-control encrypted" data-bind="css: {success: message().smimeDecrypted()}">
+								<span data-icon="🔒" data-i18n="SMIME/ENCRYPTED_MESSAGE"></span>
+								<button class="btn" data-bind="click: smimeDecrypt" data-i18n="CRYPTO/DECRYPT"></button>
+								<div class="alert-error" data-icon="⚠" data-bind="visible: message().smimeEncrypted()?.error, text: message().smimeEncrypted()?.error"></div>
+							</div>
+						</div>
+						<div data-bind="visible: message().smimeSigned()">
+							<div class="crypto-control signed" data-bind="css: {success: true === message().smimeSigned()?.success, error: false === message().smimeSigned()?.success}">
+								<span data-icon="✍" data-i18n="SMIME/SIGNED_MESSAGE"></span>
+								<button class="btn" data-bind="click: smimeVerify" data-i18n="CRYPTO/VERIFY"></button>
 							</div>
 						</div>
 					</div>

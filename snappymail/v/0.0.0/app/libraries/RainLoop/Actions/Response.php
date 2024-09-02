@@ -2,7 +2,6 @@
 
 namespace RainLoop\Actions;
 
-use RainLoop\Enumerations\Capa;
 use RainLoop\Notifications;
 use RainLoop\Utils;
 
@@ -14,11 +13,11 @@ trait Response
 	public function DefaultResponse($mResult, array $aAdditionalParams = array(), string $sActionName = '') : array
 	{
 		if (false === $mResult) {
-			if (!isset($aAdditionalParams['ErrorCode'])) {
-				$aAdditionalParams['ErrorCode'] = 0;
+			if (!isset($aAdditionalParams['code'])) {
+				$aAdditionalParams['code'] = 0;
 			}
-			if (!isset($aAdditionalParams['ErrorMessage'])) {
-				$aAdditionalParams['ErrorMessage'] = '';
+			if (!isset($aAdditionalParams['message'])) {
+				$aAdditionalParams['message'] = '';
 			}
 		}
 
@@ -37,17 +36,18 @@ trait Response
 	public function FalseResponse(int $iErrorCode = 0, string $sErrorMessage = '', string $sAdditionalErrorMessage = '') : array
 	{
 		return $this->DefaultResponse(false, [
-			'ErrorCode' => $iErrorCode,
-			'ErrorMessage' => $sErrorMessage,
-			'ErrorMessageAdditional' => $sAdditionalErrorMessage
+			'code' => $iErrorCode,
+			'message' => $sErrorMessage,
+			'messageAdditional' => $sAdditionalErrorMessage
 		]);
 	}
 
 	public function ExceptionResponse(\Throwable $oException) : array
 	{
-		$iErrorCode = 0;
-		$sErrorMessage = '';
+		$iErrorCode = Notifications::UnknownError;
+		$sErrorMessage = $oException->getMessage();
 		$sErrorMessageAdditional = '';
+		$iExceptionCode = 0;
 
 		if ($oException instanceof \RainLoop\Exceptions\ClientException) {
 			$iErrorCode = $oException->getCode();
@@ -56,16 +56,16 @@ trait Response
 			}
 			$sErrorMessageAdditional = $oException->getAdditionalMessage();
 		} else {
-			$iErrorCode = Notifications::UnknownError;
-			$sErrorMessage = $oException->getCode().' - '.$oException->getMessage();
+			$iExceptionCode = $oException->getCode();
 		}
 
 		$this->logException($oException->getPrevious() ?: $oException);
 
 		return $this->DefaultResponse(false, [
-			'ErrorCode' => $iErrorCode,
-			'ErrorMessage' => $sErrorMessage,
-			'ErrorMessageAdditional' => $sErrorMessageAdditional
+			'code' => $iErrorCode,
+			'message' => $sErrorMessage,
+			'messageAdditional' => $sErrorMessageAdditional,
+			'ExceptionCode' => $iExceptionCode
 		]);
 	}
 
@@ -93,10 +93,7 @@ trait Response
 
 		if ($mResponse instanceof \MailSo\Mail\Message) {
 			$aResult = $mResponse->jsonSerialize();
-			if (!$this->Config()->Get('labs', 'date_from_headers', true) && $aResult['internalTimestamp']) {
-				$aResult['dateTimestamp'] = $aResult['internalTimestamp'];
-			}
-			if (!$sParent && \strlen($aResult['readReceipt']) && !\in_array('$forwarded', $aResult['flags'])) {
+			if (!$sParent && \strlen($aResult['readReceipt']) && !\in_array('$mdnsent', $aResult['flags']) && !\in_array('\\answered', $aResult['flags'])) {
 				$oAccount = $this->getAccountFromToken();
 				if ('1' === $this->Cacher($oAccount)->Get(\RainLoop\KeyPathHelper::ReadReceiptCache($oAccount->Email(), $aResult['folder'], $aResult['uid']), '0')) {
 					$aResult['readReceipt'] = '';

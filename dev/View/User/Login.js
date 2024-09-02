@@ -20,7 +20,6 @@ const
 	SignMeOn = 1,
 	SignMeUnused = 2;
 
-
 export class LoginUserView extends AbstractViewLogin {
 	constructor() {
 		super();
@@ -92,10 +91,6 @@ export class LoginUserView extends AbstractViewLogin {
 		this.submitError('');
 	}
 
-	toggleSignMe() {
-		this.signMe(!this.signMe());
-	}
-
 	submitCommand(self, event) {
 		const email = this.email().trim();
 		this.email(email);
@@ -123,9 +118,9 @@ export class LoginUserView extends AbstractViewLogin {
 						if (Notifications.InvalidInputArgument == iError) {
 							iError = Notifications.AuthError;
 						}
-						this.submitError(getNotification(iError, oData?.ErrorMessage,
-							Notifications.UnknownNotification));
-						this.submitErrorAdditional(oData?.ErrorMessageAdditional);
+						this.submitError(getNotification(iError, oData?.message,
+							Notifications.UnknownError));
+						this.submitErrorAdditional(oData?.messageAdditional || oData?.message);
 					} else {
 						rl.setData(oData.Result);
 					}
@@ -142,25 +137,20 @@ export class LoginUserView extends AbstractViewLogin {
 	onBuild(dom) {
 		super.onBuild(dom);
 
-		const signMe = (SettingsGet('signMe') || '').toLowerCase();
-
+		let signMe = SettingsGet('signMe');
 		switch (signMe) {
-			case 'defaultoff':
-			case 'defaulton':
-				this.signMeType(
-					'defaulton' === signMe ? SignMeOn : SignMeOff
-				);
-
+			case SignMeOff:
+			case SignMeOn:
 				switch (Local.get(ClientSideKeyNameLastSignMe)) {
 					case '-1-':
-						this.signMeType(SignMeOn);
+						signMe = SignMeOn;
 						break;
 					case '-0-':
-						this.signMeType(SignMeOff);
+						signMe = SignMeOff;
 						break;
 					// no default
 				}
-
+				this.signMeType(signMe);
 				break;
 			default:
 				this.signMeType(SignMeUnused);

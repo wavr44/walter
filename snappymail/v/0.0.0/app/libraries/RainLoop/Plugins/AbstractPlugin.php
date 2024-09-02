@@ -191,15 +191,6 @@ abstract class AbstractPlugin
 		return $this;
 	}
 
-	final protected function replaceTemplate(string $sFile, bool $bAdminScope = false) : self
-	{
-		if ($this->oPluginManager) {
-			$this->oPluginManager->AddTemplate($this->sPath.'/'.$sFile, $bAdminScope);
-		}
-
-		return $this;
-	}
-
 	final protected function addPartHook(string $sActionName, string $sFunctionName) : self
 	{
 		if ($this->oPluginManager) {
@@ -209,10 +200,10 @@ abstract class AbstractPlugin
 		return $this;
 	}
 
-	final protected function addJsonHook(string $sActionName, string $sFunctionName) : self
+	final protected function addJsonHook(string $sActionName, string $sFunctionName = '') : self
 	{
 		if ($this->oPluginManager) {
-			$this->oPluginManager->AddAdditionalJsonAction($sActionName, array($this, $sFunctionName));
+			$this->oPluginManager->AddAdditionalJsonAction($sActionName, array($this, $sFunctionName ?: $sActionName));
 		}
 
 		return $this;

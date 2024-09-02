@@ -29,12 +29,16 @@ export const SettingsUserStore = new class {
 			showNextMessage: 0,
 			allowDraftAutosave: 1,
 			useThreads: 0,
+			threadAlgorithm: '',
 			replySameFolder: 0,
 			hideUnsubscribed: 0,
 			hideDeleted: 1,
 			unhideKolabFolders: 0,
 			autoLogout: 0,
+			keyPassForget: 15,
 			showUnreadCount: 0,
+			messageNewWindow: 0,
+			messageReadAuto: 0,
 
 			requestReadReceipt: 0,
 			requestDsn: 0,
@@ -45,6 +49,7 @@ export const SettingsUserStore = new class {
 
 			layout: 1,
 			editorDefaultType: 'Html',
+			editorWysiwyg: 'Squire',
 			msgDefaultAction: 1
 		});
 
@@ -76,41 +81,83 @@ export const SettingsUserStore = new class {
 
 	init() {
 		const self = this;
-		self.editorDefaultType(SettingsGet('EditorDefaultType'));
+
+		[
+			'EditorDefaultType',
+			'editorWysiwyg',
+			'messageNewWindow',
+			'messageReadAuto',
+			'MsgDefaultAction',
+			'ViewHTML',
+			'ViewImages',
+			'ViewImagesWhitelist',
+			'RemoveColors',
+			'AllowStyles',
+			'CollapseBlockquotes',
+			'MaxBlockquotesLevel',
+			'ListInlineAttachments',
+			'simpleAttachmentsList',
+			'UseCheckboxesInList',
+			'listGrouped',
+			'showNextMessage',
+			'AllowDraftAutosave',
+			'useThreads',
+			'threadAlgorithm',
+			'ReplySameFolder',
+			'HideUnsubscribed',
+			'HideDeleted',
+			'ShowUnreadCount',
+			'UnhideKolabFolders',
+			'requestReadReceipt',
+			'requestDsn',
+			'requireTLS',
+			'pgpSign',
+			'pgpEncrypt',
+			'allowSpellcheck'
+/*
+			'MessagesPerPage',
+			'MessageReadDelay',
+			'SoundNotification',
+			'NotificationSound',
+			'DesktopNotifications',
+			'Layout',
+			'AutoLogout',
+			'ContactsAutosave',
+			'contactsAllowed',
+			'CheckMailInterval',
+			'SentFolder',
+			'DraftsFolder',
+			'JunkFolder',
+			'TrashFolder',
+			'ArchiveFolder',
+			'hourCycle',
+			'Resizer4Width',
+			'Resizer5Width',
+			'Resizer5Height',
+			'fontSansSerif',
+			'fontSerif',
+			'fontMono',
+			'userBackgroundName',
+			'userBackgroundHash',
+			'autoVerifySignatures',
+			'allowLanguagesOnSettings',
+			'attachmentLimit',
+			'Theme',
+			'language',
+			'clientLanguage',
+			'StaticLibsJs',
+*/
+		].forEach(name => {
+			let value = SettingsGet(name);
+			name = name[0].toLowerCase() + name.slice(1);
+			self[name](value);
+		});
 
 		self.layout(pInt(SettingsGet('Layout')));
 		self.messagesPerPage(pInt(SettingsGet('MessagesPerPage')));
 		self.checkMailInterval(pInt(SettingsGet('CheckMailInterval')));
 		self.messageReadDelay(pInt(SettingsGet('MessageReadDelay')));
 		self.autoLogout(pInt(SettingsGet('AutoLogout')));
-		self.msgDefaultAction(SettingsGet('MsgDefaultAction'));
-
-		self.viewHTML(SettingsGet('ViewHTML'));
-		self.viewImages(SettingsGet('ViewImages'));
-		self.viewImagesWhitelist(SettingsGet('ViewImagesWhitelist'));
-		self.removeColors(SettingsGet('RemoveColors'));
-		self.allowStyles(SettingsGet('AllowStyles'));
-		self.collapseBlockquotes(SettingsGet('CollapseBlockquotes'));
-		self.maxBlockquotesLevel(SettingsGet('MaxBlockquotesLevel'));
-		self.listInlineAttachments(SettingsGet('ListInlineAttachments'));
-		self.simpleAttachmentsList(SettingsGet('simpleAttachmentsList'));
-		self.useCheckboxesInList(SettingsGet('UseCheckboxesInList'));
-		self.listGrouped(SettingsGet('listGrouped'));
-		self.showNextMessage(SettingsGet('showNextMessage'));
-		self.allowDraftAutosave(SettingsGet('AllowDraftAutosave'));
-		self.useThreads(SettingsGet('UseThreads'));
-		self.replySameFolder(SettingsGet('ReplySameFolder'));
-
-		self.hideUnsubscribed(SettingsGet('HideUnsubscribed'));
-		self.hideDeleted(SettingsGet('HideDeleted'));
-		self.showUnreadCount(SettingsGet('ShowUnreadCount'));
-		self.unhideKolabFolders(SettingsGet('UnhideKolabFolders'));
-
-		self.requestReadReceipt(SettingsGet('requestReadReceipt'));
-		self.requestDsn(SettingsGet('requestDsn'));
-		self.requireTLS(SettingsGet('requireTLS'));
-		self.pgpSign(SettingsGet('pgpSign'));
-		self.pgpEncrypt(SettingsGet('pgpEncrypt'));
-		self.allowSpellcheck(SettingsGet('allowSpellcheck'));
+		self.keyPassForget(pInt(SettingsGet('keyPassForget')));
 	}
 };

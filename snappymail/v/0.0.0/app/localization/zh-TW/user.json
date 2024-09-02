@@ -11,13 +11,15 @@
 		"CLOSE": "關閉",
 		"CONTACTS": "連絡人",
 		"DELETE": "刪除",
+		"UNDELETE": "撤銷刪除",
 		"DONE": "完成",
 		"EMAIL": "電子郵件",
 		"FROM": "寄件者",
-		"LOADING": "正在載入...",
+		"LOADING": "正在載入…",
 		"LOGOUT": "登出",
 		"MORE": "更多",
 		"MOVE_TO": "移至",
+		"COPY_TO": "复制到",
 		"NAME": "名稱",
 		"NONE": "無",
 		"TO_SPAM": "移動郵件至垃圾郵件",
@@ -58,12 +60,18 @@
 		"UNSEEN": "未讀取",
 		"DATE": "日期",
 		"DATE_ALL": "全部",
-		"DATE_3_DAYS": "三天以內",
-		"DATE_7_DAYS": "一週以內",
-		"DATE_MONTH": "一個月以內",
-		"DATE_3_MONTHS": "三個月以內",
-		"DATE_6_MONTHS": "半年以內",
-		"DATE_YEAR": "一年以內",
+		"BEFORE_3_DAYS": "三天以外",
+		"BEFORE_7_DAYS": "一週以外",
+		"BEFORE_MONTH": "一個月以外",
+		"BEFORE_3_MONTHS": "三個月以外",
+		"BEFORE_6_MONTHS": "半年以外",
+		"BEFORE_YEAR": "一年以外",
+		"SINCE_3_DAYS": "三天以內",
+		"SINCE_7_DAYS": "一週以內",
+		"SINCE_MONTH": "一個月以內",
+		"SINCE_3_MONTHS": "三個月以內",
+		"SINCE_6_MONTHS": "半年以內",
+		"SINCE_YEAR": "一年以內",
 		"SUBFOLDERS": "子資料夾",
 		"SUBFOLDERS_NONE": "無",
 		"SUBFOLDERS_SUBTREE": "全部",
@@ -80,8 +88,19 @@
 		"TRASH_NAME": "垃圾桶",
 		"ARCHIVE_NAME": "封存"
 	},
-	"QUOTA": {
-		"TITLE": "配額使用"
+	"IMAP": {
+		"ACL_RIGHTS": "Rights",
+		"ACL_A": "Administer",
+		"ACL_E": "Expunge",
+		"ACL_I": "Insert messages",
+		"ACL_K": "Create sub-folders",
+		"ACL_L": "Show messages",
+		"ACL_P": "Send mail",
+		"ACL_R": "Select folder",
+		"ACL_S": "\\SEEN tag",
+		"ACL_T": "\\DELETED tag",
+		"ACL_W": "Other tags",
+		"ACL_X": "Delete\/Rename folder"
 	},
 	"MESSAGE_LIST": {
 		"BUTTON_RELOAD": "重新載入郵件清單",
@@ -139,6 +158,7 @@
 		"MENU_VIEW_ORIGINAL": "顯示原始內容",
 		"HTML_VIEW": "檢視 HTML 郵件",
 		"PLAIN_VIEW": "檢視純文字郵件",
+		"SWAP_COLORS": "Swap default (background)color",
 		"MENU_DOWNLOAD_ORIGINAL": "下載為 .eml 檔案",
 		"MENU_FILTER_SIMILAR": "篩選這類郵件",
 		"MENU_PRINT": "列印郵件",
@@ -153,7 +173,9 @@
 		"SPAM_SCORE": "垃圾郵件計分",
 		"HAS_VIRUS_WARNING": "警告: 已偵測到病毒",
 		"TAGS": "標籤",
-		"NEW_TAG": "新增標籤"
+		"NEW_TAG": "新增標籤",
+		"ENABLE_TRACKING_LINKS": "啓用跟蹤鏈接",
+		"TRACKING_ENABLED": "點擊鏈接時會被追蹤！"
 	},
 	"MESSAGE_TAGS": {
 		"$important": "重要",
@@ -169,7 +191,7 @@
 		"BODY": "這是您寄到 %READ-RECEIPT% 的郵件回條。\n\n注意: 這份回條僅能認知到郵件已在收件者的電腦中顯示。\n無法確認收件者已閱讀或瞭解信中的內容\n"
 	},
 	"SUGGESTIONS": {
-		"SEARCHING_DESC": "正在搜尋..."
+		"SEARCHING_DESC": "正在搜尋…"
 	},
 	"CONTACTS": {
 		"TAB_CONTACT": "聯絡人",
@@ -185,7 +207,6 @@
 		"ALWAYS_IF_POSSIBLE": "可能的話永遠",
 		"BUTTON_ADD_CONTACT": "新增連絡人",
 		"BUTTON_CREATE_CONTACT": "建立",
-		"BUTTON_UPDATE_CONTACT": "更新",
 		"BUTTON_IMPORT": "匯入 (csv, vcf, vCard)",
 		"BUTTON_EXPORT_VCARD": "匯出 (vcf, vCard)",
 		"BUTTON_EXPORT_CSV": "匯出 (csv)",
@@ -209,7 +230,8 @@
 		"ADD_MENU_BIRTHDAY": "生日",
 		"ADD_MENU_TAGS": "標籤",
 		"BUTTON_SHARE_ALL": "所有人",
-		"BUTTON_SYNC": "同步 (CardDAV)"
+		"BUTTON_SYNC": "同步 (CardDAV)",
+		"SEND_TO_ALL_CONTACT_EMAILS": "Send to all contact emails"
 	},
 	"COMPOSE": {
 		"LINK_SHOW_INPUTS": "顯示所有欄位",
@@ -244,20 +266,20 @@
 		"TITLE_LANGUAGES": "選取語言"
 	},
 	"POPUPS_ADD_ACCOUNT": {
-		"TITLE_ADD_ACCOUNT": "是否要新增帳戶？",
+		"TITLE_ADD_ACCOUNT": "是否要新增帳戶",
 		"BUTTON_ADD_ACCOUNT": "新增",
-		"TITLE_UPDATE_ACCOUNT": "是否要更新帳戶？",
-		"BUTTON_UPDATE_ACCOUNT": "更新"
+		"TITLE_UPDATE_ACCOUNT": "是否要更新帳戶"
 	},
 	"POPUPS_IDENTITY": {
-		"TITLE_ADD_IDENTITY": "是否要新增識別檔？",
-		"TITLE_UPDATE_IDENTITY": "是否要更新識別檔？",
+		"TITLE_ADD_IDENTITY": "是否要新增識別檔",
+		"TITLE_UPDATE_IDENTITY": "是否要更新識別檔",
+		"LABEL": "標簽",
 		"BUTTON_ADD_IDENTITY": "新增",
-		"BUTTON_UPDATE_IDENTITY": "更新",
+		"SIGNATURE": "簽名",
 		"LABEL_SIGNATURE_INSERT_BEFORE": "在回覆引用的訊息前插入此簽名"
 	},
 	"POPUPS_CREATE_FOLDER": {
-		"TITLE_CREATE_FOLDER": "是否要建立資料夾？",
+		"TITLE_CREATE_FOLDER": "是否要建立資料夾",
 		"LABEL_PARENT": "父資料夾",
 		"BUTTON_CREATE": "建立",
 		"TITLE_CREATING_PROCESS": "正在建立資料夾"
@@ -267,7 +289,22 @@
 		"DANGER_DESC_WARNING": "警告！",
 		"DANGER_DESC_HTML_1": "此操作將完全刪除資料夾「<strong>%FOLDER%<\/strong>」中的所有郵件。",
 		"DANGER_DESC_HTML_2": "一旦執行操作，就無法中斷或取消。",
-		"TITLE_CLEARING_PROCESS": "正在清除資料夾..."
+		"TITLE_CLEARING_PROCESS": "正在清除資料夾…"
+	},
+	"CRYPTO": {
+		"SIGN": "簽署",
+		"ENCRYPT": "加密",
+		"DECRYPT": "解密",
+		"VERIFY": "驗證",
+		"GOOD_SIGNATURE": "來自「%USER%」的良好簽署",
+		"ERROR": "%TYPE% 錯誤: %ERROR%",
+		"CREATE_SELF_SIGNED": "創建自簽署",
+		"VALID_UNTIL": "有效期至",
+		"PRIVATE_KEY": "私鑰",
+		"CHANGE_PASS": "改變密碼",
+		"CURRENT_PASS": "現有密碼",
+		"NEW_PASS": "新密碼",
+		"ASK_CRYPTKEY_PASS": "台端之登入密碼業已改變。請鍵入舊密碼，以便解鎖資料。"
 	},
 	"OPENPGP": {
 		"POPUP_IMPORT_TITLE": "匯入 OpenPGP 金鑰",
@@ -277,20 +314,26 @@
 		"POPUP_GENERATE_TITLE": "產生 OpenPGP 金鑰",
 		"POPUP_GENERATE_BUTTON": "產生",
 		"LABEL_KEY_TYPE": "類型",
-		"LABEL_SIGN": "簽署",
-		"LABEL_ENCRYPT": "加密",
-		"BUTTON_DECRYPT": "解密",
-		"BUTTON_VERIFY": "驗證",
 		"SIGNED_MESSAGE": "已透過 OpenPGP 簽署郵件",
 		"ENCRYPTED_MESSAGE": "已透過 OpenPGP 加密郵件",
 		"STORE_IN_GNUPG": "以 GnuPG 儲存在伺服器上",
+		"STORE_PUBLIC_KEY_IN_GNUPG": "以 GnuPG 儲存公鑰在伺服器上",
+		"STORE_PRIVATE_KEY_IN_GNUPG": "以 GnuPG 儲存私鑰在伺服器上",
 		"BACKUP_ON_SERVER": "在伺服器中儲存 (已加密)",
-		"GOOD_SIGNATURE": "來自「%USER%」的良好簽署",
-		"ERROR": "OpenPGP 錯誤: %ERROR%"
+		"BACKUP_PUBLIC_KEY_ON_SERVER": "在伺服器中儲存公鑰",
+		"BACKUP_PRIVATE_KEY_ON_SERVER": "在伺服器中儲存私鑰"
+	},
+	"SMIME": {
+		"POPUP_IMPORT_TITLE": "匯入 S\/MIME 證書",
+		"CERTIFICATE": "證書",
+		"CERTIFICATES": "S\/MIME 證書",
+		"SIGNED_MESSAGE": "已透過 S\/MIME 簽署郵件",
+		"ENCRYPTED_MESSAGE": "已透過 S\/MIME 加密郵件",
+		"PRIVATE_KEY_OF": "%EMAIL% 的 S\/MIME 私鑰"
 	},
 	"POPUPS_FILTER": {
-		"TITLE_CREATE_FILTER": "是否要建立篩選器？",
-		"TITLE_EDIT_FILTER": "是否要更新篩選器？",
+		"TITLE_CREATE_FILTER": "是否要建立篩選器",
+		"TITLE_EDIT_FILTER": "是否要更新篩選器",
 		"LEGEND_CONDITIONS": "條件",
 		"LEGEND_ACTIONS": "操作",
 		"BUTTON_ADD_CONDITION": "新增條件",
@@ -360,7 +403,7 @@
 	},
 	"EDITOR": {
 		"PLAIN": "HTML <-> 純文字",
-		"SOURCE": "HTML <-> 來源",
+		"SOURCE": "HTML <-> 原始碼",
 		"FONTFAMILY": "字型家族",
 		"FONTSIZE": "字型大小",
 		"DIR": "文字方向",
@@ -384,7 +427,8 @@
 		"IMAGEURL": "圖片 URL",
 		"IMAGEUPLOAD": "圖片選取",
 		"UNDO": "復原",
-		"REDO": "取消復原"
+		"REDO": "取消復原",
+		"REMOVESTYLE": "移除格式"
 	},
 	"SETTINGS_LABELS": {
 		"GENERAL": "一般設定",
@@ -408,10 +452,10 @@
 	"SETTINGS_SECURITY": {
 		"LEGEND_SECURITY": "安全性",
 		"LABEL_AUTOLOGOUT": "自動登出",
-		"AUTOLOGIN_NEVER_OPTION_NAME": "永不"
+		"FORGET_KEY_PASS": "忘記私鑰密碼",
+		"NEVER": "永不"
 	},
 	"SETTINGS_GENERAL": {
-		"LEGEND_GENERAL": "一般設定",
 		"LANGUAGE": "語言",
 		"HOUR_FORMAT": "小時格式",
 		"IDENTITY": "識別檔",
@@ -428,6 +472,7 @@
 		"HIDE_DELETED_MESSAGES": "隱藏標示為已刪除的郵件",
 		"USE_CHECKBOXES_IN_LIST": "在清單中顯示核取方塊",
 		"USE_THREADS": "使用對話",
+		"THREAD_ALGORITHM": "對話演算法",
 		"REPLY_SAME_FOLDER": "放置回覆的郵件在其所在資料夾",
 		"PREFER_HTML": "偏好 HTML",
 		"PREFER_HTML_INFO": "部分郵件會有兩種格式。此選項旨在設定郵件應優先顯示 HTML 格式，或純文字格式。",
@@ -452,7 +497,9 @@
 		"IMAGES_OPTION_ASK": "每次都要詢問",
 		"IMAGES_OPTION_WHITELIST": "白名單或詢問",
 		"IMAGES_OPTION_ALWAYS": "永遠顯示",
-		"IMAGES_WHITELIST": "圖片白名單"
+		"IMAGES_WHITELIST": "圖片白名單",
+		"MESSAGE_POPUP_WINDOW": "在新彈出窗口而非分頁中打開",
+		"MAILTO": "注冊成 mailto: 連結處理器"
 	},
 	"SETTINGS_CONTACTS": {
 		"LABEL_CONTACTS_AUTOSAVE": "自動新增收件者至通訊錄",
@@ -486,7 +533,7 @@
 		"TO_MANY_FOLDERS_DESC_2": "僅顯示部分資料夾，以避免性能問題。",
 		"HELP_DELETE_FOLDER": "刪除資料夾",
 		"HELP_SHOW_HIDE_FOLDER": "顯示\/隱藏資料夾",
-		"HELP_CHECK_FOR_NEW_MESSAGES": "檢查\/不檢查新郵件",
+		"HELP_CHECK_FOR_NEW_MESSAGES": "檢查新郵件",
 		"HIDE_UNSUBSCRIBED": "隱藏取消訂閱的資料夾",
 		"UNHIDE_KOLAB_FOLDERS": "取消隱藏 Kolab 資料夾",
 		"TYPE_CALENDAR": "日曆",
@@ -503,12 +550,13 @@
 		"LEGEND_ACCOUNTS_AND_IDENTITIES": "帳戶和識別",
 		"BUTTON_ADD_ACCOUNT": "新增帳戶",
 		"BUTTON_ADD_IDENTITY": "新增識別檔",
-		"LOADING_PROCESS": "正在更新...",
+		"LOADING_PROCESS": "正在更新…",
 		"SHOW_UNREAD": "顯示未讀郵件數"
 	},
 	"SETTINGS_OPENPGP": {
 		"BUTTON_IMPORT_KEY": "匯入金鑰",
 		"BUTTON_GENERATE_KEY_PAIR": "產生密鑰",
+		"IMPORT_FROM_SERVER": "從伺服器匯入",
 		"TITLE_PRIVATE": "私密",
 		"TITLE_PUBLIC": "公開",
 		"GET_MAILVELOPE": "取得 Mailvelope 瀏覽器擴充功能"
@@ -551,42 +599,43 @@
 		"LABEL_CLOSE_COMPOSE": "關閉撰寫"
 	},
 	"NOTIFICATIONS": {
-		"REQUEST_ERROR": "請求失敗",
-		"REQUEST_ABORTED": "已中止請求",
-		"REQUEST_TIMEOUT": "請求逾時",
-		"INVALID_TOKEN": "標記無效",
-		"AUTH_ERROR": "驗證失敗",
-		"CONNECTION_ERROR": "無法連線至伺服器",
-		"DOMAIN_ALREADY_EXISTS": "域名已經存在",
-		"DOMAIN_NOT_ALLOWED": "不可使用該域名",
-		"ACCOUNT_NOT_ALLOWED": "不可使用該帳戶",
-		"CONTACTS_SYNC_ERROR": "連絡人同步錯誤",
-		"CANT_GET_MESSAGE_LIST": "無法取得郵件清單",
-		"CANT_GET_MESSAGE": "無法取得郵件",
-		"CANT_DELETE_MESSAGE": "無法刪除郵件",
-		"CANT_COPY_MESSAGE": "無法複製郵件",
-		"CANT_MOVE_MESSAGE": "無法移動郵件",
-		"CANT_SAVE_MESSAGE": "無法儲存郵件",
-		"CANT_SEND_MESSAGE": "無法傳送郵件",
-		"INVALID_RECIPIENTS": "收件人無效",
-		"CANT_SAVE_FILTERS": "無法儲存篩選器",
-		"CANT_GET_FILTERS": "無法取得篩選器",
-		"CANT_ACTIVATE_FILTERS_SCRIPT": "無法啟用篩選器指令檔",
-		"CANT_DELETE_FILTERS_SCRIPT": "無法刪除篩選器指令檔",
-		"FILTERS_ARE_NOT_CORRECT": "篩選器不正確",
-		"CANT_CREATE_FOLDER": "無法新增資料夾",
-		"CANT_RENAME_FOLDER": "無法重新命名資料夾",
-		"CANT_DELETE_FOLDER": "無法刪除資料夾",
-		"CANT_DELETE_NON_EMPTY_FOLDER": "無法刪除非空資料夾",
-		"CANT_SUBSCRIBE_FOLDER": "無法訂閱資料夾",
-		"CANT_UNSUBSCRIBE_FOLDER": "無法取消訂閱資料夾",
-		"DEMO_SEND_MESSAGE_ERROR": "基於安全性考量，此帳戶不允許傳送郵件至外部電子郵件地址。",
-		"DEMO_ACCOUNT_ERROR": "基於安全性考量，此帳戶不允許執行此操作！",
-		"ACCOUNT_ALREADY_EXISTS": "帳戶已經存在",
-		"ACCOUNT_DOES_NOT_EXIST": "帳戶不存在",
-		"ACCOUNT_SWITCH_FAILED": "切換至「%EMAIL%」帳戶時失敗",
-		"MAIL_SERVER_ERROR": "存取郵件伺服器時發生錯誤。",
-		"INVALID_INPUT_ARGUMENT": "輸入引數無效",
-		"UNKNOWN_ERROR": "未知錯誤"
+		"RequestError": "請求失敗",
+		"RequestAborted": "已中止請求",
+		"RequestTimeout": "請求逾時",
+		"InvalidToken": "標記無效",
+		"AuthError": "驗證失敗",
+		"ConnectionError": "無法連線至伺服器",
+		"DomainAlreadyExists": "域名已經存在",
+		"DomainNotAllowed": "不可使用該域名",
+		"AccountNotAllowed": "不可使用該帳戶",
+		"CryptKeyError": "登入密碼已改變",
+		"ContactsSyncError": "連絡人同步錯誤",
+		"CantGetMessageList": "無法取得郵件清單",
+		"CantGetMessage": "無法取得郵件",
+		"CantDeleteMessage": "無法刪除郵件",
+		"CantCopyMessage": "無法複製郵件",
+		"CantMoveMessage": "無法移動郵件",
+		"CantSaveMessage": "無法儲存郵件",
+		"CantSendMessage": "無法傳送郵件",
+		"InvalidRecipients": "收件人無效",
+		"CantSaveFilters": "無法儲存篩選器",
+		"CantGetFilters": "無法取得篩選器",
+		"CantActivateFiltersScript": "無法啟用篩選器指令檔",
+		"CantDeleteFiltersScript": "無法刪除篩選器指令檔",
+		"FiltersAreNotCorrect": "篩選器不正確",
+		"CantCreateFolder": "無法新增資料夾",
+		"CantRenameFolder": "無法重新命名資料夾",
+		"CantDeleteFolder": "無法刪除資料夾",
+		"CantDeleteNonEmptyFolder": "無法刪除非空資料夾",
+		"CantSubscribeFolder": "無法訂閱資料夾",
+		"CantUnsubscribeFolder": "無法取消訂閱資料夾",
+		"DemoSendMessageError": "基於安全性考量，此帳戶不允許傳送郵件至外部電子郵件地址。",
+		"DemoAccountError": "基於安全性考量，此帳戶不允許執行此操作！",
+		"AccountAlreadyExists": "帳戶已經存在",
+		"AccountDoesNotExist": "帳戶不存在",
+		"AccountSwitchFailed": "切換至「%EMAIL%」帳戶時失敗",
+		"MailServerError": "存取郵件伺服器時發生錯誤。",
+		"InvalidInputArgument": "輸入引數無效",
+		"UnknownError": "未知錯誤"
 	}
 }

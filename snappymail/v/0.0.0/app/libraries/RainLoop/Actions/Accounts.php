@@ -12,6 +12,7 @@ use RainLoop\Notifications;
 use RainLoop\Providers\Identities;
 use RainLoop\Providers\Storage\Enumerations\StorageType;
 use RainLoop\Utils;
+use SnappyMail\IDN;
 
 trait Accounts
 {
@@ -72,35 +73,37 @@ trait Accounts
 	 */
 	public function DoAccountSetup(): array
 	{
-		$oMainAccount = $this->getMainAccountFromToken();
-
 		if (!$this->GetCapa(Capa::ADDITIONAL_ACCOUNTS)) {
 			return $this->FalseResponse();
 		}
 
+		$oMainAccount = $this->getMainAccountFromToken();
 		$aAccounts = $this->GetAccounts($oMainAccount);
 
 		$sEmail = \trim($this->GetActionParam('email', ''));
-		$sPassword = $this->GetActionParam('password', '');
-		$sName = \trim($this->GetActionParam('name', ''));
+		$oPassword = new \SnappyMail\SensitiveString($this->GetActionParam('password', ''));
 		$bNew = !empty($this->GetActionParam('new', 1));
 
-		$sEmail = \MailSo\Base\Utils::IdnToAscii($sEmail, true);
-		if ($bNew && ($oMainAccount->Email() === $sEmail || isset($aAccounts[$sEmail]))) {
-			throw new ClientException(Notifications::AccountAlreadyExists);
-		} else if (!$bNew && !isset($aAccounts[$sEmail])) {
+		if ($bNew || \strlen($oPassword)) {
+			$oNewAccount = $this->LoginProcess($sEmail, $oPassword, false);
+			$sEmail = $oNewAccount->Email();
+			$aAccount = $oNewAccount->asTokenArray($oMainAccount);
+		} else {
+			$aAccount = \RainLoop\Model\AdditionalAccount::convertArray($aAccounts[$sEmail]);
+		}
+
+		if ($bNew) {
+			if ($oMainAccount->Email() === $sEmail || isset($aAccounts[$sEmail])) {
+				throw new ClientException(Notifications::AccountAlreadyExists);
+			}
+		} else if (!isset($aAccounts[$sEmail])) {
 			throw new ClientException(Notifications::AccountDoesNotExist);
 		}
 
-		if ($bNew || $sPassword) {
-			$oNewAccount = $this->LoginProcess($sEmail, $sPassword, false, false);
-			$aAccounts[$sEmail] = $oNewAccount->asTokenArray($oMainAccount);
-		} else {
-			$aAccounts[$sEmail] = \RainLoop\Model\AdditionalAccount::convertArray($aAccounts[$sEmail]);
-		}
+		$aAccounts[$sEmail] = $aAccount;
 
 		if ($aAccounts[$sEmail]) {
-			$aAccounts[$sEmail]['name'] = $sName;
+			$aAccounts[$sEmail]['name'] = \trim($this->GetActionParam('name', ''));
 			$this->SetAccounts($oMainAccount, $aAccounts);
 		}
 
@@ -109,7 +112,7 @@ trait Accounts
 
 	protected function loadAdditionalAccountImapClient(string $sEmail): \MailSo\Imap\ImapClient
 	{
-		$sEmail = \MailSo\Base\Utils::IdnToAscii(\trim($sEmail), true);
+		$sEmail = IDN::emailToAscii($sEmail);
 		if (!\strlen($sEmail)) {
 			throw new ClientException(Notifications::AccountDoesNotExist);
 		}
@@ -173,7 +176,7 @@ trait Accounts
 		}
 
 		$sEmailToDelete = \trim($this->GetActionParam('emailToDelete', ''));
-		$sEmailToDelete = \MailSo\Base\Utils::IdnToAscii($sEmailToDelete, true);
+		$sEmailToDelete = IDN::emailToAscii($sEmailToDelete);
 
 		$aAccounts = $this->GetAccounts($oMainAccount);
 
@@ -181,6 +184,7 @@ trait Accounts
 			$bReload = false;
 			$oAccount = $this->getAccountFromToken();
 			if ($oAccount instanceof AdditionalAccount && $oAccount->Email() === $sEmailToDelete) {
+//				$this->SetAdditionalAuthToken(null);
 				\SnappyMail\Cookies::clear(self::AUTH_ADDITIONAL_TOKEN_KEY);
 				$bReload = true;
 			}
@@ -197,18 +201,21 @@ trait Accounts
 	public function getAccountData(Account $oAccount): array
 	{
 		$oConfig = $this->Config();
+		$minRefreshInterval = (int) $oConfig->Get('webmail', 'min_refresh_interval', 5);
 		$aResult = [
+//			'Email' => IDN::emailToUtf8($oAccount->Email()),
 			'Email' => $oAccount->Email(),
 			'accountHash' => $oAccount->Hash(),
 			'mainEmail' => \RainLoop\Api::Actions()->getMainAccountFromToken()->Email(),
 			'contactsAllowed' => $this->AddressBookProvider($oAccount)->IsActive(),
 			'HideUnsubscribed' => false,
-			'UseThreads' => (bool) $oConfig->Get('defaults', 'mail_use_threads', false),
+			'useThreads' => (bool) $oConfig->Get('defaults', 'mail_use_threads', false),
+			'threadAlgorithm' => '',
 			'ReplySameFolder' => (bool) $oConfig->Get('defaults', 'mail_reply_same_folder', false),
 			'HideDeleted' => true,
 			'ShowUnreadCount' => false,
 			'UnhideKolabFolders' => false,
-			'CheckMailInterval' => 15
+			'CheckMailInterval' => \max(15, $minRefreshInterval)
 		];
 		$oSettingsLocal = $this->SettingsProvider(true)->Load($oAccount);
 		if ($oSettingsLocal instanceof \RainLoop\Settings) {
@@ -218,12 +225,13 @@ trait Accounts
 			$aResult['TrashFolder'] = (string) $oSettingsLocal->GetConf('TrashFolder', '');
 			$aResult['ArchiveFolder'] = (string) $oSettingsLocal->GetConf('ArchiveFolder', '');
 			$aResult['HideUnsubscribed'] = (bool) $oSettingsLocal->GetConf('HideUnsubscribed', $aResult['HideUnsubscribed']);
-			$aResult['UseThreads'] = (bool) $oSettingsLocal->GetConf('UseThreads', $aResult['UseThreads']);
+			$aResult['useThreads'] = (bool) $oSettingsLocal->GetConf('UseThreads', $aResult['useThreads']);
+			$aResult['threadAlgorithm'] = (string) $oSettingsLocal->GetConf('threadAlgorithm', $aResult['threadAlgorithm']);
 			$aResult['ReplySameFolder'] = (bool) $oSettingsLocal->GetConf('ReplySameFolder', $aResult['ReplySameFolder']);
 			$aResult['HideDeleted'] = (bool)$oSettingsLocal->GetConf('HideDeleted', $aResult['HideDeleted']);
 			$aResult['ShowUnreadCount'] = (bool)$oSettingsLocal->GetConf('ShowUnreadCount', $aResult['ShowUnreadCount']);
 			$aResult['UnhideKolabFolders'] = (bool)$oSettingsLocal->GetConf('UnhideKolabFolders', $aResult['UnhideKolabFolders']);
-			$aResult['CheckMailInterval'] = (int)$oSettingsLocal->GetConf('CheckMailInterval', $aResult['CheckMailInterval']);
+			$aResult['CheckMailInterval'] = \max((int) $oSettingsLocal->GetConf('CheckMailInterval', $aResult['CheckMailInterval']), $minRefreshInterval);
 /*
 			foreach ($oSettingsLocal->toArray() as $key => $value) {
 				$aResult[\lcfirst($key)] = $value;
@@ -261,7 +269,11 @@ trait Accounts
 		if (!$oIdentity->FromJSON($this->GetActionParams(), true)) {
 			throw new ClientException(Notifications::InvalidInputArgument);
 		}
-
+/*		// TODO: verify private key for certificate?
+		if ($oIdentity->smimeCertificate && $oIdentity->smimeKey) {
+			new \SnappyMail\SMime\Certificate($oIdentity->smimeCertificate, $oIdentity->smimeKey);
+		}
+*/
 		$this->IdentitiesProvider()->UpdateIdentity($oAccount, $oIdentity);
 		return $this->TrueResponse();
 	}
@@ -326,7 +338,7 @@ trait Accounts
 		return $this->DefaultResponse(array(
 			'Accounts' => \array_values(\array_map(function($value){
 					return [
-						'email' => \MailSo\Base\Utils::IdnToUtf8($value['email'] ?? $value[1]),
+						'email' => IDN::emailToUtf8($value['email'] ?? $value[1]),
 						'name' => $value['name'] ?? ''
 					];
 				},

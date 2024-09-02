@@ -13,7 +13,7 @@ imapsync.php \
 
 use MailSo\Net\Enumerations\ConnectionSecurityType as SecurityType;
 
-if (4 > \count($_SERVER['argv']) || \in_array('--help', $_SERVER['argv'])) {
+if ('cli' !== PHP_SAPI || 4 > \count($_SERVER['argv']) || \in_array('--help', $_SERVER['argv'])) {
 echo 'OPTIONS
 
     usage: imapsync.php [options]
@@ -154,8 +154,6 @@ function getImapClient(int $host)
 {
 	global $options;
 
-	$oConfig = \RainLoop\API::Config();
-
 	$type = SecurityType::AUTO_DETECT;
 	if (isset($options["tls{$host}"])) {
 		$type = SecurityType::STARTTLS;
@@ -168,6 +166,7 @@ function getImapClient(int $host)
 		'host' => $options["host{$host}"] ?? 'localhost',
 		'port' => $options["port{$host}"] ?? 143,
 		'type' => $type,
+//		'sasl' => [],
 		'ssl' => []
 	]);
 	if (993 === $ImapSettings->port) {
@@ -178,19 +177,8 @@ function getImapClient(int $host)
 	if (isset($options["timeout{$host}"])) {
 		$ImapSettings->timeout = (int) $options["timeout{$host}"];
 	}
-	if ($oConfig->Get('labs', 'sasl_allow_scram_sha', false)) {
-		\array_push($ImapSettings->SASLMechanisms, 'SCRAM-SHA3-512', 'SCRAM-SHA-512', 'SCRAM-SHA-256', 'SCRAM-SHA-1');
-	}
-	if ($oConfig->Get('labs', 'sasl_allow_cram_md5', false)) {
-		$ImapSettings->SASLMechanisms[] = 'CRAM-MD5';
-	}
-	if ($oConfig->Get('labs', 'sasl_allow_plain', true)) {
-		$ImapSettings->SASLMechanisms[] = 'PLAIN';
-	}
-	$ImapSettings->Login = $options["user{$host}"];
+	$ImapSettings->Login = $options["user{$host}"]; // convert to punycode?
 	$ImapSettings->Password = $options["password{$host}"];
-//	$ImapSettings1->ProxyAuthUser = '';
-//	$ImapSettings1->ProxyAuthPassword = '';
 	$ImapSettings->useAuth = true;
 
 	$oImapClient = new \MailSo\Imap\ImapClient;

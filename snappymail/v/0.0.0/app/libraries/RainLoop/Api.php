@@ -43,7 +43,7 @@ abstract class Api
 		$CSP->report_only = $oConfig->Get('debug', 'enable', false); // || SNAPPYMAIL_DEV
 
 		// Allow https: due to remote images in e-mails or use proxy
-		if (!$oConfig->Get('security', 'use_local_proxy_for_external_images', '')) {
+		if (!$oConfig->Get('labs', 'use_local_proxy_for_external_images', '')) {
 			$CSP->add('img-src', 'https:');
 			$CSP->add('img-src', 'http:');
 		}
@@ -77,7 +77,11 @@ abstract class Api
 		return APP_VERSION;
 	}
 
-	public static function CreateUserSsoHash(string $sEmail, string $sPassword, array $aAdditionalOptions = array(), bool $bUseTimeout = true) : ?string
+	public static function CreateUserSsoHash(string $sEmail,
+		#[\SensitiveParameter]
+		string $sPassword,
+		array $aAdditionalOptions = array(), bool $bUseTimeout = true
+	) : ?string
 	{
 		$sSsoHash = \MailSo\Base\Utils::Sha1Rand(\sha1($sPassword.$sEmail));
 
@@ -100,16 +104,20 @@ abstract class Api
 	public static function ClearUserData(string $sEmail) : bool
 	{
 		if (\strlen($sEmail)) {
-			$sEmail = \MailSo\Base\Utils::IdnToAscii($sEmail);
+			$sEmail = \SnappyMail\IDN::emailToAscii($sEmail);
 
 			$oStorageProvider = static::Actions()->StorageProvider();
 			if ($oStorageProvider && $oStorageProvider->IsActive()) {
 				$oStorageProvider->DeleteStorage($sEmail);
 			}
 
-			$oAddressBookProvider = static::Actions()->AddressBookProvider();
-			if ($oAddressBookProvider) {
-				$oAddressBookProvider->DeleteAllContacts($sEmail);
+			$oConfig = static::Config();
+			$sqlite_global = $oConfig->Get('contacts', 'sqlite_global', false);
+			if ('sqlite' != $oConfig->Get('contacts', 'type', '') || \is_file(APP_PRIVATE_DATA . '/AddressBook.sqlite')) {
+				$oConfig->Set('contacts', 'sqlite_global', true);
+				$oAddressBookProvider = static::Actions()->AddressBookProvider();
+				$oAddressBookProvider && $oAddressBookProvider->DeleteAllContacts($sEmail);
+				$oConfig->Set('contacts', 'sqlite_global', !!$sqlite_global);
 			}
 
 			return true;

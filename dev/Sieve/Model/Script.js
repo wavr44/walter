@@ -17,8 +17,8 @@ function filtersToSieveScript(filters)
 			''
 		];
 
-	const quote = string => '"' + string.trim().replace(/(\\|")/g, '\\$1') + '"';
-	const StripSpaces = string => string.replace(/\s+/, ' ').trim();
+	const quote = string => '"' + string.replace(/(\\|")/g, '\\$1') + '"';
+	const StripSpaces = string => string.replace(/\s+/, ' ');
 
 	// conditionToSieveScript
 	const conditionToString = (condition, require) =>
@@ -26,8 +26,8 @@ function filtersToSieveScript(filters)
 		let result = '',
 			type = condition.type(),
 			field = condition.field(),
-			value = condition.value().trim(),
-			valueSecond = condition.valueSecond().trim();
+			value = condition.value(),
+			valueSecond = condition.valueSecond();
 
 		if (value.length && ('Header' !== field || valueSecond.length)) {
 			switch (type)
@@ -85,7 +85,7 @@ function filtersToSieveScript(filters)
 			}
 
 			if (('From' === field || 'Recipient' === field) && value.includes(',')) {
-				result += ' [' + value.split(',').map(value => quote(value)).join(', ').trim() + ']';
+				result += ' [' + value.split(',').map(value => quote(value)).join(', ') + ']';
 			} else if ('Size' === field) {
 				result += ' ' + value;
 			} else {
@@ -130,7 +130,7 @@ function filtersToSieveScript(filters)
 			result.push(sTab + 'addflag "\\\\Seen";');
 		}
 
-		let value = filter.actionValue().trim();
+		let value = filter.actionValue();
 		value = value.length ? quote(value) : 0;
 		switch (filter.actionType())
 		{
@@ -146,21 +146,21 @@ function filtersToSieveScript(filters)
 					let days = 1,
 						subject = '',
 						addresses = '',
-						paramValue = filter.actionValueSecond().trim();
+						paramValue = filter.actionValueSecond();
 
 					if (paramValue.length) {
 						subject = ':subject ' + quote(StripSpaces(paramValue)) + ' ';
 					}
 
-					paramValue = ('' + (filter.actionValueThird() || '')).trim();
+					paramValue = ('' + (filter.actionValueThird() || ''));
 					if (paramValue.length) {
 						days = Math.max(1, parseInt(paramValue, 10));
 					}
 
-					paramValue = ('' + (filter.actionValueFourth() || '')).trim()
+					paramValue = ('' + (filter.actionValueFourth() || ''))
 					if (paramValue.length) {
 						paramValue = paramValue.split(',').map(email =>
-							email.trim().length ? quote(email) : ''
+							email.length ? quote(email) : ''
 						).filter(email => email.length);
 						if (paramValue.length) {
 							addresses = ':addresses [' + paramValue.join(', ') + '] ';
@@ -228,7 +228,7 @@ function filtersToSieveScript(filters)
 }
 
 // fileStringToCollection
-function sieveScriptToFilters(script)
+function rainloopScriptToFilters(script)
 {
 	let regex = /BEGIN:HEADER([\s\S]+?)END:HEADER/gm,
 		filters = [],
@@ -239,7 +239,6 @@ function sieveScriptToFilters(script)
 			json = decodeURIComponent(escape(atob(json[1].replace(/\s+/g, ''))));
 			if (json && json.length && (json = JSON.parse(json))) {
 				json['@Object'] = 'Object/Filter';
-				json.Conditions.forEach(condition => condition['@Object'] = 'Object/FilterCondition');
 				filter = FilterModel.reviveFromJson(json);
 				filter && filters.push(filter);
 			}
@@ -261,7 +260,6 @@ export class SieveScriptModel extends AbstractModel
 			exists: false,
 			nameError: false,
 			askDelete: false,
-			canBeDeleted: true,
 			hasChanges: false
 		});
 
@@ -280,13 +278,8 @@ export class SieveScriptModel extends AbstractModel
 //		this.body(filtersToSieveScript(this.filters));
 	}
 
-	rawToFilters() {
-		return sieveScriptToFilters(this.body());
-//		this.filters(sieveScriptToFilters(this.body()));
-	}
-
 	verify() {
-		this.nameError(!this.name().trim());
+		this.nameError(!this.name());
 		return !this.nameError();
 	}
 
@@ -315,9 +308,8 @@ export class SieveScriptModel extends AbstractModel
 		const script = super.reviveFromJson(json);
 		if (script) {
 			if (script.allowFilters()) {
-				script.filters(sieveScriptToFilters(script.body()));
+				script.filters(rainloopScriptToFilters(script.body()));
 			}
-			script.canBeDeleted(SIEVE_FILE_NAME !== json.name);
 			script.exists(true);
 			script.hasChanges(false);
 		}

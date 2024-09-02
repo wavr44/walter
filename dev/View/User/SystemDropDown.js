@@ -36,7 +36,8 @@ export class SystemDropDownUserView extends AbstractViewRight {
 
 		addObservablesTo(this, {
 			currentAudio: '',
-			accountMenuDropdownTrigger: false
+			// bootstrap dropdown
+			accountMenu: null
 		});
 
 		this.allowContacts = AppUserStore.allowContacts();
@@ -58,7 +59,7 @@ export class SystemDropDownUserView extends AbstractViewRight {
 				(iError/*, oData*/) => {
 					if (iError) {
 						AccountUserStore.loading(false);
-						alert(getNotification(iError).replace('%EMAIL%', email));
+						alert('Account error: ' + getNotification(iError).replace('%EMAIL%', email));
 						if (account.isAdditional()) {
 							showScreenPopup(AccountPopupView, [account]);
 						}
@@ -86,9 +87,8 @@ export class SystemDropDownUserView extends AbstractViewRight {
 	}
 
 	accountName() {
-		let email = AccountUserStore.email(),
-			account = AccountUserStore.find(account => account.email == email);
-		return account?.name || email;
+		const email = AccountUserStore.email();
+		return AccountUserStore.find(account => account.email == email)?.label() || IDN.toUnicode(email);
 	}
 
 	settingsClick() {
@@ -115,7 +115,7 @@ export class SystemDropDownUserView extends AbstractViewRight {
 		registerShortcut('m', '', [ScopeMessageList, ScopeMessageView, ScopeSettings], () => {
 			if (!this.viewModelDom.hidden) {
 //				exitFullscreen();
-				this.accountMenuDropdownTrigger(true);
+				this.accountMenu().ddBtn.toggle();
 				return false;
 			}
 		});

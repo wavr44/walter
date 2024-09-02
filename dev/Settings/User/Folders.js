@@ -15,6 +15,7 @@ import Remote from 'Remote/User/Fetch';
 
 import { showScreenPopup } from 'Knoin/Knoin';
 
+//import { FolderPopupView } from 'View/Popup/Folder';
 import { FolderCreatePopupView } from 'View/Popup/FolderCreate';
 import { FolderSystemPopupView } from 'View/Popup/FolderSystem';
 
@@ -41,8 +42,8 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 
 		this.displaySpecSetting = FolderUserStore.displaySpecSetting;
 		this.folderList = FolderUserStore.folderList;
-		this.folderListOptimized = FolderUserStore.folderListOptimized;
-		this.folderListError = FolderUserStore.folderListError;
+		this.folderListOptimized = FolderUserStore.optimized;
+		this.folderListError = FolderUserStore.error;
 		this.hideUnsubscribed = SettingsUserStore.hideUnsubscribed;
 		this.unhideKolabFolders = SettingsUserStore.unhideKolabFolders;
 
@@ -55,7 +56,7 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 	}
 
 	onShow() {
-		FolderUserStore.folderListError('');
+		FolderUserStore.error('');
 	}
 /*
 	onBuild(oDom) {
@@ -75,7 +76,7 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 		 && folderToRemove.askDelete()
 		) {
 			if (0 < folderToRemove.totalEmails()) {
-//				FolderUserStore.folderListError(getNotification(Notifications.CantDeleteNonEmptyFolder));
+//				FolderUserStore.error(getNotification(Notifications.CantDeleteNonEmptyFolder));
 				folderToRemove.errorMsg(getNotification(Notifications.CantDeleteNonEmptyFolder));
 			} else {
 				folderForDeletion(null);
@@ -96,7 +97,7 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 								}
 							},
 							error => {
-								FolderUserStore.folderListError(
+								FolderUserStore.error(
 									getNotification(error.code, '', Notifications.CantDeleteFolder)
 									+ '.\n' + error.message
 								);
@@ -108,7 +109,7 @@ export class UserSettingsFolders /*extends AbstractViewSettings*/ {
 	}
 
 	hideError() {
-		this.folderListError('');
+		FolderUserStore.error('');
 	}
 
 	toggleFolderKolabType(folder, event) {

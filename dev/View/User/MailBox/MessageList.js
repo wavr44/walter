@@ -1,20 +1,18 @@
 import ko from 'ko';
 import { addObservablesTo, addComputablesTo } from 'External/ko';
 
+import { UNUSED_OPTION_VALUE } from 'Common/Consts';
 import { ScopeFolderList, ScopeMessageList, ScopeMessageView } from 'Common/Enums';
-
 import { ComposeType, FolderType, MessageSetAction } from 'Common/EnumsUser';
-
 import { doc,
 	leftPanelDisabled, toggleLeftPanel,
 	Settings, SettingsCapa,
 	addEventsListeners, stopEvent,
 	addShortcut, registerShortcut, formFieldFocused
 } from 'Common/Globals';
-
 import { arrayLength } from 'Common/Utils';
 import { computedPaginatorHelper, showMessageComposer, populateMessageBody, downloadZip, moveAction } from 'Common/UtilsUser';
-import { FileInfo } from 'Common/File';
+import { FileInfo, RFC822 } from 'Common/File';
 import { isFullscreen, toggleFullscreen } from 'Common/Fullscreen';
 
 import { mailBox } from 'Common/Links';
@@ -59,19 +57,37 @@ const
 	 */
 	listAction = (...args) => MessagelistUserStore.setAction(...args),
 
-	moveMessagesToFolderType = (toFolderType, bDelete) =>
-		rl.app.moveMessagesToFolderType(
+	moveMessagesToFolderType = (toFolderType, bDelete) => {
+		let messages = MessagelistUserStore.listCheckedOrSelectedUidsWithSubMails();
+		messages.size && rl.app.moveMessagesToFolderType(
 			toFolderType,
-			FolderUserStore.currentFolderFullName(),
-			MessagelistUserStore.listCheckedOrSelectedUidsWithSubMails(),
+			messages.folder,
+			messages,
 			bDelete
-		),
+		)
+	},
 
 	pad2 = v => 10 > v ? '0' + v : '' + v,
-	Ymd = dt => dt.getFullYear() + pad2(1 + dt.getMonth()) + pad2(dt.getDate());
+	Ymd = dt => dt.getFullYear() + pad2(1 + dt.getMonth()) + pad2(dt.getDate()),
+
+	setMessage = msg => {
+		populateMessageBody(msg);
+/* This will replace url hash, and then load message
+ * It's working properly yet
+//		let hash = msg.href;
+		let hash = mailBox(
+			msg.folder,
+			MessagelistUserStore.page(),
+			MessagelistUserStore.listSearch(),
+			MessagelistUserStore.threadUid(),
+			msg.uid
+		);
+		MessageUserStore.message() ? hasher.replaceHash(hash) : hasher.setHash(hash);
+*/
+	};
+
 
 let
-	iGoToUpOrDownTimeout = 0,
 	sLastSearchValue = '';
 
 export class MailMessageList extends AbstractViewRight {
@@ -95,10 +111,9 @@ export class MailMessageList extends AbstractViewRight {
 
 		this.userUsageProc = FolderUserStore.quotaPercentage;
 
-		addObservablesTo(this, {
-			moreDropdownTrigger: false,
-			sortDropdownTrigger: false,
+		this.hideDeleted = SettingsUserStore.hideDeleted;
 
+		addObservablesTo(this, {
 			focusSearch: false
 		});
 
@@ -111,17 +126,14 @@ export class MailMessageList extends AbstractViewRight {
 
 		addComputablesTo(this, {
 
-			sortSupported: () =>
-				(FolderUserStore.hasCapability('SORT') | FolderUserStore.hasCapability('ESORT'))
-				&& !MessagelistUserStore.threadUid(),
+			sortSupported: () => FolderUserStore.hasCapability('SORT') && !MessagelistUserStore.threadUid(),
 
 			messageListSearchDesc: () => {
 				const value = MessagelistUserStore().search;
 				return value ? i18n('MESSAGE_LIST/SEARCH_RESULT_FOR', { SEARCH: value }) : ''
 			},
 
-			messageListPaginator: computedPaginatorHelper(MessagelistUserStore.page,
-				MessagelistUserStore.pageCount),
+			messageListPaginator: computedPaginatorHelper(MessagelistUserStore.page, MessagelistUserStore.pageCount),
 
 			checkAll: {
 				read: () => MessagelistUserStore.hasChecked(),
@@ -153,11 +165,11 @@ export class MailMessageList extends AbstractViewRight {
 				let list = [], current, sort = FolderUserStore.sortMode() || 'DATE';
 				if (sort.includes('FROM')) {
 					MessagelistUserStore.forEach(msg => {
-						let email = msg.from[0].email;
+						let email = msg.from[0]?.email;
 						if (!current || email != current.id) {
 							current = {
 								id: email,
-								label: msg.from[0].toLine(),
+								label: msg.from[0]?.toLine(),
 								search: 'from=' + email,
 								messages: []
 							};
@@ -219,15 +231,14 @@ export class MailMessageList extends AbstractViewRight {
 			MessagelistUserStore,
 			MessagelistUserStore.selectedMessage,
 			MessagelistUserStore.focusedMessage,
-			'.messageListItem .actionHandle',
-			'.messageListItem .messageCheckbox',
-			'.messageListItem.focused'
+			'.messageListItem',
+			'.messageListItem .messageCheckbox'
 		);
 
 		this.selector.on('ItemSelect', message => {
 			if (message) {
-//				populateMessageBody(message.clone());
-				populateMessageBody(message);
+//				setMessage(message.clone());
+				setMessage(message);
 			} else {
 				MessageUserStore.message(null);
 			}
@@ -235,52 +246,42 @@ export class MailMessageList extends AbstractViewRight {
 
 		this.selector.on('MiddleClick', message => populateMessageBody(message, true));
 
-		this.selector.on('ItemGetUid', message => (message ? message.generateUid() : ''));
+		this.selector.on('ItemGetUid', message => (message ? message.folder + '/' + message.uid : ''));
 
-		this.selector.on('AutoSelect', () => MessagelistUserStore.canAutoSelect());
+		this.selector.on('canSelect', () => MessagelistUserStore.canSelect());
+
+		this.selector.on('click', (event, currentMessage) => {
+			const el = event.target;
+			if (el.closest('.flagParent')) {
+				if (currentMessage) {
+					const checked = MessagelistUserStore.listCheckedOrSelected();
+					listAction(
+						currentMessage.folder,
+						currentMessage.isFlagged() ? MessageSetAction.UnsetFlag : MessageSetAction.SetFlag,
+						checked.find(message => message.uid == currentMessage.uid) ? checked : [currentMessage]
+					);
+				}
+			} else if (el.closest('.threads-len')) {
+				this.gotoThread(currentMessage);
+			} else {
+				return 1;
+			}
+		});
 
 		this.selector.on('UpOrDown', up => {
-			if (MessagelistUserStore.hasChecked()) {
-				return false;
-			}
-
-			clearTimeout(iGoToUpOrDownTimeout);
-			iGoToUpOrDownTimeout = setTimeout(() => {
-				let prev, next, temp, current;
-
-				this.messageListPaginator().find(item => {
-					if (item) {
-						if (current) {
-							next = item;
-						}
-
-						if (item.current) {
-							current = item;
-							prev = temp;
-						}
-
-						if (next) {
-							return true;
-						}
-
-						temp = item;
-					}
-
-					return false;
-				});
-
-				if (up ? prev : next) {
+			if (!MessagelistUserStore.hasChecked()) {
+				up = up ? -1 : 1;
+				const page = MessagelistUserStore.page() + up;
+				if (page > 0 && page <= MessagelistUserStore.pageCount()) {
 					if (SettingsUserStore.usePreviewPane() || MessageUserStore.message()) {
-						this.selector.iSelectNextHelper = up ? -1 : 1;
+						this.selector.iSelectNextHelper = up;
 					} else {
-						this.selector.iFocusedNextHelper = up ? -1 : 1;
+						this.selector.iFocusedNextHelper = up;
 					}
 					this.selector.unselect();
-					this.gotoPage(up ? prev : next);
+					this.gotoPage(page);
 				}
-			}, 350);
-
-			return true;
+			}
 		});
 
 		addEventListener('mailbox.message-list.selector.go-down',
@@ -312,7 +313,7 @@ export class MailMessageList extends AbstractViewRight {
 					let message = new MessageModel;
 					message.folder = sFolder;
 					message.uid = iUid;
-					populateMessageBody(message);
+					setMessage(message);
 				} else {
 					MessageUserStore.message(null);
 				}
@@ -328,11 +329,13 @@ export class MailMessageList extends AbstractViewRight {
 			downloadZipCommand: canBeMovedHelper,
 			forwardCommand: canBeMovedHelper,
 			deleteWithoutMoveCommand: canBeMovedHelper,
-			deleteCommand: canBeMovedHelper,
+			deleteCommand: () => MessagelistUserStore.hasCheckedOrSelectedAndUndeleted(),
+			undeleteCommand: () => MessagelistUserStore.hasCheckedOrSelectedAndDeleted(),
 			archiveCommand: canBeMovedHelper,
 			spamCommand: canBeMovedHelper,
 			notSpamCommand: canBeMovedHelper,
 			moveCommand: canBeMovedHelper,
+			copyCommand: canBeMovedHelper
 		});
 	}
 
@@ -401,8 +404,30 @@ export class MailMessageList extends AbstractViewRight {
 		&& moveMessagesToFolderType(FolderType.Trash, true);
 	}
 
+	// User setting hideDeleted || immediatelyMoveToTrash ??
 	deleteCommand() {
-		moveMessagesToFolderType(FolderType.Trash);
+		/**
+		 * When FolderUserStore.trashFolder is set to "Do not use",
+		 * flag as \Deleted for removal by later EXPUNGE
+		 */
+		if (UNUSED_OPTION_VALUE === FolderUserStore.trashFolder()) {
+			listAction(
+				FolderUserStore.currentFolderFullName(),
+				MessageSetAction.SetDeleted,
+				MessagelistUserStore.listCheckedOrSelected()
+			);
+		} else {
+			moveMessagesToFolderType(FolderType.Trash);
+		}
+	}
+
+	// User setting !hideDeleted && !immediatelyMoveToTrash ??
+	undeleteCommand() {
+		listAction(
+			FolderUserStore.currentFolderFullName(),
+			MessageSetAction.UnsetDeleted,
+			MessagelistUserStore.listCheckedOrSelected()
+		);
 	}
 
 	archiveCommand() {
@@ -417,16 +442,24 @@ export class MailMessageList extends AbstractViewRight {
 		moveMessagesToFolderType(FolderType.Inbox);
 	}
 
-	moveCommand(vm, event) {
-		if (MessagelistUserStore.hasChecked()) {
+	moveOrCopy(vm, event, mode) {
+		if (canBeMovedHelper()) {
 			if (vm && event?.preventDefault) {
 				stopEvent(event);
 			}
 
-			let b = moveAction();
-			AppUserStore.focusedState(b ? ScopeMessageList : ScopeFolderList);
-			moveAction(!b);
+			let i = moveAction();
+			AppUserStore.focusedState(i ? ScopeMessageList : ScopeFolderList);
+			moveAction(i ? 0 : mode);
 		}
+	}
+
+	moveCommand(vm, event) {
+		this.moveOrCopy(vm, event, 1);
+	}
+
+	copyCommand(vm, event) {
+		this.moveOrCopy(vm, event, 2);
 	}
 
 	composeClick() {
@@ -530,7 +563,7 @@ export class MailMessageList extends AbstractViewRight {
 		page && hasher.setHash(
 			mailBox(
 				FolderUserStore.currentFolderFullNameHash(),
-				page.value,
+				page,
 				MessagelistUserStore.listSearch(),
 				MessagelistUserStore.threadUid()
 			)
@@ -584,33 +617,19 @@ export class MailMessageList extends AbstractViewRight {
 					toggleLeftPanel();
 				} else {
 					ThemeStore.isMobile() && leftPanelDisabled(true);
+
+					if (eqs(event, '.messageList') && ScopeMessageView === AppUserStore.focusedState()) {
+						AppUserStore.focusedState(ScopeMessageList);
+					}
+
+					let el = eqs(event, '.e-paginator a');
+					el && this.gotoPage(ko.dataFor(el)?.value);
+
+					eqs(event, '.checkboxCheckAll') && this.checkAll(!this.checkAll());
 				}
-
-				if (eqs(event, '.messageList') && ScopeMessageView === AppUserStore.focusedState()) {
-					AppUserStore.focusedState(ScopeMessageList);
-				}
-
-				let el = eqs(event, '.e-paginator a');
-				el && this.gotoPage(ko.dataFor(el));
-
-				eqs(event, '.checkboxCheckAll') && this.checkAll(!this.checkAll());
-
-				el = eqs(event, '.flagParent');
-				let currentMessage = el && ko.dataFor(el);
-				if (currentMessage) {
-					const checked = MessagelistUserStore.listCheckedOrSelected();
-					listAction(
-						currentMessage.folder,
-						currentMessage.isFlagged() ? MessageSetAction.UnsetFlag : MessageSetAction.SetFlag,
-						checked.find(message => message.uid == currentMessage.uid) ? checked : [currentMessage]
-					);
-				}
-
-				el = eqs(event, '.threads-len');
-				el && this.gotoThread(ko.dataFor(el));
 			},
 			dblclick: event => {
-				let el = eqs(event, '.actionHandle');
+				let el = eqs(event, '.messageListItem');
 				el && this.gotoThread(ko.dataFor(el));
 			}
 		});
@@ -621,7 +640,7 @@ export class MailMessageList extends AbstractViewRight {
 			const dropZone = dom.querySelector('.listDragOver'),
 				validFiles = oEvent => {
 					for (const item of oEvent.dataTransfer.items) {
-						if ('file' === item.kind && 'message/rfc822' === item.type) {
+						if ('file' === item.kind && RFC822 === item.type) {
 							return true;
 						}
 					}
@@ -674,7 +693,7 @@ export class MailMessageList extends AbstractViewRight {
 				MessagelistUserStore.mainSearch(sLastSearchValue);
 				return false;
 			}
-			if (MessageUserStore.message() && MessagelistUserStore.canAutoSelect()) {
+			if (MessageUserStore.message() && MessagelistUserStore.canSelect()) {
 				isFullscreen() || toggleFullscreen();
 				return false;
 			}
