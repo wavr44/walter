@@ -678,7 +678,6 @@ class Actions
 					'accountSignMe' => isset($_COOKIE[self::AUTH_SIGN_ME_TOKEN_KEY]),
 
 					'contactsAllowed' => $this->AddressBookProvider($oAccount)->IsActive(),
-					'contactsExternal' => $this->AddressBookProvider($oAccount)->IsExternal(),
 
 					'ViewHTML' => (bool) $oConfig->Get('defaults', 'view_html', true),
 					'ViewImages' => $oConfig->Get('defaults', 'view_images', 'ask'),
