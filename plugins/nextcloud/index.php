@@ -11,6 +11,8 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		REQUIRED = '2.36.2';
 
 
+	private const DEFAULT_ADDRESSBOOK_NAME = 'WebMail';
+	private const DEFAULT_ADDRESSBOOK_DESCRIPTION = 'Recipients from snappymail';
 	private const DEFAULT_ADDRESSBOOK_URI = 'webmail';
 	private const ADDRESSBOOK_SETTINGS_KEY = 'nextCloudAddressBookUri';
 
@@ -46,9 +48,15 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 			$this->addHook('smtp.before-login', 'beforeLogin');
 			$this->addHook('sieve.before-login', 'beforeLogin');
 
-			$this->addJs('js/addressbook.js');
-			$this->addJsonHook('NextcloudGetAddressBooks', 'GetAddressBooks');
-			$this->addJsonHook('NextcloudUpdateAddressBook', 'UpdateAddressBook');
+			if ($this->Config()->Get('plugin', 'enableNcAddressbook', false)) {
+				$this->addJs('js/addressbook.js');
+				$this->addJsonHook('NextcloudGetAddressBooks', 'GetAddressBooks');
+				$this->addJsonHook('NextcloudUpdateAddressBook', 'UpdateAddressBook');
+			}
+
+			if ($this->Config()->Get('plugin', 'disableInhouseAddressbook', false)) {
+				$this->addJs('js/hideInhouseAddressbook.js');
+			}
 		} else {
 			\SnappyMail\Log::debug('Nextcloud', 'NOT integrated');
 			// \OC::$server->getConfig()->getAppValue('snappymail', 'snappymail-no-embed');
@@ -62,10 +70,12 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 
 		$contactsManager = \OC::$server->getContactsManager();
 
-		$selectedUri = $this->Settings()->GetConf(self::ADDRESSBOOK_SETTINGS_KEY, self::DEFAULT_ADDRESSBOOK_URI);
+		$defaultUri = $this->Config()->Get('plugin', 'defaultNCAddressbookUri', self::DEFAULT_ADDRESSBOOK_URI);
+		$selectedUri = $this->UserSettings()->GetConf(self::ADDRESSBOOK_SETTINGS_KEY, $defaultUri);
+		$ignoreSystemAddressbook = $this->Config()->Get('plugin', 'ignoreSystemAddressbook', true);
 
 		foreach ($contactsManager->getUserAddressBooks() as $addressBook) {
-			if ($addressBook->isSystemAddressBook()) {
+			if ($ignoreSystemAddressbook && $addressBook->isSystemAddressBook()) {
 				$contactsManager->unregisterAddressBook($addressBook);
 				continue;
 			}
@@ -89,7 +99,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 	public function UpdateAddressBook(): array
 	{
 		$uri = $this->jsonParam('uri');
-		$oSettings = $this->Settings();
+		$oSettings = $this->UserSettings();
 		if (\is_string($uri)) {
 			$oSettings->SetConf(self::ADDRESSBOOK_SETTINGS_KEY, $uri);
 			$this->SettingsProvider()->Save($this->Account(), $oSettings);
@@ -422,12 +432,24 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 					$this->Config()->Get('plugin', 'ignoreSystemAddressbook', true)
 				);
 			}
-			if ('address-book' === $sName) {
+
+			if ('address-book' === $sName && $this->Config()->Get('plugin', 'enableNcAddressbook', false)) {
 				if (!\is_array($mResult)) {
 					$mResult = array();
 				}
 				include_once __DIR__ . '/NextcloudAddressBook.php';
-				$mResult = new NextcloudAddressBook();
+
+				$ignoreSystemAddressbook = $this->Config()->Get('plugin', 'ignoreSystemAddressbook', true);
+				$defaultName = $this->Config()->Get('plugin', 'defaultNCAddressbookName', self::DEFAULT_ADDRESSBOOK_NAME);
+				$defaultDescription = $this->Config()->Get('plugin', 'defaultNCAddressbookDescription', self::DEFAULT_ADDRESSBOOK_DESCRIPTION);
+				$defaultUri = $this->Config()->Get('plugin', 'defaultNCAddressbookUri', self::DEFAULT_ADDRESSBOOK_URI);
+
+				$mResult = new NextcloudAddressBook(
+					$defaultUri,
+					$defaultName,
+					$defaultDescription,
+					$ignoreSystemAddressbook
+				);
 			}
 			/*
 			if ($this->Config()->Get('plugin', 'storage', false) && ('storage' === $sName || 'storage-local' === $sName)) {
@@ -453,6 +475,26 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				->SetDefaultValue(false)
 */
 			\RainLoop\Plugins\Property::NewInstance('calendar')->SetLabel('Enable "Put ICS in calendar"')
+				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
+				->SetDefaultValue(false),
+
+			\RainLoop\Plugins\Property::NewInstance('enableNcAddressbook')->SetLabel('Enable User to choose Nextcloud addressbook for recipients')
+				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
+				->SetDefaultValue(false),
+
+			\RainLoop\Plugins\Property::NewInstance('defaultNCAddressbookUri')->SetLabel('Default nextcloud addressbook URI for recipinets')
+				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
+				->SetDefaultValue('webmail'),
+
+			\RainLoop\Plugins\Property::NewInstance('defaultNCAddressbookName')->SetLabel('Default nextcloud addressbook Name for recipinets')
+				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
+				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_NAME),
+
+			\RainLoop\Plugins\Property::NewInstance('defaultNCAddressbookDescription')->SetLabel('Default nextcloud addressbook description for recipinets')
+				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
+				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_DESCRIPTION),
+
+			\RainLoop\Plugins\Property::NewInstance('disableInhouseAddressbook')->SetLabel('Disable SnappyMail internal addressbook. This is recomended if nextcloud addressbook is being used.')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
 				->SetDefaultValue(false)
 		);
@@ -496,7 +538,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 		return \RainLoop\Api::Actions()->SettingsProvider(true);
 	}
 
-	private function Settings(): \RainLoop\Settings
+	private function UserSettings(): \RainLoop\Settings
 	{
 		return $this->SettingsProvider()->Load($this->Account());
 	}

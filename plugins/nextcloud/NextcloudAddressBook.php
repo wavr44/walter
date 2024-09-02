@@ -7,11 +7,21 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	use RainLoop\Providers\AddressBook\CardDAV;
 	private $contactsManager;
 
-	private const DEFAULT_URI = 'webmail';
 	private const SETTINGS_KEY = 'nextCloudAddressBookUri';
 
-	function __construct()
+	private string $defaultUri = 'webmail';
+	private string $defaultName = 'WebMail';
+	private string $defaultDescription = 'Recipients from snappymail';
+	private bool $ignoreSystemAddressBook = true;
+
+
+	function __construct(string $defaultUri = 'webmail', string $defaultName = 'WebMail', string $defaultDescription = 'Recipients from snappymail', bool $ignoreSystemAddressBook = true)
 	{
+		$this->defaultUri = $defaultUri;
+		$this->defaultName = $defaultName;
+		$this->defaultDescription = $defaultDescription;
+		$this->ignoreSystemAddressBook = $ignoreSystemAddressBook;
+
 		$this->GetSavedAddressBookKey();
 	}
 
@@ -19,9 +29,11 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	{
 		$this->contactsManager = \OC::$server->getContactsManager();
 
-		foreach ($this->contactsManager->getUserAddressBooks() as $addressBook) {
-			if ($addressBook->isSystemAddressBook()) {
-				$this->contactsManager->unregisterAddressBook($addressBook);
+		if ($this->ignoreSystemAddressBook) {
+			foreach ($this->contactsManager->getUserAddressBooks() as $addressBook) {
+				if ($addressBook->isSystemAddressBook()) {
+					$this->contactsManager->unregisterAddressBook($addressBook);
+				}
 			}
 		}
 
@@ -33,8 +45,8 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 
 		if ($addressBookId === null) {
 			return $cardDavBackend->createAddressBook($principalUri, $uri, array_filter([
-				'{DAV:}displayname' => 'WebMail',
-				'{urn:ietf:params:xml:ns:carddav}addressbook-description' => 'Recipients from snappymail',
+				'{DAV:}displayname' => $this->defaultName,
+				'{urn:ietf:params:xml:ns:carddav}addressbook-description' => $this->defaultDescription,
 			]));
 		}
 
@@ -181,6 +193,6 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 
 	private function GetSavedUri(): string
 	{
-		return $this->Settings()->GetConf(self::SETTINGS_KEY, self::DEFAULT_URI);
+		return $this->Settings()->GetConf(self::SETTINGS_KEY, $this->defaultUri);
 	}
 }
