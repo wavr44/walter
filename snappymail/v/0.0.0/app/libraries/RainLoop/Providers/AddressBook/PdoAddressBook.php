@@ -75,7 +75,7 @@ class PdoAddressBook
 		$aDrivers = static::getAvailableDrivers();
 		return \is_array($aDrivers) && \in_array($this->settings->driver, $aDrivers);
 	}
-	
+
 	public function SetEmail(string $sEmail) : bool
 	{
 		$this->iUserID = $this->getUserId($sEmail);
