@@ -8,11 +8,10 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 
 	private const SETTINGS_KEY = 'nextcloudAddressBookUri';
 
-	private string $defaultUri = 'webmail';
-	private string $defaultName = 'WebMail';
-	private string $defaultDescription = 'Recipients from snappymail';
-	private bool $ignoreSystemAddressBook = true;
-
+	private string $defaultUri;
+	private string $defaultName;
+	private string $defaultDescription;
+	private bool $ignoreSystemAddressBook;
 	private $contactsManager;
 
 	function __construct(string $defaultUri = 'webmail', string $defaultName = 'WebMail', string $defaultDescription = 'Recipients from snappymail', bool $ignoreSystemAddressBook = true)
