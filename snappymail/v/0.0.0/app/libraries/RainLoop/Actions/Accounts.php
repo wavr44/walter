@@ -184,6 +184,7 @@ trait Accounts
 			$bReload = false;
 			$oAccount = $this->getAccountFromToken();
 			if ($oAccount instanceof AdditionalAccount && $oAccount->Email() === $sEmailToDelete) {
+//				$this->SetAdditionalAuthToken(null);
 				\SnappyMail\Cookies::clear(self::AUTH_ADDITIONAL_TOKEN_KEY);
 				$bReload = true;
 			}
@@ -207,7 +208,6 @@ trait Accounts
 			'accountHash' => $oAccount->Hash(),
 			'mainEmail' => \RainLoop\Api::Actions()->getMainAccountFromToken()->Email(),
 			'contactsAllowed' => $this->AddressBookProvider($oAccount)->IsActive(),
-			'contactsExternal' => $this->AddressBookProvider($oAccount)->IsExternal(),
 			'HideUnsubscribed' => false,
 			'useThreads' => (bool) $oConfig->Get('defaults', 'mail_use_threads', false),
 			'threadAlgorithm' => '',

@@ -60,13 +60,7 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 		return true;
 	}
 
-	public function IsExternal(): bool
-	{
-		return true;
-	}
-
-	public function SetEmail(string $sEmail): bool
-	{
+	public function SetEmail(string $sEmail) : bool {
 		return true;
 	}
 

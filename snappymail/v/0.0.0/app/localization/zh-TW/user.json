@@ -88,8 +88,19 @@
 		"TRASH_NAME": "垃圾桶",
 		"ARCHIVE_NAME": "封存"
 	},
-	"QUOTA": {
-		"TITLE": "配額使用"
+	"IMAP": {
+		"ACL_RIGHTS": "Rights",
+		"ACL_A": "Administer",
+		"ACL_E": "Expunge",
+		"ACL_I": "Insert messages",
+		"ACL_K": "Create sub-folders",
+		"ACL_L": "Show messages",
+		"ACL_P": "Send mail",
+		"ACL_R": "Select folder",
+		"ACL_S": "\\SEEN tag",
+		"ACL_T": "\\DELETED tag",
+		"ACL_W": "Other tags",
+		"ACL_X": "Delete\/Rename folder"
 	},
 	"MESSAGE_LIST": {
 		"BUTTON_RELOAD": "重新載入郵件清單",
@@ -310,7 +321,7 @@
 		"STORE_PRIVATE_KEY_IN_GNUPG": "以 GnuPG 儲存私鑰在伺服器上",
 		"BACKUP_ON_SERVER": "在伺服器中儲存 (已加密)",
 		"BACKUP_PUBLIC_KEY_ON_SERVER": "在伺服器中儲存公鑰",
-		"BACKUP_PRIVATE_KEY_ON_SERVER": "在伺服器中儲存私鑰",
+		"BACKUP_PRIVATE_KEY_ON_SERVER": "在伺服器中儲存私鑰"
 	},
 	"SMIME": {
 		"POPUP_IMPORT_TITLE": "匯入 S\/MIME 證書",

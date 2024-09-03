@@ -176,21 +176,10 @@ trait UserAuth
 			$this->Plugins()->RunHook('login.success', array($oAccount));
 
 			$this->SetAuthToken($oAccount);
+			$this->SetAdditionalAuthToken(null);
 		}
 
 		return $oAccount;
-	}
-
-	private static function SetAccountCookie(string $sName, ?Account $oAccount)
-	{
-		if ($oAccount) {
-			Cookies::set(
-				$sName,
-				\MailSo\Base\Utils::UrlSafeBase64Encode(\SnappyMail\Crypt::EncryptToJSON($oAccount))
-			);
-		} else {
-			Cookies::clear($sName);
-		}
 	}
 
 	public function switchAccount(string $sEmail) : bool
@@ -336,13 +325,13 @@ trait UserAuth
 	public function SetAuthToken(MainAccount $oAccount): void
 	{
 		$this->SetMainAuthAccount($oAccount);
-		static::SetAccountCookie(self::AUTH_SPEC_TOKEN_KEY, $oAccount);
+		Cookies::setSecure(self::AUTH_SPEC_TOKEN_KEY, $oAccount);
 	}
 
 	public function SetAdditionalAuthToken(?AdditionalAccount $oAccount): void
 	{
 		$this->oAdditionalAuthAccount = $oAccount ?: false;
-		static::SetAccountCookie(self::AUTH_ADDITIONAL_TOKEN_KEY, $oAccount);
+		Cookies::setSecure(self::AUTH_ADDITIONAL_TOKEN_KEY, $oAccount);
 	}
 
 	/**

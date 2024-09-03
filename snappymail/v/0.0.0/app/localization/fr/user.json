@@ -88,8 +88,19 @@
 		"TRASH_NAME": "Corbeille",
 		"ARCHIVE_NAME": "Archive"
 	},
-	"QUOTA": {
-		"TITLE": "Quota"
+	"IMAP": {
+		"ACL_RIGHTS": "Droits",
+		"ACL_A": "Administrer",
+		"ACL_E": "Supprimer",
+		"ACL_I": "Insérer des messages",
+		"ACL_K": "Créer des sous-dossiers",
+		"ACL_L": "Afficher les messages",
+		"ACL_P": "Envoyer un courrier",
+		"ACL_R": "Sélectionner un dossier",
+		"ACL_S": "\\VUE balise",
+		"ACL_T": "\\SUPPRIMÉE balise",
+		"ACL_W": "Autres balises",
+		"ACL_X": "Supprimer\/Renommer le dossier"
 	},
 	"MESSAGE_LIST": {
 		"BUTTON_RELOAD": "Recharger la liste des messages",
