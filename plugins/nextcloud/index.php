@@ -503,7 +503,7 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
 				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_NAME),
 
-			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_DESCRIPTION_KEY)->SetLabel('Default nextcloud addressbook description for recipinets')
+			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_DESCRIPTION_KEY)->SetLabel('Default nextcloud addressbook description for recipients')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
 				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_DESCRIPTION),
 
