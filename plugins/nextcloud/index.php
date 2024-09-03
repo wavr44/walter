@@ -495,11 +495,11 @@ class NextcloudPlugin extends \RainLoop\Plugins\AbstractPlugin
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::BOOL)
 				->SetDefaultValue(self::ENABLE_NC_ADDRESSBOOK_DEFAULT_VALUE),
 
-			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_URI_KEY)->SetLabel('Default nextcloud addressbook URI for recipinets')
+			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_URI_KEY)->SetLabel('Default nextcloud addressbook URI for recipients')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
 				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_URI),
 
-			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_NAME_KEY)->SetLabel('Default nextcloud addressbook Name for recipinets')
+			\RainLoop\Plugins\Property::NewInstance(self::DEFAULT_ADDRESSBOOK_NAME_KEY)->SetLabel('Default nextcloud addressbook Name for recipients')
 				->SetType(\RainLoop\Enumerations\PluginPropertyType::STRING)
 				->SetDefaultValue(self::DEFAULT_ADDRESSBOOK_NAME),
 
