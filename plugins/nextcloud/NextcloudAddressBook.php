@@ -62,7 +62,8 @@ class NextcloudAddressBook implements \RainLoop\Providers\AddressBook\AddressBoo
 	public function IsSupported() : bool
 	{
 		// Maybe just return true, contacts app is just a frontend
-		return \OC::$server->getAppManager()->isEnabledForUser('contacts');
+		// return \OC::$server->getAppManager()->isEnabledForUser('contacts');
+		return true;
 	}
 
 	public function SetEmail(string $sEmail) : bool

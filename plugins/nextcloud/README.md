@@ -2,7 +2,7 @@
 
 ## Nextcloud Addressbook for recipients
 
-This plugin can let user to choose which nextcloud addressbook to use save recipients. This is opt-in feature (enabled by admin). After admin enable this, user will find a dropdown in his/her SnappyMail's `Contacts` section, containing all his/her addressbook.
+ This plugin can let user to choose which nextcloud addressbook to use save recipients. This is opt-in feature (enabled by admin). After admin enable this, user will find a dropdown in his/her SnappyMail's `Contacts` section, containing all his/her addressbook. It works better with [Nextcloud Contacts App](https://github.com/nextcloud/contacts/)
 
 ### Admin settings
 
