@@ -63,7 +63,8 @@ config.paths.js = {
 			'vendors/bootstrap/js/bootstrap.native.js',
 			'vendors/knockout/build/output/knockout-latest.js',
 //			'vendors/knockout/build/output/knockout-latest.debug.js',
-			'vendors/squire/build/squire-raw.js',
+			'vendors/dompurify/dist/purify.js',
+			'vendors/squire-rte/dist/squire-raw.js',
 			'vendors/mathiasbynens/punycode.js',
 			'dev/External/SquireUI.js'
 		]
