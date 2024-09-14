@@ -1,4 +1,4 @@
- # Squire
+# Squire
 
 Squire is an HTML5 rich text editor, which provides powerful cross-browser normalisation in a flexible lightweight package (only 16KB of JS after minification and gzip, with no dependencies!).
 
