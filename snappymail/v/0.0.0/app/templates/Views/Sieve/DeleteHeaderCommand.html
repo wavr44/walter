@@ -1,0 +1,13 @@
+<!-- rfc5293 -->
+deleteheader
+	<input type="number" name="index">
+	<label><input type="checkbox" name="last"> last</label>
+	comparator     = '',
+	<select name="match_type">
+		<option>:is</option>
+		<option>:contains</option>
+		<option>:matches</option>
+		<option data-bind="visible root.capa.extlists">:list</option>
+	</select>
+	<input type="text" name="field_name">
+	<textarea name="source">GrammarStringList</textarea>
