@@ -291,5 +291,6 @@ export const parseScript = (script, name = 'script.sieve') => {
 	}
 
 	tree.requires = requires;
+	tree.toString = () => tree.join('\r\n');
 	return tree;
 };

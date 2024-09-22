@@ -1,6 +1,7 @@
 import { AbstractModel } from 'Sieve/Model/Abstract';
 import { FilterModel } from 'Sieve/Model/Filter';
 import { koArrayWithDestroy } from 'Sieve/Utils';
+import { parseScript } from 'Sieve/Parser';
 
 const SIEVE_FILE_NAME = 'rainloop.user';
 
@@ -297,6 +298,10 @@ export class SieveScriptModel extends AbstractModel
 	 */
 	allowFilters() {
 		return SIEVE_FILE_NAME === this.name();
+	}
+
+	parse() {
+		return parseScript(this.body(), this.name());
 	}
 
 	/**

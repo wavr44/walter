@@ -132,6 +132,11 @@ export class SieveScriptPopupView extends rl.pluginPopupView {
 		});
 	}
 
+	templateName(obj) {
+		const id = 'Sieve' + obj.constructor.name;
+		return document.getElementById(id) ? id : null;
+	}
+
 	beforeShow(oScript) {
 //	onShow(oScript) {
 		this.sieveCapabilities(capa.join(' '));

@@ -1,5 +1,7 @@
 <!-- rfc5228 -->
 else
 {
-<div data-bind="template: { name: 'SieveCommand', foreach: commands, as: 'command' }"></div>
+	<div data-bind="foreach: commands">
+		<div data-bind="template: {name: $root.templateName($data)}"></div>
+	</div>
 }

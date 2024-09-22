@@ -1,3 +1,5 @@
 <!-- rfc5228 -->
 anyof
-<div data-bind="template: { name: 'SieveTest', foreach: tests, as: 'test' }"></div>
+	<div data-bind="foreach: tests">
+		<div data-bind="template: {name: $root.templateName($data)}"></div>
+	</div>
