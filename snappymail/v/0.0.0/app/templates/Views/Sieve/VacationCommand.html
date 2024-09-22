@@ -2,9 +2,9 @@
 vacation
 	<input type="number" name="_days">
 	<input type="number" name="_seconds">
-	<input type="text" name="_subject">
-	<input type="text" name="_from">
+	<input type="text" name="_subject" data-bind="textInput: _subject">
+	<input type="text" name="_from" data-bind="textInput: _from">
 	<textarea name="source">GrammarStringList</textarea>
 	<label><input type="checkbox" name="mime"> mime</label>
-	<input type="text" name="_handle">
-	<input type="text" name="_reason"> // QuotedString / MultiLine
+	<input type="text" name="_handle" data-bind="textInput: _handle">
+	<input type="text" name="_reason" data-bind="textInput: _reason"> // QuotedString / MultiLine

@@ -1,5 +1,5 @@
 <!-- rfc5228 -->
 fileinto
-	<label data-bind="root.capa.copy"><input type="checkbox"> copy</label><!-- rfc3894 -->
-	<label data-bind="root.capa.mailbox"><input type="checkbox"> create</label><!-- rfc5490 -->
-	<input data-bind="mailbox">
+	<label data-bind="root.capa.copy"><input type="checkbox" data-bind="checked: copy"> copy</label><!-- rfc3894 -->
+	<label data-bind="root.capa.mailbox"><input type="checkbox" data-bind="checked: create"> create</label><!-- rfc5490 -->
+	<input type="text" data-bind="textInput: mailbox">

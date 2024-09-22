@@ -1,18 +1,25 @@
 <!-- rfc5228 -->
 header
-	<select name="address_part">
+	<textarea name="header_names" data-bind="textInput: header_names">GrammarStringList</textarea>
+	<select name="match_type" data-bind="value: match_type">
+		<option>:is</option>
+		<option>:contains</option>
+		<option>:matches</option>
+	</select>
+	<!--
+	<select name="address_part" data-bind="value: address_part">
 		<option>:localpart</option>
 		<option>:domain</option>
 		<option>:all</option>
 	</select>
-	<textarea name="header_names">GrammarStringList</textarea>
-	<textarea name="key_list">GrammarStringList</textarea>
-	<input type="number" name="index">
-	<input type="checkbox" name="last">
-	<input type="checkbox" name="mime">
-	<input type="checkbox" name="anychild">
+	-->
+	<textarea name="key_list" data-bind="textInput: key_list">GrammarStringList</textarea>
+	<input type="number" name="index" data-bind="textInput: index">
+	<label><input type="checkbox" name="last"> last</label>
+	<label><input type="checkbox" name="mime"> mime</label>
+	<label><input type="checkbox" name="anychild"> anychild</label>
 	<!-- when ":mime" is used: -->
-	<input type="checkbox" name="type">
-	<input type="checkbox" name="subtype">
-	<input type="checkbox" name="contenttype">
-	<textarea name="param">GrammarStringList</textarea>
+	<label><input type="checkbox" name="type"> type</label>
+	<label><input type="checkbox" name="subtype"> subtype</label>
+	<label><input type="checkbox" name="contenttype"> contenttype</label>
+	<textarea name="param" data-bind="textInput: param">GrammarStringList</textarea>

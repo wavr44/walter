@@ -22,9 +22,9 @@ export class FileIntoCommand extends ActionCommand
 		// QuotedString / MultiLine
 		this._mailbox = new GrammarQuotedString();
 		// https://datatracker.ietf.org/doc/html/rfc3894
-//		this.copy = false;
+		this.copy = false;
 		// https://datatracker.ietf.org/doc/html/rfc5490#section-3.2
-//		this.create = false;
+		this.create = false;
 	}
 
 	get require() { return 'fileinto'; }
@@ -67,9 +67,9 @@ export class RedirectCommand extends ActionCommand
 		// QuotedString / MultiLine
 		this._address = new GrammarQuotedString();
 		// https://datatracker.ietf.org/doc/html/rfc3894
-//		this.copy = false;
+		this.copy = false;
 		// https://datatracker.ietf.org/doc/html/rfc6134#section-2.3
-//		this.list = null;
+		this.list = null;
 	}
 
 	toString()
