@@ -1,0 +1,18 @@
+<!-- rfc5228 -->
+header
+	<select name="address_part">
+		<option>:localpart</option>
+		<option>:domain</option>
+		<option>:all</option>
+	</select>
+	<textarea name="header_names">GrammarStringList</textarea>
+	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="number" name="index">
+	<input type="checkbox" name="last">
+	<input type="checkbox" name="mime">
+	<input type="checkbox" name="anychild">
+	<!-- when ":mime" is used: -->
+	<input type="checkbox" name="type">
+	<input type="checkbox" name="subtype">
+	<input type="checkbox" name="contenttype">
+	<textarea name="param">GrammarStringList</textarea>

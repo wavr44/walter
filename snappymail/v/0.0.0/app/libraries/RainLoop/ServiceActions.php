@@ -645,7 +645,15 @@ class ServiceActions
 				$aTemplates[$sTemplateName] = $file;
 			}
 		}
-
+/*
+//		if (!$this->GetCapa(Capa::SIEVE, $oAccount)) {
+		if (!$bAdmin) {
+			foreach (\glob(APP_VERSION_ROOT_PATH."app/templates/Views/Sieve/*.html") as $file) {
+				$sTemplateName = 'Sieve' . \basename($file, '.html');
+				$aTemplates[$sTemplateName] = $file;
+			}
+		}
+*/
 		$this->oActions->Plugins()->CompileTemplate($aTemplates, $bAdmin);
 
 		$sHtml = '';

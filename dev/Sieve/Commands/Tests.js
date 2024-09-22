@@ -316,11 +316,6 @@ export class NotTest extends TestCommand
 	{
 		return 'not ' + this.test;
 	}
-
-	pushArguments()
-	{
-		throw 'No arguments';
-	}
 }
 
 /**
