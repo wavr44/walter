@@ -1,9 +1,9 @@
 <!-- rfc5260 -->
 date
 	<input type="text" data-bind="textInput: zone">
-	<label><input type="checkbox"> originalzone</label>
+	<label><input type="checkbox" data-bind="checked: originalzone"> originalzone</label>
 	<input type="text" data-bind="textInput: header_name">
 	<input type="text" data-bind="textInput: date_part">
 	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>
 	<input type="number">
-	<label><input type="checkbox"> last</label>
+	<label><input type="checkbox" data-bind="checked: last"> last</label>

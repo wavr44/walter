@@ -1,5 +1,9 @@
 <!-- rfc5228 -->
-allof
-	<div data-bind="foreach: tests">
-		<div data-bind="template: {name: $root.templateName($data)}"></div>
+<div data-bind="foreach: tests">
+	<div class="sieve-block">
+		<details>
+			<summary data-bind="text: $data"></summary>
+			<div data-bind="template: {name: $root.templateName($data)}"></div>
+		</details>
 	</div>
+</div>

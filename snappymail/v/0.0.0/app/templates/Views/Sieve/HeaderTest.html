@@ -19,17 +19,17 @@
 <br/>
 <input type="number" data-bind="textInput: index">
 <br/>
-<label><input type="checkbox"> last</label>
+<label><input type="checkbox" data-bind="checked: last"> last</label>
 <br/>
-<label><input type="checkbox"> mime</label>
+<label><input type="checkbox" data-bind="checked: mime"> mime</label>
 <br/>
-<label><input type="checkbox"> anychild</label>
+<label><input type="checkbox" data-bind="checked: anychild"> anychild</label>
 <br/>
 <!-- when ":mime" is used: -->
-<label><input type="checkbox"> type</label>
+<label><input type="checkbox" data-bind="checked: type"> type</label>
 <br/>
-<label><input type="checkbox"> subtype</label>
+<label><input type="checkbox" data-bind="checked: subtype"> subtype</label>
 <br/>
-<label><input type="checkbox"> contenttype</label>
+<label><input type="checkbox" data-bind="checked: contenttype"> contenttype</label>
 <br/>
 <input type="text" data-bind="textInput: param" pattern='".+"|\[".+"(,".+")*\]'>

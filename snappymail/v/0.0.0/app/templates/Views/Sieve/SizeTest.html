@@ -1,7 +1,6 @@
 <!-- rfc5228 -->
-size
-	<select>
-		<option>:over</option>
-		<option>:under</option>
-	</select>
-	<input type="number">
+<select data-bind="value: mode">
+	<option>:over</option>
+	<option>:under</option>
+</select>
+<input type="number" data-bind="textInput: limit">

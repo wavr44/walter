@@ -1,6 +1,6 @@
 <!-- rfc6609 -->
 include
-	<label><input type="checkbox"> global</label> // ':personal' / ':global';
-	<label><input type="checkbox"> once</label>
-	<label><input type="checkbox"> optional</label>
-	<input type="text" data-bind="textInput: value">
+	<input type="text" data-bind="textInput: value.value">
+	<label><input type="checkbox" data-bind="checked: global"> global</label>
+	<label><input type="checkbox" data-bind="checked: once"> once</label>
+	<label><input type="checkbox" data-bind="checked: optional"> optional</label>
