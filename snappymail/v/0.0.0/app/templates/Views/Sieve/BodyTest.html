@@ -1,8 +1,9 @@
 <!-- rfc5173 -->
-<select data-bind="value: match_type">
-	<option>:is</option>
+<select data-bind="value: ko_match_type">
+	<option value="">:is</option>
 	<option>:contains</option>
 	<option>:matches</option>
+	<option>:list</option><!-- $root.capa.includes('extlists') -->
 </select>
 body_transform = ''; // :raw, :content <string-list>, :text
 <input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

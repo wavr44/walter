@@ -1,10 +1,11 @@
 <!-- rfc5228 -->
 <input type="text" data-bind="textInput: header_names" pattern='".+"|\[".+"(,".+")*\]'>
 <br/>
-<select data-bind="value: match_type">
-	<option>:is</option>
+<select data-bind="value: ko_match_type">
+	<option value="">:is</option>
 	<option>:contains</option>
 	<option>:matches</option>
+	<option>:list</option><!-- $root.capa.includes('extlists') -->
 </select>
 <br/>
 <!--

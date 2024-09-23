@@ -1,9 +1,10 @@
 <!-- rfc5260 -->
 currentdate
-<select data-bind="value: match_type">
-	<option>:is</option>
+<select data-bind="value: ko_match_type">
+	<option value="">:is</option>
 	<option>:contains</option>
 	<option>:matches</option>
+	<option>:list</option><!-- $root.capa.includes('extlists') -->
 </select>
 	<input type="text" data-bind="textInput: zone">
 	<input type="text" data-bind="textInput: date_part">

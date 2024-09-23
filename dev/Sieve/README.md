@@ -4,6 +4,7 @@ https://www.iana.org/assignments/sieve-extensions/sieve-extensions.xhtml
 - [ ] RFC3461 envelope-dsn / redirect-dsn
 - [x] RFC3894 copy
 - [ ] RFC4790 comparator-*
+- [ ] RFC5051 i;unicode-casemap
 - [x] RFC5173 body
 - [x] RFC5183 environment
 - [x] RFC5228 encoded-character / envelope / fileinto
