@@ -1,4 +1,4 @@
 <!-- rfc5173 -->
 body
 	body_transform = ''; // :raw, :content <string-list>, :text
-	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

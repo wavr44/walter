@@ -1,9 +1,9 @@
 <!-- rfc5228 -->
 envelope
-	<select name="address_part">
+	<select>
 		<option>:localpart</option>
 		<option>:domain</option>
 		<option>:all</option>
 	</select>
-	<textarea name="envelope_part">GrammarStringList</textarea>
-	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: envelope_part" pattern='".+"|\[".+"(,".+")*\]'>
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

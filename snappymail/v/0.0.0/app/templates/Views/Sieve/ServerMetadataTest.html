@@ -1,4 +1,4 @@
 <!-- rfc5490 -->
 servermetadata
-	<input type="text" name="annotation_name" data-bind="textInput: annotation_name">
-	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: annotation_name">
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

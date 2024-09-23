@@ -1,8 +1,12 @@
 <!-- rfc5228 -->
-elsif
-<div data-bind="template: {name: $root.templateName(test), data: test}"></div>
-{
-	<div style="padding-left:4em" data-bind="foreach: commands">
-		<div data-bind="template: {name: $root.templateName($data)}"></div>
-	</div>
-}
+<div class="sieve-block">
+	<details>
+		<summary data-bind="text: 'elsif ' + test"></summary>
+		<div data-bind="template: {name: $root.templateName(test), data: test}"></div>
+	</details>
+	{
+		<div data-bind="foreach: commands">
+			<div data-bind="template: {name: $root.templateName($data)}"></div>
+		</div>
+	}
+</div>

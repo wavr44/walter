@@ -134,7 +134,7 @@ export class SieveScriptPopupView extends rl.pluginPopupView {
 
 	templateName(obj) {
 		const id = 'Sieve' + obj.constructor.name;
-		return document.getElementById(id) ? id : null;
+		return document.getElementById(id) ? id : 'SieveCommand';
 	}
 
 	beforeShow(oScript) {

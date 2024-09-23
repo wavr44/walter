@@ -1,25 +1,35 @@
 <!-- rfc5228 -->
-header
-	<textarea name="header_names" data-bind="textInput: header_names">GrammarStringList</textarea>
-	<select name="match_type" data-bind="value: match_type">
-		<option>:is</option>
-		<option>:contains</option>
-		<option>:matches</option>
-	</select>
-	<!--
-	<select name="address_part" data-bind="value: address_part">
-		<option>:localpart</option>
-		<option>:domain</option>
-		<option>:all</option>
-	</select>
-	-->
-	<textarea name="key_list" data-bind="textInput: key_list">GrammarStringList</textarea>
-	<input type="number" name="index" data-bind="textInput: index">
-	<label><input type="checkbox" name="last"> last</label>
-	<label><input type="checkbox" name="mime"> mime</label>
-	<label><input type="checkbox" name="anychild"> anychild</label>
-	<!-- when ":mime" is used: -->
-	<label><input type="checkbox" name="type"> type</label>
-	<label><input type="checkbox" name="subtype"> subtype</label>
-	<label><input type="checkbox" name="contenttype"> contenttype</label>
-	<textarea name="param" data-bind="textInput: param">GrammarStringList</textarea>
+<input type="text" data-bind="textInput: header_names" pattern='".+"|\[".+"(,".+")*\]'>
+<br/>
+<select data-bind="value: match_type">
+	<option>:is</option>
+	<option>:contains</option>
+	<option>:matches</option>
+</select>
+<br/>
+<!--
+<select data-bind="value: address_part">
+	<option>:localpart</option>
+	<option>:domain</option>
+	<option>:all</option>
+</select>
+-->
+<br/>
+<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>
+<br/>
+<input type="number" data-bind="textInput: index">
+<br/>
+<label><input type="checkbox"> last</label>
+<br/>
+<label><input type="checkbox"> mime</label>
+<br/>
+<label><input type="checkbox"> anychild</label>
+<br/>
+<!-- when ":mime" is used: -->
+<label><input type="checkbox"> type</label>
+<br/>
+<label><input type="checkbox"> subtype</label>
+<br/>
+<label><input type="checkbox"> contenttype</label>
+<br/>
+<input type="text" data-bind="textInput: param" pattern='".+"|\[".+"(,".+")*\]'>

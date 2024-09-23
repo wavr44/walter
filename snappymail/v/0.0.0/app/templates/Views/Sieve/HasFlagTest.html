@@ -1,4 +1,4 @@
 <!-- rfc5232 -->
 hasflag
-	<textarea name="variable_list">GrammarStringList</textarea>
-	<textarea name="list_of_flags">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: variable_list" pattern='".+"|\[".+"(,".+")*\]'>
+	<input type="text" data-bind="textInput: list_of_flags" pattern='".+"|\[".+"(,".+")*\]'>

@@ -1,5 +1,5 @@
 <!-- rfc5435 -->
 notifymethodcapability
-	<input type="text" name="notification_uri" data-bind="textInput: notification_uri">
-	<input type="text" name="notification_capability" data-bind="textInput: notification_capability">
-	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: notification_uri">
+	<input type="text" data-bind="textInput: notification_capability">
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

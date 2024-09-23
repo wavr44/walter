@@ -18,7 +18,7 @@ export class GrammarString /*extends String*/
 {
 	constructor(value = '')
 	{
-		this._value = value;
+		this._value = value.toString ? value.toString() : value;
 	}
 
 	toString()
@@ -227,6 +227,7 @@ export class GrammarStringList extends Array
 {
 	toString()
 	{
+		// if there is only a single string, the brackets are optional
 		if (1 < this.length) {
 			return '[' + this.join(',') + ']';
 		}
@@ -235,7 +236,7 @@ export class GrammarStringList extends Array
 
 	push(value)
 	{
-		if (!(value instanceof GrammarString)) {
+		if (!(value instanceof GrammarQuotedString)) {
 			value = new GrammarQuotedString(value);
 		}
 		super.push(value);

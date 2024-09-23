@@ -1,4 +1,4 @@
 <!-- rfc5490 -->
 metadataexists
-	<input type="text" name="mailbox" data-bind="textInput: mailbox">
-	<textarea name="annotation_names">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: mailbox">
+	<input type="text" data-bind="textInput: annotation_names" pattern='".+"|\[".+"(,".+")*\]'>

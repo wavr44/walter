@@ -1,4 +1,4 @@
 <!-- rfc5183 -->
 environment
-	<input type="text" name="name" data-bind="textInput: name">
-	<textarea name="key_list">GrammarStringList</textarea>
+	<input type="text" data-bind="textInput: name">
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

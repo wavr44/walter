@@ -1,13 +1,13 @@
 <!-- rfc5228 -->
 address
-	<select name="address_part">
+	<select>
 		<option>:localpart</option>
 		<option>:domain</option>
 		<option>:all</option>
 	</select>
-	<textarea name="header_list">GrammarStringList</textarea>
-	<textarea name="key_list">GrammarStringList</textarea>
-	<input type="number" name="index">
-	<input type="checkbox" name="last">
+	<input type="text" data-bind="textInput: header_list" pattern='".+"|\[".+"(,".+")*\]'>
+	<input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>
+	<input type="number">
+	<input type="checkbox">
 //	mime
 //	anychild
