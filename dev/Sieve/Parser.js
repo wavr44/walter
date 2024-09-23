@@ -228,7 +228,8 @@ export const parseScript = (script, name = 'script.sieve') => {
 			pushArg(GrammarMultiLine.fromString(value));
 			break;
 		case T_QUOTED_STRING:
-			pushArg(new GrammarQuotedString(value.slice(1,-1)));
+			try { value = JSON.parse(value); } catch(e) { console.error(e, value); }
+			pushArg(new GrammarQuotedString(value));
 			break;
 		case T_NUMBER:
 			pushArg(new GrammarNumber(value));
