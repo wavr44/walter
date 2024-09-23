@@ -1,10 +1,10 @@
 <!-- rfc5230 -->
 vacation
-	<input type="number">
-	<input type="number">
+	<input type="number" data-bind="textInput: _days">
+	<input type="number" data-bind="textInput: _seconds">
 	<input type="text" data-bind="textInput: _subject">
 	<input type="text" data-bind="textInput: _from">
-	<input type="text" data-bind="textInput: source" pattern='".+"|\[".+"(,".+")*\]'>
-	<label><input type="checkbox"> mime</label>
+	<input type="text" data-bind="textInput: addresses" pattern='".+"|\[".+"(,".+")*\]'>
+	<label><input type="checkbox" data-bind="checked: mime"> mime</label>
 	<input type="text" data-bind="textInput: _handle">
 	<input type="text" data-bind="textInput: _reason"> // QuotedString / MultiLine
