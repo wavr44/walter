@@ -35,15 +35,20 @@
 	font-family: var(--fontMono);
 }
 
-.sieve-block {
-	border: 1px solid var(--border-color, #ddd);
-	margin: 1em 0;
-	padding: 0.5em;
-}
-
-.sieve-block > div {
+.sieve-control > div,
+.sieve-test > div,
+.sieve-action > div {
 	padding-left:2em;
 }
-.sieve-block > details > div {
+
+.sieve-control > details > div,
+.sieve-test > details > div,
+.sieve-action > details > div {
 	padding-left:1em;
+}
+
+.sieve-control, .sieve-test, .sieve-action, .sieve-comment {
+	border: 1px solid var(--border-color, #ddd);
+	margin: 0.5em 0;
+	padding: 0.5em;
 }

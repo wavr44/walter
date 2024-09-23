@@ -1,9 +1,7 @@
 <!-- rfc5228 -->
-<div class="sieve-block">
-	<span>else</span>
-	{
-		<div data-bind="foreach: commands">
-			<div data-bind="template: {name: $root.templateName($data)}"></div>
-		</div>
-	}
-</div>
+<span>else</span>
+{
+	<div data-bind="foreach: commands">
+		<div data-bind="attr:{class:$root.styleClass($data)}, template: {name: $root.templateName($data)}"></div>
+	</div>
+}

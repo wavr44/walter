@@ -1,7 +1,7 @@
 <!-- rfc5228 -->
-<div data-bind="foreach: tests">
-	<details class="sieve-block">
+<!-- ko foreach: tests -->
+	<details class="sieve-test">
 		<summary data-bind="text: $data"></summary>
 		<div data-bind="template: {name: $root.templateName($data)}"></div>
 	</details>
-</div>
+<!-- /ko -->

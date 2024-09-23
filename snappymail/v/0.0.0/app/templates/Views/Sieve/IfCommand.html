@@ -1,12 +1,10 @@
 <!-- rfc5228 -->
-<div class="sieve-block">
-	<details>
-		<summary data-bind="text: 'if ' + test"></summary>
-		<div data-bind="template: {name: $root.templateName(test), data: test}"></div>
-	</details>
-	{
-		<div data-bind="foreach: commands">
-			<div data-bind="template: {name: $root.templateName($data)}"></div>
-		</div>
-	}
-</div>
+<details>
+	<summary data-bind="text: 'if ' + test"></summary>
+	<div data-bind="template: {name: $root.templateName(test), data: test}"></div>
+</details>
+{
+	<div data-bind="foreach: commands">
+		<div data-bind="attr:{class:$root.styleClass($data)}, template: {name: $root.templateName($data)}"></div>
+	</div>
+}

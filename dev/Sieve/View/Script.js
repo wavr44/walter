@@ -7,6 +7,8 @@ import { parseScript } from 'Sieve/Parser';
 
 import { availableActions, availableControls, availableTests } from 'Sieve/Commands';
 
+import { ControlCommand, TestCommand, ActionCommand, GrammarComment } from 'Sieve/Grammar';
+
 import {
 	capa,
 	scripts,
@@ -135,6 +137,57 @@ export class SieveScriptPopupView extends rl.pluginPopupView {
 	templateName(obj) {
 		const id = 'Sieve' + obj.constructor.name;
 		return document.getElementById(id) ? id : 'SieveCommand';
+	}
+
+	styleClass(obj) {
+		if (obj instanceof ControlCommand) {
+			return 'sieve-control';
+		}
+		if (obj instanceof TestCommand) {
+			return 'sieve-test';
+		}
+		if (obj instanceof ActionCommand) {
+			return 'sieve-action';
+		}
+		if (obj instanceof GrammarComment) {
+			return 'sieve-comment';
+		}
+/*
+		if (obj instanceof GrammarString) {
+			return 'sieve-string';
+		}
+		if (obj instanceof GrammarCommand) {
+			return 'sieve-command';
+		}
+		if (obj instanceof GrammarCommands) {
+			return 'sieve-commands';
+		}
+		if (obj instanceof GrammarTestList {
+			return 'sieve-testlist';
+		}
+		if (obj instanceof GrammarBracketComment {
+			return 'sieve-bcomment';
+		}
+		if (obj instanceof GrammarHashComment {
+			return 'sieve-hcomment';
+		}
+		if (obj instanceof GrammarNumber {
+			return 'sieve-number';
+		}
+		if (obj instanceof GrammarStringList {
+			return 'sieve-stringlist';
+		}
+		if (obj instanceof GrammarQuotedString {
+			return 'sieve-qstring';
+		}
+		if (obj instanceof GrammarMultiLine {
+			return 'sieve-multiline';
+		}
+		if (obj instanceof UnknownCommand {
+			return 'sieve-string';
+		}
+*/
+		return 'sieve-' + obj.constructor.name;
 	}
 
 	beforeShow(oScript) {
