@@ -1,4 +1,9 @@
 <!-- rfc5232 -->
 hasflag
+<select data-bind="value: match_type">
+	<option>:is</option>
+	<option>:contains</option>
+	<option>:matches</option>
+</select>
 	<input type="text" data-bind="textInput: variable_list" pattern='".+"|\[".+"(,".+")*\]'>
 	<input type="text" data-bind="textInput: list_of_flags" pattern='".+"|\[".+"(,".+")*\]'>

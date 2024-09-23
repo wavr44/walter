@@ -1,5 +1,10 @@
 <!-- rfc5260 -->
 date
+<select data-bind="value: match_type">
+	<option>:is</option>
+	<option>:contains</option>
+	<option>:matches</option>
+</select>
 	<input type="text" data-bind="textInput: zone">
 	<label><input type="checkbox" data-bind="checked: originalzone"> originalzone</label>
 	<input type="text" data-bind="textInput: header_name">

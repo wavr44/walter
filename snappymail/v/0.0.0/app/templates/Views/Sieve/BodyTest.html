@@ -1,3 +1,8 @@
 <!-- rfc5173 -->
+<select data-bind="value: match_type">
+	<option>:is</option>
+	<option>:contains</option>
+	<option>:matches</option>
+</select>
 body_transform = ''; // :raw, :content <string-list>, :text
 <input type="text" data-bind="textInput: key_list" pattern='".+"|\[".+"(,".+")*\]'>

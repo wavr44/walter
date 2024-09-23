@@ -230,7 +230,6 @@ export class HeaderTest extends TestCommand
 	constructor()
 	{
 		super();
-		this.match_type = ':is';
 		this.address_part = ':all';
 		this.header_names = new GrammarStringList;
 		this.key_list     = new GrammarStringList;
